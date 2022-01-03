@@ -1,0 +1,205 @@
+#+title: zk.el - A dead-simple Zettelkasten implementation for Emacs
+#+author: Grant Rosson
+#+language: en
+
+* Introduction
+
+This set of functions aims to implement many (but not all) of the features of
+the package [[https://github.com/EFLS/zetteldeft/][Zetteldeft]], while circumventing and eliminating any dependency on
+[[https://github.com/jrblevin/deft][Deft]], or any other external packages for that matter. It therefore eschews the
+use of any backend cache or database, preferring instead to query a directory
+of plaintext notes directly, thereby treating and utilizing that directory as
+a sufficient database unto itself.
+
+To that end, these functions rely, at the lowest level, on simple calls to
+=grep=, which returns lists of files, links, and tags to the Emacs completion
+function =completing-read=, from which files can be opened and links and tags
+can be inserted into an open buffer.
+
+The structural simplicity of this set of functions is---one hopes, at
+least---in line with the structural simplicity of the so-called "Zettelkasten
+method," of which much can be read in many places, including at
+https://www.zettelkasten.de. With a core code-base of around 300 lines, this
+package aims to be a lean, understandable, and eminently forkable
+Zettelkasten implementation for Emacs. Fork away, and make it your own.
+
+** File Structure
+
+Notes are all kept in a single directory, set to the variable =zk-directory=,
+with no subdirectories.
+
+Each note is a separate file, named as follows: a unique ID number followed
+by the title of the note followed by the file extension (set in the variable
+=zk-extension=), e.g. "202012091130 On the origin of species.txt".
+
+** IDs and Links
+
+The primary connector between notes is the simple link, which takes the form
+of an ID number enclosed in double-brackets, eg, =[[202012091130]]=. A note's
+ID number, by default, is a twelve-digit string corresponding to the date and
+time the note was originally created. For example, a note created on December
+9th, 2020 at 11:30 will have the ID "202012091130". Linking to such a note
+involves nothing more than placing the string =[[202012091130]]= into another
+note in the directory.
+
+A key consequence of the ID and file-naming scheme used by these functions is
+that a note's title can change without any existing links to the note being
+broken, wherever they might be in the directory.
+
+
+* Key Features
+
+** Several Possible Ways to Follow Links
+
+The most basic way to follow a link, which will work in any mode, is
+simply to call the function =zk-follow-id-at-point= with the point on an ID.
+This function can be bound to a convenient key for ready use.
+
+Other ways to follow links rely on external packages but are far more
+accommodating. The following can be used together or separately, in any
+combination:
+
+*** In Org-Mode
+
+When using notes in =org-mode=, load the file =zk-org.el= to enable
+click-to-follow links.
+
+*** With Embark
+
+With [[https://github.com/oantolin/embark][Embark]] installed, load =zk-embark.el= to enable =embark-act= to target
+links at point, as well as filenames in a completion interface.
+
+*** With link-hint.el
+
+With [[https://github.com/noctuid/link-hint.el][link-hint.el]] installed, load =zk-link-hint.el= to allow =link-hint.el=
+to find visible IDs in a buffer.
+
+** Dynamic, Context-Sensitive New-Note Creation
+
+The function =zk-new-note= prompts for a title for a new note and generates a
+unique ID number for it based on the current date and time. A new file with
+that ID and the input title is created in the =zk-directory=.
+
+Since, by default, the date/time of an ID only goes to the minute, if more
+than one note is created in the same minute, the function simply adds 1 to
+the number string until the ID is unique.
+
+A link to the new note is placed wherever the point was at the time the
+function was called.
+
+If the function is called within an existing note in the =zk-directory=, the
+new note will contain a backlink to the note of origin. If the function is
+called from somewhere outside of the =zk-directory=, there are two possible
+behaviors, depending on the setting of the variable =zk-default-backlink=. If
+this variable is set to nil, no backlink is inserted into a new note created
+outside of =zk-directory=. If this variable is set to an ID (as a string), a
+link to the corresponding note, along with that note's title, will be
+inserted into the new note as a backlink. (This can be useful if the
+directory contains a something like a "home" note or an "inbox" note.)
+
+A new note can be created from an actively selected region. The convention
+for this behavior is that the first line of the region will be used as the
+title of the new note while all subsequent lines, with a single line between,
+will be used as the body. To clarify, consider the following as a region
+selected when =zk-new-note= is called:
+
+#+begin_src emacs-lisp
+On the origin of species
+
+It is not knowledge we lack. What is missing is the courage
+to understand what we know and to draw conclusions.
+#+end_src
+
+The title of the new note will be "On the origin of species." The body will
+be the two sentences that follow it. The empty line separating "title" from
+"body" is necessary.
+
+Note: This behavior is derived from the behavior of an earlier, long-used
+Zettelkasten implementation and persists here by custom only. It would be
+trivial to alter this function to behave more sensibly, perhaps by using the
+selected region in its entirety as the body and prompting for a title. For
+now, though, custom prevails.
+
+** Inserting Links
+
+Calling =zk-insert-link= presents a list of all notes in the =zk-directory=,
+via Emacs's standard =completing-reading= function. After selecting a note,
+the user is prompted with a yes-or-no query asking whether to insert a title
+with the link or insert only a link by itself. (This prompt can be bypassed
+by calling =zk-insert-link= with a prefix-argument or, more generally, by
+setting the variable =zk-insert-title-prompt= to nil.)
+
+** Backlinks
+
+Calling =zk-backlinks= in any note presents a list, via =completing-read=, of
+all notes in the =zk-directory= that contain at least one link to the current
+note.
+
+** Search
+
+*** Note Search
+
+The default search behavior of =zk-search= calls the built-in function
+=lgrep= to search for a regexp in all files in =zk-directory=. Results are
+presented in a =grep= buffer.
+
+The function =zk-find-file-by-full-text-search= presents, via
+=completing-read=, a list of all files containing at least a single instance
+of a give search string somewhere in the body of the note. Compare this to
+=zk-file-file= which returns matches only from the filename.
+
+*** Tag Search and Insert
+
+There are two functions that query all notes in the =zk-directory= for tags
+in following form: =#tag=. One of the functions, =zk-tag-search=, opens a
+grep buffer listing all notes that contain the selected tag. The other
+function, =zk-tag-insert=, inserts the selected tag into the current buffer.
+
+*** Alternative Search Functions, using Consult-Grep 
+
+The file =zk-consult.el= includes two alternative functions, for use with the
+[[https://github.com/minad/consult][Consult]] package, that display the results using =completing-read=.
+
+To use, make sure =Consult= is loaded, then load =zk-consult.el=, and set
+the following variables accordingly:
+
+#+begin_src emacs-lisp
+(setq zk-search-function 'zk-consult-grep)
+(setq zk-tag-search-function 'zk-consult-grep-tag-search)
+#+end_src
+
+* Comparable Zettelkasten(-like) Implementations 
+
+- _Emacs-based_
+  - [[https://github.com/EFLS/zetteldeft][Zetteldeft]]
+  - [[https://github.com/org-roam/org-roam][Org-Roam]]
+
+- _Non-Emacs_
+  - [[https://zettelkasten.de/the-archive/][The Archive]]
+  - [[https://zettlr.com][Zettlr]]
+  - [[https://roamresearch.com][Roam]]
+  - [[https://obsidian.md][Obsidian]]
+
+** Why not use one of these?
+
+/You should/! They are great. I used each one of them for a least some time,
+some for longer than others. At a certain point with each, however, I found
+that I couldn't make them do exactly what I wanted. My sense, eventually, was
+that the best implementation of a Zettelkasten is the one in which a user has
+as much control as possible over its structure, over its behavior, and,
+frankly, over its future viability. At first, this primarily meant using only
+plaintext files --- no proprietary formats, no opaque databases. Eventually,
+however, it also meant seeking out malleability and extensibility in the
+means of dealing with those plaintext files, ie, in the software.
+
+My best experiences in this regard were with "The Archive" and, after I
+discovered Emacs, with "Zetteldeft." The former is highly extensible, largely
+by virtue (at least at this point) of the macro editor "KeyboardMaestro,"
+through which one can do nearly anything with a directory of text files, in
+terms of editing, querying, inserting tags and links, etc. If I hadn't fallen
+into Emacs, I would definitely still be using "The Archive" in combination
+with "KeyboardMaestro." Little about my note-taking practices and preferences
+has changed since I used "The Archive." As for "Zetteldeft," the notable
+differences between it and the present package are only to be found
+under-the-hood, so to speak. The only reason I'm not still using it is that,
+over time, it became this.
