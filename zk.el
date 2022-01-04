@@ -136,10 +136,7 @@ Opens search results in a grep buffer."
          (list (split-string files "\n" t)))
     (if (null list)
         (error (format "No results for \"%s\"" str))
-      (mapcar
-       (lambda (x)
-         (abbreviate-file-name x))
-       list))))
+      (mapcar 'abbreviate-file-name list))))
 
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
@@ -153,10 +150,7 @@ Opens search results in a grep buffer."
   "Wrapper around `completing-read' to select zk-file from LIST."
   (let* ((list (if list list
                  (directory-files zk-directory t zk-id-regexp)))
-         (files (mapcar
-                 (lambda (x)
-                   (abbreviate-file-name x))
-                 list)))
+         (files (mapcar 'abbreviate-file-name list)))
     (completing-read
      "Select File: "
      (lambda (string predicate action)
@@ -339,8 +333,10 @@ title without prompting."
   "Select from list of all notes that link to the current note."
   (interactive)
   (let* ((id (zk--current-id))
-         (files (zk--grep-file-list id))
-         (choice (zk--select-file (remove (zk--parse-id 'file-path id) files))))
+         (files (zk--grep-file-list (regexp-quote (format zk-link-format id))))
+         (choice (if (length= files 1)
+                     (error "No backlinks - no other notes link to this note")
+                   (zk--select-file (remove (zk--parse-id 'file-path id) files)))))
     (find-file choice)))
 
 ;;; Tag Functions
