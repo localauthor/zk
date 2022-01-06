@@ -83,6 +83,8 @@
 (defvar zk-tag-search-function 'zk--grep)
 (defvar zk-insert-title-prompt nil)
 (defvar zk-default-backlink nil)
+(defvar zk-history nil)
+(defvar zk-current-notes-function nil)
 
 ;;; Low-Level Functions
 
@@ -115,7 +117,7 @@ The ID is created using `zk-id-format'."
   (if (not (string=
             default-directory
             (expand-file-name (concat zk-directory "/"))))
-      (error "Not a zk file")
+      (user-error "Not a zk file")
     (string-match zk-id-regexp buffer-file-name))
   (match-string 0 buffer-file-name))
 
@@ -135,7 +137,7 @@ Opens search results in a grep buffer."
                                           " 2>/dev/null")))
          (list (split-string files "\n" t)))
     (if (null list)
-        (error (format "No results for \"%s\"" str))
+        (message (format "No results for \"%s\"" str))
       (mapcar 'abbreviate-file-name list))))
 
 (defun zk--grep-tag-list ()
@@ -157,7 +159,8 @@ Opens search results in a grep buffer."
        (if (eq action 'metadata)
            `(metadata
              (category . zk-file))
-         (complete-with-action action files string predicate))))))
+         (complete-with-action action files string predicate)))
+     nil t nil 'zk-history)))
 
 (defun zk--parse-id (target id)
   "Return TARGET, either 'file-path, 'file-name, or 'title, from file with ID."
@@ -175,7 +178,7 @@ Opens search results in a grep buffer."
           (if (eq target 'file-path)
               (concat zk-directory "/" (match-string return file))
             (match-string return file)))
-      (error (format "No file associated with %s" id)))))
+      (message (format "No file associated with %s" id)))))
 
 (defun zk--parse-file (target file)
   "Return TARGET, either 'id or 'title, from FILE.
@@ -301,6 +304,22 @@ Optional argument TITLE."
           (zk--grep-file-list str) nil t)))
     (find-file choice)))
 
+;;;###autoload
+(defun zk-current-notes ()
+  "Select from list of currently open notes.
+Can call a custom function, set to the variable
+'zk-current-notes-function'. An alternative,
+'zk-consult-current-notes', is provided in 'zk-consult.el'."
+  (interactive)
+  (if zk-current-notes-function
+      (funcall zk-current-notes-function)
+    (read-buffer 
+     "Current Notes: " nil t
+     (lambda (x)
+       (and (string-match zk-id-regexp (car x))
+            (member (match-string 0 (car x))
+                    (zk--id-list)))))))
+
 ;;; Insert Link
 
 ;;;###autoload
@@ -335,7 +354,7 @@ title without prompting."
   (let* ((id (zk--current-id))
          (files (zk--grep-file-list (regexp-quote (format zk-link-format id))))
          (choice (if (length= files 1)
-                     (error "No backlinks - no other notes link to this note")
+                     (message "No backlinks - no other notes link to this note")
                    (zk--select-file (remove (zk--parse-id 'file-path id) files)))))
     (find-file choice)))
 

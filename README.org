@@ -46,10 +46,62 @@ A key consequence of the ID and file-naming scheme used by these functions is
 that a note's title can change without any existing links to the note being
 broken, wherever they might be in the directory.
 
-
 * Key Features
 
-** Several Possible Ways to Follow Links
+** List Backlinks
+
+Calling =zk-backlinks= in any note presents a list with completion of all
+notes in the =zk-directory= containing at least one link to the current note.
+
+** List Current Notes
+
+The function =zk-current-notes= presents a list, with completion, of all
+currently open notes. Selecting a note opens it in the current frame. By
+default the function uses =read-buffer=, meaning all Embark buffer actions
+are automatically available through =embark-act=.
+
+The command can be set to use custom function, however, by setting the
+variable =zk-current-note-function= to the name of a function.
+
+One such function is available in =zk-consult.el=: =zk-consult-current-notes=
+presents the list of current notes as a narrowed =consult-buffer-source=.
+Note that this source can also be included in the primary =consult-buffer=
+interface by adding =zk-consult-source= to list =consult-buffer-sources=. (This is *not* done by default.)
+
+** Various Search Options
+
+*** Note Search
+
+The default search behavior of =zk-search= calls the built-in function
+=lgrep= to search for a regexp in all files in =zk-directory=. Results are
+presented in a =grep= buffer.
+
+The function =zk-find-file-by-full-text-search= presents, via
+=completing-read=, a list of all files containing at least a single instance
+of a give search string somewhere in the body of the note. Compare this to
+=zk-file-file= which returns matches only from the filename.
+
+*** Tag Search and Insert
+
+There are two functions that query all notes in the =zk-directory= for tags
+in following form: =#tag=. One of the functions, =zk-tag-search=, opens a
+grep buffer listing all notes that contain the selected tag. The other
+function, =zk-tag-insert=, inserts the selected tag into the current buffer.
+
+*** Alternative Search Functions, using Consult-Grep 
+
+The file =zk-consult.el= includes two alternative functions, for use with the
+[[https://github.com/minad/consult][Consult]] package, that display the results using =completing-read=.
+
+To use, make sure =Consult= is loaded, then load =zk-consult.el=, and set
+the following variables accordingly:
+
+#+begin_src emacs-lisp
+(setq zk-search-function 'zk-consult-grep)
+(setq zk-tag-search-function 'zk-consult-grep-tag-search)
+#+end_src
+
+** Several Ways to Follow Links
 
 The most basic way to follow a link, which will work in any mode, is
 simply to call the function =zk-follow-id-at-point= with the point on an ID.
@@ -120,53 +172,14 @@ trivial to alter this function to behave more sensibly, perhaps by using the
 selected region in its entirety as the body and prompting for a title. For
 now, though, custom prevails.
 
-** Inserting Links
+** Insert Links at Point
 
 Calling =zk-insert-link= presents a list of all notes in the =zk-directory=,
-via Emacs's standard =completing-reading= function. After selecting a note,
+via Emacs's standard =completing-read= function. After selecting a note,
 the user is prompted with a yes-or-no query asking whether to insert a title
-with the link or insert only a link by itself. (This prompt can be bypassed
+with the link or insert only a link by itself. This prompt can be bypassed
 by calling =zk-insert-link= with a prefix-argument or, more generally, by
-setting the variable =zk-insert-title-prompt= to nil.)
-
-** Backlinks
-
-Calling =zk-backlinks= in any note presents a list, via =completing-read=, of
-all notes in the =zk-directory= that contain at least one link to the current
-note.
-
-** Search
-
-*** Note Search
-
-The default search behavior of =zk-search= calls the built-in function
-=lgrep= to search for a regexp in all files in =zk-directory=. Results are
-presented in a =grep= buffer.
-
-The function =zk-find-file-by-full-text-search= presents, via
-=completing-read=, a list of all files containing at least a single instance
-of a give search string somewhere in the body of the note. Compare this to
-=zk-file-file= which returns matches only from the filename.
-
-*** Tag Search and Insert
-
-There are two functions that query all notes in the =zk-directory= for tags
-in following form: =#tag=. One of the functions, =zk-tag-search=, opens a
-grep buffer listing all notes that contain the selected tag. The other
-function, =zk-tag-insert=, inserts the selected tag into the current buffer.
-
-*** Alternative Search Functions, using Consult-Grep 
-
-The file =zk-consult.el= includes two alternative functions, for use with the
-[[https://github.com/minad/consult][Consult]] package, that display the results using =completing-read=.
-
-To use, make sure =Consult= is loaded, then load =zk-consult.el=, and set
-the following variables accordingly:
-
-#+begin_src emacs-lisp
-(setq zk-search-function 'zk-consult-grep)
-(setq zk-tag-search-function 'zk-consult-grep-tag-search)
-#+end_src
+setting the variable =zk-insert-title-prompt= to nil.
 
 * Comparable Zettelkasten(-like) Implementations 
 

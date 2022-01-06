@@ -27,7 +27,7 @@
 ;;   (with-eval-after-load 'zk
 ;;     (require 'zk-consult)))
 
-;; Then set one or both of the following variables: 
+;; Then set one or both of the following variables:
 
 ;; (setq zk-search-function 'zk-consult-grep)
 ;; (setq zk-tag-search-function 'zk-consult-grep-tag-search)
@@ -36,6 +36,8 @@
 
 (require 'zk)
 (require 'consult)
+
+;;; Consult-Grep Functions
 
 (defun zk-consult-grep (&optional initial)
   "Search 'zk-directory' with 'consult-grep'.
@@ -50,6 +52,42 @@ With option for INITIAL input when called non-interactively."
 Select TAG, with completion, from list of all tags in zk notes."
   (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
   (consult-grep zk-directory tag))
+
+;;; Current Notes Consult Source
+
+(defvar zk-consult-source
+  `(:name "zk"
+          :narrow (?z . "zk - current notes")
+          :hidden n
+          :category buffer
+          :history zk-history
+          :state ,#'consult--buffer-state
+          :items ,(lambda ()
+                    (remq nil
+                          (mapcar
+                           (lambda (x)
+                             (let ((str (buffer-name x)))
+                               (when
+                                   (and (string-match zk-id-regexp str)
+                                        (member (match-string 0 str)
+                                                (zk--id-list)))
+                                 str)))
+                           (buffer-list))))))
+
+;; to add this source to consult-buffer-sources, evaluate the following:
+;; (add-to-list 'consult-buffer-sources 'zk-consult-source 'append)
+
+(defun zk-consult-current-notes ()
+  "Select a currently open note using 'consult-buffer'.
+To use, set the variable 'zk-current-notes-function' to the
+name of this function."
+  (if (zk--current-notes-list)
+      (minibuffer-with-setup-hook
+          '(lambda ()
+             (setq unread-command-events
+                   (append unread-command-events (list ?z 32))))
+        (consult-buffer))
+    (message "No currently open zk notes")))
 
 (provide 'zk-consult)
 
