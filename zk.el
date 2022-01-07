@@ -2,69 +2,64 @@
 
 ;; Copyright (C) 2021 Grant Rosson
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
+;; This program is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the Free
+;; Software Foundation, either version 3 of the License, or (at your option)
+;; any later version.
 
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+;; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+;; for more details.
 
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+;; You should have received a copy of the GNU General Public License along
+;; with this program. If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
-;; This set of functions aims to implement many (but not all) of the
-;; features of the package 'Zetteldeft' while circumventing and
-;; eliminating any dependency on 'Deft', or any other external
-;; packages for that matter. It therefore eschews the use of any
-;; backend cache or database, preferring instead to query a
-;; directory of notes directly, thereby treating and utilizing that
-;; directory as a sufficient database unto itself.
+;; This set of functions aims to implement many (but not all) of the features
+;; of the package 'Zetteldeft', while circumventing and eliminating any
+;; dependency on 'Deft', or any other external packages for that matter. It
+;; does not use any backend cache or database, but instead queries a
+;; directory of notes directly, treating and utilizing that directory as a
+;; sufficient database unto itself.
 
-;; To that end, these functions rely, at the lowest level, on simple
-;; calls to 'grep', which returns lists of files, links, and tags to
-;; 'completing-read', from which files can be opened and links and
-;; tags can be inserted into an open buffer.
+;; To that end, these functions rely, at the lowest level, on simple calls to
+;; 'grep', which returns lists of files, links, and tags to
+;; 'completing-read', from which files can be opened and links and tags can
+;; be inserted into an open buffer.
 
-;; The primary connector between notes is the simple link, which
-;; takes the form of an ID number enclosed in double-brackets, eg,
-;; [[202012091130]]. A note's ID number, by default, is a
-;; twelve-digit string corresponding to the date and time the note
-;; was originally created. For example, a note created on December
-;; 9th, 2020 at 11:30 will have the ID "202012091130". Linking to
-;; such a note involves nothing more than placing the string
+;; The primary connector between notes is the simple link, which takes the
+;; form of an ID number enclosed in double-brackets, eg, [[202012091130]]. A
+;; note's ID number, by default, is a twelve-digit string corresponding to
+;; the date and time the note was originally created. For example, a note
+;; created on December 9th, 2020 at 11:30 will have the ID "202012091130".
+;; Linking to such a note involves nothing more than placing the string
 ;; [[202012091130]] into another note in the directory.
 
-;; There are several ways to follow links. The most basic way, which
-;; works in any mode, is to simply call the function
-;; =zk-follow-id-at-point= with the point on an ID. This function
-;; could be bound to a convenient key. Other ways of following links
-;; rely on external packages. If notes are in =org-mode=, load the
-;; file =zk-org.el= to enable click-to-follow links. If
+;; There are several ways to follow links. The most basic way, which works in
+;; any mode, is to simply call the function 'zk-follow-link-at-point' with
+;; the point on an ID. This function could be bound to a convenient key.
+;; Other ways of following links rely on external packages. If notes are in
+;; 'org-mode', load the file 'zk-org.el' to enable click-to-follow links. If
 ;; 'Embark' (https://github.com/oantolin/embark) is installed, load
-;; 'zk-embark.el' to enable 'embark-act' to target links at point as
-;; well as filenames in a completion interface. If
-;; 'link-hint.el' (https://github.com/noctuid/link-hint.el) is
-;; installed, load 'zk-link-hint.el' to allow 'link-hint.el' to find
-;; visible IDs in a buffer.
+;; 'zk-embark.el' to enable 'embark-act' to target links at point as well as
+;; filenames in a completion interface. If 'link-hint.el'
+;; (https://github.com/noctuid/link-hint.el) is installed, load
+;; 'zk-link-hint.el' to allow 'link-hint.el' to find visible IDs in a buffer.
 
-;; A note's filename is constructed as follows: the ID number
-;; followed by the title of the note followed by the file extension,
-;; e.g. "202012091130 On the origin of species.txt". A key
-;; consequence of this ID/linking scheme is that a note's title can
-;; change without any existing links to the note being broken,
-;; wherever they might be in the directory.
+;; A note's filename is constructed as follows: the ID number followed by the
+;; title of the note followed by the file extension, e.g. "202012091130 On
+;; the origin of species.txt". A key consequence of this ID/linking scheme is
+;; that a note's title can change without any existing links to the note
+;; being broken, wherever they might be in the directory.
 
 ;; The directory is a single folder containing all notes.
 
-;; The structural simplicity of this set of functions is---one
-;; hopes, at least---in line with the structural simplicity of the
-;; so-called "Zettelkasten method," of which much can be read in
-;; many places, including at https://www.zettelkasten.de.
+;; The structural simplicity of this set of functions is---one hopes, at
+;; least---in line with the structural simplicity of the so-called
+;; "Zettelkasten method," of which much can be read in many places, including
+;; at https://www.zettelkasten.de.
 
 ;;; Code:
 
