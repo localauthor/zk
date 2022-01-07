@@ -46,17 +46,19 @@
 (embark-define-keymap embark-zk-id-map
   "Keymap for Embark zk-id actions
 To be used on zk-ids at point in buffers."
-  ("RET" zk-follow-id-at-point))
+  ("RET" zk-follow-link-at-point))
 
 (add-to-list 'embark-keymap-alist '(zk-id . embark-zk-id-map))
 
 (embark-define-keymap embark-zk-file-map
   "Keymap for Embark zk-file actions.
 To be used in the context of filename completion, as in the minibuffer."
+  :parent embark-file-map
   ("i" zk-insert-link)
   ("f" zk-find-file))
 
 (add-to-list 'embark-keymap-alist '(zk-file . embark-zk-file-map))
+
 
 (provide 'zk-embark)
 

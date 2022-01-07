@@ -36,7 +36,7 @@
   (link-hint--next-regexp zk-id-regexp bound))
 
 (defun link-hint--open-zk-id ()
-  (zk-follow-id-at-point))
+  (zk-follow-link-at-point))
 
 (link-hint-define-type 'zk-id
   :next #'link-hint--next-zk-id

@@ -24,13 +24,13 @@
 (require 'zk)
 (require 'org)
 
-(defun zk-try-to-follow-id (orig-org-open-at-point &optional arg)
+(defun zk-try-to-follow-link (orig-org-open-at-point &optional arg)
   (let ((org-link-search-must-match-exact-headline t))
     (condition-case nil
 	(apply orig-org-open-at-point arg)
-      (error (zk-follow-id-at-point)))))
+      (error (zk-follow-link-at-point)))))
 
-(advice-add 'org-open-at-point :around #'zk-try-to-follow-id)
+(advice-add 'org-open-at-point :around #'zk-try-to-follow-link)
 
 (provide 'zk-org)
 

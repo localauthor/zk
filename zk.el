@@ -134,12 +134,6 @@ The ID is created using `zk-id-time-string-format'."
     (string-match zk-id-regexp buffer-file-name))
   (match-string 0 buffer-file-name))
 
-(defun zk--grep (regexp)
-  "Wrapper around 'lgrep' to search for REGEXP in all notes.
-Opens search results in a grep buffer."
-  (grep-compute-defaults)
-  (lgrep regexp (concat "*." zk-file-extension) zk-directory nil))
-
 (defun zk--grep-file-list (str)
   "Return a list of files containing STR."
   (let* ((files (shell-command-to-string (concat
@@ -176,7 +170,7 @@ Opens search results in a grep buffer."
      nil t nil 'zk-history)))
 
 (defun zk--parse-id (target id)
-  "Return TARGET, either 'file-path, 'file-name, or 'title, from file with ID."
+  "Return TARGET, ie, 'file-path, 'file-name, or 'title, from file with ID."
   (let ((file (car (directory-files zk-directory nil id)))
         (return (pcase target
                   ('file-path '0)
@@ -211,9 +205,8 @@ file extension."
 ;;; Note Functions
 
 ;;;###autoload
-(defun zk-new-note (&optional title)
-  "Create a new note, insert link at point, and backlink.
-Optional argument TITLE."
+(defun zk-new-note ()
+  "Create a new note, insert link at point of creation."
   (interactive)
   (let* ((new-id (zk--generate-id))
          (orig-id (ignore-errors (zk--current-id)))
@@ -221,15 +214,16 @@ Optional argument TITLE."
                  (buffer-substring
                   (region-beginning)
                   (region-end))))
-         (new-title (when (use-region-p)
-                      (with-temp-buffer
-                        (insert text)
-                        (goto-char (point-min))
-                        (push-mark)
-                        (goto-char (line-end-position))
-                        (buffer-substring
-                         (region-beginning)
-                         (region-end)))))
+         (title (if (use-region-p)
+                  (with-temp-buffer
+                    (insert text)
+                    (goto-char (point-min))
+                    (push-mark)
+                    (goto-char (line-end-position))
+                    (buffer-substring
+                     (region-beginning)
+                     (region-end)))
+                  (read-string "Note title: ")))
          (body (when (use-region-p)
                  (with-temp-buffer
                    (insert text)
@@ -240,29 +234,29 @@ Optional argument TITLE."
                    (buffer-substring
                     (region-beginning)
                     (region-end))))))
-    (cond ((and (not title) (not new-title))
-           (setq title (read-string "Note title: ")))
-          (new-title
-           (setq title new-title)))
+    (unless orig-id
+      (setq orig-id zk-default-backlink))
     (when (use-region-p)
       (kill-region (region-beginning) (region-end)))
-    (insert (format zk-insert-link-format title new-id))
+    (zk-insert-link-and-title new-id title)
     (find-file (concat (format "%s/%s %s.%s"
                                zk-directory
                                new-id
                                title
                                zk-file-extension)))
-    (insert (format "# [[%s]] %s \n===\ntags: \n" new-id title))
-    (when (or orig-id zk-default-backlink)
-      (if orig-id nil
-        (setq orig-id zk-default-backlink))
-      (progn
-        (insert "===\n<- ")
-        (zk-insert-link orig-id t)
-        (newline)))
-    (insert "===\n\n")
+    (funcall zk-new-note-header-function title new-id orig-id)
     (when body (insert body))
     (save-buffer)))
+
+(defun zk-new-note-header (title new-id &optional orig-id)
+  "Insert header in new notes."
+  (insert (format "# [[%s]] %s \n===\ntags: \n" new-id title))
+  (when orig-id
+    (progn
+      (insert "===\n<- ")
+      (zk-insert-link-and-title orig-id (zk--parse-id 'title orig-id))
+      (newline)))
+  (insert "===\n\n"))
 
 ;;;###autoload
 (defun zk-rename-note ()
@@ -318,7 +312,7 @@ Can call a custom function, set to the variable
   (interactive)
   (if zk-current-notes-function
       (funcall zk-current-notes-function)
-    (read-buffer 
+    (read-buffer
      "Current Notes: " nil t
      (lambda (x)
        (and (string-match zk-id-regexp (car x))
@@ -353,10 +347,12 @@ Can call a custom function, set to the variable
   "Select from list of all notes that link to the current note."
   (interactive)
   (let* ((id (zk--current-id))
-         (files (zk--grep-file-list (regexp-quote (format zk-link-format id))))
-         (choice (if (length= files 1)
-                     (user-error "No backlinks - no other notes link to this note")
-                   (zk--select-file (remove (zk--parse-id 'file-path id) files)))))
+         (files (zk--grep-file-list
+                 (regexp-quote (format zk-link-format id))))
+         (choice (if (length= files 1) ;; presumes self-link in header
+                     (user-error "No backlinks - no notes link to this note")
+                   (zk--select-file
+                    (remove (zk--parse-id 'file-path id) files)))))
     (find-file choice)))
 
 ;;; Insert Link
@@ -390,16 +386,24 @@ for additional configurations."
 
 ;;;###autoload
 (defun zk-search (string)
-  "Search for STRING using function set in 'zk-search-function'."
+  "Search for STRING using function set in 'zk-search-function'.
+Defaults to 'zk-grep.'"
   (interactive "sSearch: ")
   (funcall zk-search-function string))
+
+(defun zk-grep (regexp)
+  "Wrapper around 'lgrep' to search for REGEXP in all notes.
+Opens search results in a grep buffer."
+  (grep-compute-defaults)
+  (lgrep regexp (concat "*." zk-file-extension) zk-directory nil))
 
 ;;; Tag Functions
 
 ;;;###autoload
 (defun zk-tag-search (tag)
   "Open grep buffer containing results of search for TAG.
-Select TAG, with completion, from list of all tags in zk notes."
+Select TAG, with completion, from list of all tags in zk notes.
+Defaults to 'zk-grep'."
   (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
   (funcall zk-tag-search-function tag))
 

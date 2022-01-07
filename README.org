@@ -130,32 +130,39 @@ to find visible IDs in a buffer.
 
 ** Dynamic, Context-Sensitive New-Note Creation
 
-The function =zk-new-note= prompts for a title for a new note and generates a
-unique ID number for it based on the current date and time. A new file with
-that ID and the input title is created in the =zk-directory=.
+The function =zk-new-note= prompts for a title and generates a unique ID
+number for the new note based on the current date and time. A new file with
+that ID and title will be created in the =zk-directory= and a link to the new
+note and the note's title will be placed at point wherever =zk-new-note= was
+called.
 
-Since, by default, the date/time of an ID only goes to the minute, if more
-than one note is created in the same minute, the function simply adds 1 to
-the number string until the ID is unique.
+A header can be inserted into the new note by means of a function set to the
+variable =zk-new-note-header-function=.
 
-A link to the new note is placed wherever the point was at the time the
-function was called.
+The default header function, =zk-new-note-header=, behaves differently
+depending on the context in which =zk-new-note= is initiated. If
+=zk-new-note= is called within an existing note, from within the
+=zk-directory=, the new note's header will contain a backlink to that note.
+If =zk-new-note= is called from outside of the =zk-directory=, there are two
+possible behaviors, depending on the setting of the variable
+=zk-default-backlink=. If this variable is set to nil, the header of the new
+note will contain no backlink. If this variable is set to an ID (as a
+string), the header will contain a link and title corresponding with that ID.
+This can be useful if the directory contains a something like a "home" note
+or an "inbox" note.
 
-If the function is called within an existing note in the =zk-directory=, the
-new note will contain a backlink to the note of origin. If the function is
-called from somewhere outside of the =zk-directory=, there are two possible
-behaviors, depending on the setting of the variable =zk-default-backlink=. If
-this variable is set to nil, no backlink is inserted into a new note created
-outside of =zk-directory=. If this variable is set to an ID (as a string), a
-link to the corresponding note, along with that note's title, will be
-inserted into the new note as a backlink. (This can be useful if the
-directory contains a something like a "home" note or an "inbox" note.)
+By default, the date/time of a generated ID only goes to the minute, though
+this can be configured with the variable =zk-id-time-string-format=. In the
+default case, however, if more than one note is created in the same minute,
+the ID will be incremented by 1 until it is unique, allowing for rapid note
+creation.
 
-A new note can be created from an actively selected region. The convention
-for this behavior is that the first line of the region will be used as the
-title of the new note while all subsequent lines, with a single line between,
-will be used as the body. To clarify, consider the following as a region
-selected when =zk-new-note= is called:
+Finally, a new note can be created from a selected region of text. The
+convention for this feature is that the first line of the region will be used
+as the new note's title, while the subsequent lines will be used as the body,
+with the exception of a single separator line between title and body. To
+clarify, consider the following as the region selected swhen =zk-new-note= is
+called:
 
 #+begin_src emacs-lisp
 On the origin of species
@@ -164,15 +171,15 @@ It is not knowledge we lack. What is missing is the courage
 to understand what we know and to draw conclusions.
 #+end_src
 
-The title of the new note will be "On the origin of species." The body will
-be the two sentences that follow it. The empty line separating "title" from
-"body" is necessary.
+The title of the new note in this case will be "On the origin of species."
+The body will be the two sentences that follow it. The empty line separating
+title from body is necessary and should not be excluded.
 
 Note: This behavior is derived from the behavior of an earlier, long-used
-Zettelkasten implementation and persists here by custom only. It would be
-trivial to alter this function to behave more sensibly, perhaps by using the
-selected region in its entirety as the body and prompting for a title. For
-now, though, custom prevails.
+Zettelkasten implementation and it persists here by custom only. It would be
+trivial to alter this function to behave perhaps more sensibly, for example
+by using the selected region in its entirety as the body and prompting for a
+title. For now, though, custom prevails.
 
 ** Insert Links at Point
 
