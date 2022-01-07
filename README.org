@@ -103,9 +103,11 @@ the following variables accordingly:
 
 ** Several Ways to Follow Links
 
-The most basic way to follow a link, which will work in any mode, is
-simply to call the function =zk-follow-id-at-point= with the point on an ID.
-This function can be bound to a convenient key for ready use.
+There are two ways to follow links that will work in any mode. The first is
+by calling the command =zk-follow-link-at-point= when there is a link at
+point. The second is with the command =zk-follow-link-in-note=, which
+presents a =completing-read= list of all notes that the current note links
+to. Selecting a note opens it in the current window.
 
 Other ways to follow links rely on external packages but are far more
 accommodating. The following can be used together or separately, in any

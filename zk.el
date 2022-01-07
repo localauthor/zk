@@ -75,7 +75,7 @@
 (defvar zk-directory nil)
 (defvar zk-file-extension nil)
 (defvar zk-id-regexp "[0-9]\\{12\\}")
-(defvar zk-id-format "%Y%m%d%H%M")
+(defvar zk-id-time-string-format "%Y%m%d%H%M")
 (defvar zk-insert-link-format "[%s] [[%s]]")
 (defvar zk-link-format "[[%s]]")
 (defvar zk-search-function 'zk--grep)
@@ -90,8 +90,8 @@
 
 (defun zk--generate-id ()
   "Generate and return a note ID.
-The ID is created using `zk-id-format'."
-  (let ((id (format-time-string zk-id-format)))
+The ID is created using `zk-id-time-string-format'."
+  (let ((id (format-time-string zk-id-time-string-format)))
     (while (zk--id-unavailable-p id)
       (setq id (1+ (string-to-number id)))
       (setq id (number-to-string id)))
@@ -272,14 +272,6 @@ Optional argument TITLE."
           (goto-char (point-max))))
       (set-visited-file-name new-file t t))))
 
-;;; Follow ID at Point
-
-;;;###autoload
-(defun zk-follow-id-at-point ()
-  (interactive)
-  (when (thing-at-point-looking-at zk-id-regexp)
-    (find-file (zk--parse-id 'file-path (match-string-no-properties 0)))))
-
 ;;; Find File
 
 ;;;###autoload
@@ -320,6 +312,40 @@ Can call a custom function, set to the variable
             (member (match-string 0 (car x))
                     (zk--id-list)))))))
 
+;;; Follow Links
+
+;;;###autoload
+(defun zk-follow-link-at-point ()
+  "Open note that corresponds with the zk-id at point."
+  (interactive)
+  (when (thing-at-point-looking-at zk-id-regexp)
+    (find-file (zk--parse-id 'file-path (match-string-no-properties 0)))))
+
+;;;###autoload
+(defun zk-follow-link-in-note ()
+  "Select from list of notes linked to in the current note."
+  (interactive)
+  (let (files)
+    (save-excursion
+      (goto-char (point-min))
+      (save-match-data
+        (while (re-search-forward zk-id-regexp nil t)
+          (push (zk--parse-id 'file-path (match-string-no-properties 0)) files))))
+    (find-file (zk--select-file (delete-dups files)))))
+
+;;; List Backlinks
+
+;;;###autoload
+(defun zk-backlinks ()
+  "Select from list of all notes that link to the current note."
+  (interactive)
+  (let* ((id (zk--current-id))
+         (files (zk--grep-file-list (regexp-quote (format zk-link-format id))))
+         (choice (if (length= files 1)
+                     (user-error "No backlinks - no other notes link to this note")
+                   (zk--select-file (remove (zk--parse-id 'file-path id) files)))))
+    (find-file choice)))
+
 ;;; Insert Link
 
 ;;;###autoload
@@ -344,19 +370,6 @@ title without prompting."
   "Search for STRING using function set in 'zk-search-function'."
   (interactive "sSearch: ")
   (funcall zk-search-function string))
-
-;;; List Backlinks
-
-;;;###autoload
-(defun zk-backlinks ()
-  "Select from list of all notes that link to the current note."
-  (interactive)
-  (let* ((id (zk--current-id))
-         (files (zk--grep-file-list (regexp-quote (format zk-link-format id))))
-         (choice (if (length= files 1)
-                     (message "No backlinks - no other notes link to this note")
-                   (zk--select-file (remove (zk--parse-id 'file-path id) files)))))
-    (find-file choice)))
 
 ;;; Tag Functions
 
