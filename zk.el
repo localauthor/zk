@@ -71,15 +71,33 @@
 (defvar zk-file-extension nil)
 (defvar zk-id-regexp "[0-9]\\{12\\}")
 (defvar zk-id-time-string-format "%Y%m%d%H%M")
-(defvar zk-insert-link-format "[%s] [[%s]]")
-(defvar zk-link-format "[[%s]]")
-(defvar zk-search-function 'zk--grep)
+(defvar zk-new-note-header-function #'zk-new-note-header)
+(defvar zk-search-function #'zk-grep)
 (defvar zk-tag-regexp "[#][[:alnum:]_-]+")
-(defvar zk-tag-search-function 'zk--grep)
-(defvar zk-insert-title-prompt nil)
+(defvar zk-tag-search-function #'zk-grep)
+
+(defvar zk-link-format "[[%s]]"
+  "Set formatting for inserting link and title.
+Used in conjunction with 'format', the string '%s' will be
+replaced by a note's ID.")
+
+(defvar zk-link-and-title nil
+  "If non-nil, 'zk-insert-link' inserts both link and title.
+If set to 'ask, 'zk-insert-link' asks each time whether to
+include a title. In both cases, calling 'zk-insert-link' with a
+prefix-argument reverts to default behavior and inserts only a
+link. The format in which link and title are inserted can be
+configured by setting the variable
+'zk-link-and-title-format'.")
+
+(defvar zk-link-and-title-format "[%t] [[%i]]"
+  "Set formatting for inserting link and title togethers.
+Used with 'format-spec', the string '%t' will be replaced by the
+note's title and '%i' will be replaced by its ID.")
+
 (defvar zk-default-backlink nil)
-(defvar zk-history nil)
 (defvar zk-current-notes-function nil)
+(defvar zk-history nil)
 
 ;;; Low-Level Functions
 
@@ -344,19 +362,29 @@ Can call a custom function, set to the variable
 ;;; Insert Link
 
 ;;;###autoload
-(defun zk-insert-link (id &optional incl-title)
-  "Insert ID link to note using 'completing-read', with prompt to include title.
-With prefix-argument, or when INCL-TITLE is non-nil, include the
-title without prompting."
+(defun zk-insert-link (id)
+  "Insert link to note, with 'completing-read'.
+By default, only a link is inserted. With prefix-argument, both
+link and title are inserted. See variable 'zk-link-and-title'
+for additional configurations."
   (interactive (list (zk--parse-file 'id (zk--select-file))))
   (let* ((pref-arg current-prefix-arg)
          (title (zk--parse-id 'title id)))
-    (if (or incl-title
-            (unless (or pref-arg
-                        (not zk-insert-title-prompt))
-              (y-or-n-p "Include title? ")))
-        (insert (format zk-insert-link-format title id))
-      (insert (format zk-link-format id)))))
+    (cond
+     ((or (and (not pref-arg) (eq 't zk-link-and-title))
+          (and pref-arg (eq 'nil zk-link-and-title)))
+      (zk-insert-link-and-title id title))
+     ((and (not pref-arg) (eq 'ask zk-link-and-title))
+      (if (y-or-n-p "Include title? ")
+          (zk-insert-link-and-title id title)
+        (insert (format zk-link-format id))))
+     ((or t
+          (and pref-arg (eq 't zk-link-and-title)))
+      (insert (format zk-link-format id))))))
+
+(defun zk-insert-link-and-title (id title)
+  (insert (format-spec zk-link-and-title-format
+                       `((?i . ,id)(?t . ,title)))))
 
 ;;; Search
 

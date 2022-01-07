@@ -6,10 +6,10 @@
 
 This set of functions aims to implement many (but not all) of the features of
 the package [[https://github.com/EFLS/zetteldeft/][Zetteldeft]], while circumventing and eliminating any dependency on
-[[https://github.com/jrblevin/deft][Deft]], or any other external packages for that matter. It therefore eschews the
-use of any backend cache or database, preferring instead to query a directory
-of plaintext notes directly, thereby treating and utilizing that directory as
-a sufficient database unto itself.
+[[https://github.com/jrblevin/deft][Deft]], or any other external packages for that matter. It does not use any
+backend cache or database, preferring instead to query a directory of
+plaintext notes directly, treating and utilizing that directory as a
+sufficient database unto itself.
 
 To that end, these functions rely, at the lowest level, on simple calls to
 =grep=, which returns lists of files, links, and tags to the Emacs completion
@@ -176,12 +176,16 @@ now, though, custom prevails.
 
 ** Insert Links at Point
 
-Calling =zk-insert-link= presents a list of all notes in the =zk-directory=,
-via Emacs's standard =completing-read= function. After selecting a note,
-the user is prompted with a yes-or-no query asking whether to insert a title
-with the link or insert only a link by itself. This prompt can be bypassed
-by calling =zk-insert-link= with a prefix-argument or, more generally, by
-setting the variable =zk-insert-title-prompt= to nil.
+Calling =zk-insert-link= presents a list, with completion, of all notes in
+the =zk-directory=. By default this function inserts only the link itself. To
+insert both a link and title, either use a prefix-argument before calling
+=zk-insert-link= or set the variable =zk-link-insert-title= to =t=. When this
+variable is set to =t=, calling =zk-insert-link= with a prefix-argument
+temporarily restores the default behavior and inserts the link without a
+title. To be prompted with a yes-or-no query, asking whether to insert a
+title with the link or insert only a link by itself, set
+=zk-link-insert-title= to ='ask=. With this setting, a prefix-argument also
+restores the default behavior.
 
 * Comparable Zettelkasten(-like) Implementations 
 
