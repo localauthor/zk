@@ -77,7 +77,7 @@
 (defvar zk-tag-search-function #'zk-grep)
 
 (defvar zk-link-format "[[%s]]"
-  "Set formatting for inserting link and title.
+  "Set format for inserting link.
 Used in conjunction with 'format', the string '%s' will be
 replaced by a note's ID.")
 
@@ -91,7 +91,7 @@ configured by setting the variable
 'zk-link-and-title-format'.")
 
 (defvar zk-link-and-title-format "[%t] [[%i]]"
-  "Set formatting for inserting link and title togethers.
+  "Set format for inserting link and title togethers.
 Used with 'format-spec', the string '%t' will be replaced by the
 note's title and '%i' will be replaced by its ID.")
 
@@ -180,7 +180,9 @@ The ID is created using `zk-id-time-string-format'."
         (progn
           (string-match (concat "\\(?1:"
                               zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\..*")
+                              "\\).\\(?2:.*?\\)\\."
+                              zk-file-extension
+                              ".*")
                         file)
           (if (eq target 'file-path)
               (concat zk-directory "/" (match-string return file))
@@ -196,9 +198,11 @@ file extension."
   (let ((return (pcase target
                   ('id '1)
                   ('title '2))))
-    (string-match (concat "\\(?1:"
-                          zk-id-regexp
-                          "\\).\\(?2:.*?\\)\\..*")
+            (string-match (concat "\\(?1:"
+                              zk-id-regexp
+                              "\\).\\(?2:.*?\\)\\."
+                              zk-file-extension
+                              ".*")
                   file)
     (match-string return file)))
 
@@ -381,6 +385,38 @@ for additional configurations."
 (defun zk-insert-link-and-title (id title)
   (insert (format-spec zk-link-and-title-format
                        `((?i . ,id)(?t . ,title)))))
+
+(defun zk-completion-at-point ()
+  (let ((case-fold-search t)
+        (beg (save-excursion
+               (re-search-backward "\\[\\[" nil t)))
+        (end (point)))
+    (list beg end (zk--completion-at-point-list)
+          :exclusive 'no)))
+
+(defvar zk--completion-at-point-format "[[%i]] %t")
+
+(defun zk--completion-at-point-list ()
+  "Return a list of filenames for all notes in 'zk-directory'."
+  (let* ((files (directory-files zk-directory zk-id-regexp))
+         (output))
+    (dolist (file files)
+      (progn
+        (string-match (concat "\\(?1:"
+                              zk-id-regexp
+                              "\\).\\(?2:.*?\\)\\."
+                              zk-file-extension
+                              ".*")
+                      file)
+        (let ((id (match-string 1 file))
+              (title (match-string 2 file)))
+          (when id
+            (push (format-spec zk--completion-at-point-format
+                               `((?i . ,id)(?t . ,title)))
+                  output)))))
+    output))
+
+;; (add-to-list 'completion-at-point-functions #'zk-completion-at-point)
 
 ;;; Search
 

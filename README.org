@@ -68,6 +68,32 @@ presents the list of current notes as a narrowed =consult-buffer-source=.
 Note that this source can also be included in the primary =consult-buffer=
 interface by adding =zk-consult-source= to list =consult-buffer-sources=. (This is *not* done by default.)
 
+** Insert Links via Function or Completion-at-Point
+
+*** Insert Functions
+
+Calling =zk-insert-link= presents a list, with completion, of all notes in
+the =zk-directory=. By default this function inserts only the link itself. To
+insert both a link and title, either use a prefix-argument before calling
+=zk-insert-link= or set the variable =zk-link-insert-title= to =t=. When this
+variable is set to =t=, calling =zk-insert-link= with a prefix-argument
+temporarily restores the default behavior and inserts the link without a
+title. To be prompted with a yes-or-no query, asking whether to insert a
+title with the link or insert only a link by itself, set
+=zk-link-insert-title= to ='ask=. With this setting, a prefix-argument also
+restores the default behavior.
+
+*** Completion-at-Point
+
+This package includes a completion-at-point-function,
+=zk-completion-at-point= for inserting link. Completion candidates are
+formatted as a link followed by a title, i.e., =[[202012091130]] On the
+origin of species=, such that typing =[[= will initiate completion. To
+enable, add this function to =completion-at-point-functions= by evaluating
+the following:
+
+=(add-to-list 'completion-at-point-functions #'zk-completion-at-point)=
+
 ** Various Search Options
 
 *** Note Search
@@ -181,18 +207,7 @@ trivial to alter this function to behave perhaps more sensibly, for example
 by using the selected region in its entirety as the body and prompting for a
 title. For now, though, custom prevails.
 
-** Insert Links at Point
 
-Calling =zk-insert-link= presents a list, with completion, of all notes in
-the =zk-directory=. By default this function inserts only the link itself. To
-insert both a link and title, either use a prefix-argument before calling
-=zk-insert-link= or set the variable =zk-link-insert-title= to =t=. When this
-variable is set to =t=, calling =zk-insert-link= with a prefix-argument
-temporarily restores the default behavior and inserts the link without a
-title. To be prompted with a yes-or-no query, asking whether to insert a
-title with the link or insert only a link by itself, set
-=zk-link-insert-title= to ='ask=. With this setting, a prefix-argument also
-restores the default behavior.
 
 * Comparable Zettelkasten(-like) Implementations 
 

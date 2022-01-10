@@ -74,20 +74,18 @@ Select TAG, with completion, from list of all tags in zk notes."
                                  str)))
                            (buffer-list))))))
 
-;; to add this source to consult-buffer-sources, evaluate the following:
+;; evaluate the following to add this source to 'consult-buffer-sources':
 ;; (add-to-list 'consult-buffer-sources 'zk-consult-source 'append)
 
 (defun zk-consult-current-notes ()
   "Select a currently open note using 'consult-buffer'.
 To use, set the variable 'zk-current-notes-function' to the
 name of this function."
-  (if (zk--current-notes-list)
-      (minibuffer-with-setup-hook
-          '(lambda ()
-             (setq unread-command-events
-                   (append unread-command-events (list ?z 32))))
-        (consult-buffer))
-    (message "No currently open zk notes")))
+  (minibuffer-with-setup-hook
+      '(lambda ()
+         (setq unread-command-events
+               (append unread-command-events (list ?z 32))))
+    (consult-buffer)))
 
 (provide 'zk-consult)
 
