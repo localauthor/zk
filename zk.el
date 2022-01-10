@@ -187,7 +187,7 @@ The ID is created using `zk-id-time-string-format'."
           (if (eq target 'file-path)
               (concat zk-directory "/" (match-string return file))
             (match-string return file)))
-      (message (format "No file associated with %s" id)))))
+      (user-error (format "No file associated with %s" id)))))
 
 (defun zk--parse-file (target file)
   "Return TARGET, either 'id or 'title, from FILE.
@@ -346,7 +346,7 @@ Can call a custom function, set to the variable
     (find-file (zk--parse-id 'file-path (match-string-no-properties 0)))))
 
 ;;;###autoload
-(defun zk-follow-link-in-note ()
+(defun zk-links-in-note ()
   "Select from list of notes linked to in the current note."
   (interactive)
   (let (files)
@@ -354,9 +354,15 @@ Can call a custom function, set to the variable
       (goto-char (point-min))
       (save-match-data
         (while (re-search-forward zk-id-regexp nil t)
-          (push (zk--parse-id 'file-path (match-string-no-properties 0)) files))))
-    (find-file (zk--select-file (delete-dups files)))))
+          (let ((note
+                 (condition-case nil
+                     (zk--parse-id 'file-path (match-string-no-properties 0))
+                   (error "no-file"))))
+            (when (file-exists-p note)
+              (push note files))))))
+        (find-file (zk--select-file (delete-dups files)))))
 
+    
 ;;; List Backlinks
 
 ;;;###autoload

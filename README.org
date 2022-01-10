@@ -131,7 +131,7 @@ the following variables accordingly:
 
 There are two ways to follow links that will work in any mode. The first is
 by calling the command =zk-follow-link-at-point= when there is a link at
-point. The second is with the command =zk-follow-link-in-note=, which
+point. The second is with the command =zk-links-in-note=, which
 presents a =completing-read= list of all notes that the current note links
 to. Selecting a note opens it in the current window.
 
