@@ -1,6 +1,6 @@
 ;;; zk.el --- Functions to deal with link-connected notes, with no backend -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021 Grant Rosson
+;; Copyright (C) 2022 Grant Rosson
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -97,6 +97,7 @@ note's title and '%i' will be replaced by its ID.")
 
 (defvar zk-default-backlink nil)
 (defvar zk-current-notes-function nil)
+(defvar zk-completion-at-point-format "[[%i]] %t")
 (defvar zk-history nil)
 
 ;;; Low-Level Functions
@@ -323,18 +324,20 @@ title."
 ;;;###autoload
 (defun zk-current-notes ()
   "Select from list of currently open notes.
-Can call a custom function, set to the variable
-'zk-current-notes-function'. An alternative,
-'zk-consult-current-notes', is provided in 'zk-consult.el'."
+Optionally call a custom function by setting the variable
+'zk-current-notes-function' to a function name. One such
+function, 'zk-consult-current-notes', is provided in
+'zk-consult.el'."
   (interactive)
   (if zk-current-notes-function
       (funcall zk-current-notes-function)
-    (read-buffer
-     "Current Notes: " nil t
-     (lambda (x)
-       (and (string-match zk-id-regexp (car x))
-            (member (match-string 0 (car x))
-                    (zk--id-list)))))))
+    (switch-to-buffer
+     (read-buffer
+      "Current Notes: " nil t
+      (lambda (x)
+	(and (string-match zk-id-regexp (car x))
+             (member (match-string 0 (car x))
+                     (zk--id-list))))))))
 
 ;;; Follow Links
 
@@ -413,10 +416,8 @@ for additional configurations."
     (list beg end (zk--completion-at-point-list)
           :exclusive 'no)))
 
-(defvar zk--completion-at-point-format "[[%i]] %t")
-
 (defun zk--completion-at-point-list ()
-  "Return a list of filenames for all notes in 'zk-directory'."
+  "Return a list of candidates for 'zk-completion-at-point'."
   (let* ((files (directory-files zk-directory zk-id-regexp))
          (output))
     (dolist (file files)
@@ -430,12 +431,10 @@ for additional configurations."
         (let ((id (match-string 1 file))
               (title (match-string 2 file)))
           (when id
-            (push (format-spec zk--completion-at-point-format
+            (push (format-spec zk-completion-at-point-format
                                `((?i . ,id)(?t . ,title)))
                   output)))))
     output))
-
-;; (add-to-list 'completion-at-point-functions #'zk-completion-at-point)
 
 ;;; Search
 

@@ -46,6 +46,10 @@ A key consequence of the ID and file-naming scheme used by these functions is
 that a note's title can change without any existing links to the note being
 broken, wherever they might be in the directory.
 
+** Completion
+
+For the best experience completing filenames and links, it is *highly* recommended to use the =orderless= completion style, from [[https://github.com/oantolin/orderless][the package of the same name]]. Another high recommendation is [[https://github.com/minad/vertico][=vertico=]], for completion in the minibuffer.
+
 * Key Features
 
 ** List Backlinks
@@ -70,7 +74,7 @@ interface by adding =zk-consult-source= to list =consult-buffer-sources=. (This 
 
 ** Insert Links via Function or Completion-at-Point
 
-*** Insert Functions
+*** Link-Insert Functions
 
 Calling =zk-insert-link= presents a list, with completion, of all notes in
 the =zk-directory=. By default this function inserts only the link itself. To
@@ -92,7 +96,7 @@ origin of species=, such that typing =[[= will initiate completion. To
 enable, add this function to =completion-at-point-functions= by evaluating
 the following:
 
-=(add-to-list 'completion-at-point-functions #'zk-completion-at-point)=
+=(add-hook 'completion-at-point-functions #'zk-completion-at-point 'append)=
 
 ** Various Search Options
 
