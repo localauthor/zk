@@ -222,22 +222,18 @@ file extension."
                   (with-temp-buffer
                     (insert text)
                     (goto-char (point-min))
-                    (push-mark)
-                    (goto-char (line-end-position))
                     (buffer-substring
-                     (region-beginning)
-                     (region-end)))
+                     (point)
+                     (line-end-position)))
                   (read-string "Note title: ")))
          (body (when (use-region-p)
                  (with-temp-buffer
                    (insert text)
                    (goto-char (point-min))
                    (forward-line 2)
-                   (push-mark)
-                   (goto-char (point-max))
                    (buffer-substring
-                    (region-beginning)
-                    (region-end))))))
+                    (point)
+                    (point-max))))))
     (unless orig-id
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
@@ -264,23 +260,40 @@ file extension."
 
 ;;;###autoload
 (defun zk-rename-note ()
-  "Rename current note and replace original title in header, if found."
+  "Rename current note and replace title in header.
+When header title does not match file title, ask to accept header
+title as new title. If no, prompt for new title and replace
+header title in buffer. If yes, file name changed to header
+title."
   (interactive)
   (let* ((id (zk--current-id))
-         (orig-title (zk--parse-id 'title id))
-         (new-title (read-string "New title: " orig-title))
-         (new-file (concat
-                    zk-directory "/"
-                    id " "
-                    new-title
-                    "." zk-file-extension)))
+         (file-title (zk--parse-id 'title id))
+         (header-title (progn
+                      (save-excursion
+                        (goto-char (point-min))
+                        (re-search-forward id)
+                        (re-search-forward " ")
+                        (buffer-substring-no-properties
+                         (point)
+                         (line-end-position)))))
+         (new-title))
+    (if (not (string= file-title header-title))
+      (if (y-or-n-p (format "Change from \"%s\" to \"%s\"?" file-title header-title))
+          (setq new-title header-title)
+        (setq new-title (read-string "New title: " file-title)))
+      (setq new-title (read-string "New title: " file-title)))
     (save-excursion
-      (rename-file buffer-file-name new-file t)
       (goto-char (point-min))
-      (while (re-search-forward orig-title nil t 1)
-        (progn
-          (replace-match new-title)
-          (goto-char (point-max))))
+      (re-search-forward id)
+      (re-search-forward " ")
+      (delete-region (point) (line-end-position))
+      (insert new-title))
+    (let ((new-file (concat
+                     zk-directory "/"
+                     id " "
+                     new-title
+                     "." zk-file-extension)))
+      (rename-file buffer-file-name new-file t)
       (set-visited-file-name new-file t t))))
 
 ;;; Find File
