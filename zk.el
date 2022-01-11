@@ -335,7 +335,7 @@ function, 'zk-consult-current-notes', is provided in
      (read-buffer
       "Current Notes: " nil t
       (lambda (x)
-	(and (string-match zk-id-regexp (car x))
+        (and (string-match zk-id-regexp (car x))
              (member (match-string 0 (car x))
                      (zk--id-list))))))))
 
@@ -365,7 +365,6 @@ function, 'zk-consult-current-notes', is provided in
               (push note files))))))
         (find-file (zk--select-file (delete-dups files)))))
 
-    
 ;;; List Backlinks
 
 ;;;###autoload
@@ -409,12 +408,13 @@ for additional configurations."
                        `((?i . ,id)(?t . ,title)))))
 
 (defun zk-completion-at-point ()
-  (let ((case-fold-search t)
-        (beg (save-excursion
-               (re-search-backward "\\[\\[" nil t)))
-        (end (point)))
-    (list beg end (zk--completion-at-point-list)
-          :exclusive 'no)))
+  (let ((case-fold-search t))
+    (save-excursion
+      (when (re-search-backward "\\[\\[" nil t)
+        (list (match-beginning 0)
+              (point)
+              (zk--completion-at-point-list)
+              :exclusive 'no)))))
 
 (defun zk--completion-at-point-list ()
   "Return a list of candidates for 'zk-completion-at-point'."
