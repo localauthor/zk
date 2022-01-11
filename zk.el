@@ -72,6 +72,17 @@
 (defvar zk-id-regexp "[0-9]\\{12\\}")
 (defvar zk-id-time-string-format "%Y%m%d%H%M")
 (defvar zk-new-note-header-function #'zk-new-note-header)
+
+(defvar zk-new-note-link-insert t
+  "If non-nil,'zk-new-note' inserts link to new note at point.
+When set to t, a link is always inserted; when set to 'zk, a link
+is inserted only when 'zk-new-note' is called inside an existing
+note in 'zk-directory'; when set to 'ask, the user is asked if a
+link should be inserted; when set to nil, a link is not inserted.
+Calling 'zk-new-note' with a prefix-argument inserts a link
+regardless of how 'zk-new-note-link-insert' is set.")
+
+
 (defvar zk-search-function #'zk-grep)
 (defvar zk-tag-regexp "[#][[:alnum:]_-]+")
 (defvar zk-tag-search-function #'zk-grep)
@@ -213,19 +224,20 @@ file extension."
 (defun zk-new-note ()
   "Create a new note, insert link at point of creation."
   (interactive)
-  (let* ((new-id (zk--generate-id))
+  (let* ((pref-arg current-prefix-arg)
+         (new-id (zk--generate-id))
          (orig-id (ignore-errors (zk--current-id)))
          (text (when (use-region-p)
                  (buffer-substring
                   (region-beginning)
                   (region-end))))
          (title (if (use-region-p)
-                  (with-temp-buffer
-                    (insert text)
-                    (goto-char (point-min))
-                    (buffer-substring
-                     (point)
-                     (line-end-position)))
+                    (with-temp-buffer
+                      (insert text)
+                      (goto-char (point-min))
+                      (buffer-substring
+                       (point)
+                       (line-end-position)))
                   (read-string "Note title: ")))
          (body (when (use-region-p)
                  (with-temp-buffer
@@ -239,7 +251,15 @@ file extension."
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
       (kill-region (region-beginning) (region-end)))
-    (zk-insert-link-and-title new-id title)
+    (when (or pref-arg
+              (eq zk-new-note-link-insert 't)
+              (and (eq zk-new-note-link-insert 'zk)
+                   (string= default-directory
+                            (concat (expand-file-name zk-directory)
+                                    "/")))
+              (and (eq zk-new-note-link-insert 'ask)
+                   (y-or-n-p "Insert link at point?")))
+      (zk-insert-link-and-title new-id title))
     (find-file (concat (format "%s/%s %s.%s"
                                zk-directory
                                new-id

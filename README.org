@@ -162,12 +162,12 @@ to find visible IDs in a buffer.
 
 The function =zk-new-note= prompts for a title and generates a unique ID
 number for the new note based on the current date and time. A new file with
-that ID and title will be created in the =zk-directory= and a link to the new
-note and the note's title will be placed at point wherever =zk-new-note= was
-called.
+that ID and title will be created in the =zk-directory=.
 
-A header can be inserted into the new note by means of a function set to the
-variable =zk-new-note-header-function=.
+*** New-Note Header and Backlink
+
+The header of the new note is inserted by means of a function, the name of
+which must be set to the variable =zk-new-note-header-function=.
 
 The default header function, =zk-new-note-header=, behaves differently
 depending on the context in which =zk-new-note= is initiated. If
@@ -181,11 +181,27 @@ string), the header will contain a link and title corresponding with that ID.
 This can be useful if the directory contains a something like a "home" note
 or an "inbox" note.
 
+*** Insert New-Note Link at Point of Creation
+
+By default, a link to the new note, along with the new note's title, will be
+placed at point wherever =zk-new-note= was called. This behavior can be
+configured with the variable =zk-new-note-link-insert=: when set to =t=, a
+link is always inserted; when set to =zk=, a link is inserted only when
+=zk-new-note= is initiated inside an existing note in =zk-directory=; when
+set to =ask=, the user is asked whether or not a link should be inserted;
+when set to =nil=, a link is not inserted. Calling =zk-new-note= with a
+prefix-argument will insert a link regardless of setting of
+=zk-new-note-link-insert=.
+
+*** ID Format
+
 By default, the date/time of a generated ID only goes to the minute, though
 this can be configured with the variable =zk-id-time-string-format=. In the
 default case, however, if more than one note is created in the same minute,
 the ID will be incremented by 1 until it is unique, allowing for rapid note
 creation.
+
+*** New-Note from Region
 
 Finally, a new note can be created from a selected region of text. The
 convention for this feature is that the first line of the region will be used
@@ -210,8 +226,6 @@ Zettelkasten implementation and it persists here by custom only. It would be
 trivial to alter this function to behave perhaps more sensibly, for example
 by using the selected region in its entirety as the body and prompting for a
 title. For now, though, custom prevails.
-
-
 
 * Comparable Zettelkasten(-like) Implementations 
 
