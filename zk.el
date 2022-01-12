@@ -173,8 +173,7 @@ a regexp to replace the default, 'zk-id-regexp'."
                                           zk-directory
                                           " 2>/dev/null")))
          (list (split-string files "\n" t)))
-    (if (null list)
-        (message (format "No results for \"%s\"" str))
+    (unless (null list)
       (mapcar 'abbreviate-file-name list))))
 
 (defun zk--grep-tag-list ()
@@ -288,7 +287,7 @@ file extension."
 
 (defun zk-new-note-header (title new-id &optional orig-id)
   "Insert header in new notes."
-  (insert (format "# [[%s]] %s \n===\ntags: \n" new-id title))
+  (insert (format "# %s %s \n===\ntags: \n" new-id title))
   (when orig-id
     (progn
       (insert "===\n<- ")
@@ -352,11 +351,12 @@ title."
   "Search for and open file containing STR."
   (interactive
    (list (read-string "Search string: ")))
-  (let ((choice
-         (completing-read
-          (format "Files containing \"%s\": " str)
-          (zk--grep-file-list str) nil t)))
-    (find-file choice)))
+  (let ((files (zk--grep-file-list str)))
+    (if files
+        (find-file (completing-read
+                    (format "Files containing \"%s\": " str)
+                    files nil t))
+      (user-error (format "No results for \"%s\"" str)))))
 
 ;;;###autoload
 (defun zk-current-notes ()
@@ -410,14 +410,10 @@ function, 'zk-consult-current-notes', is provided in
   (interactive)
   (let* ((id (zk--current-id))
          (files (zk--grep-file-list
-                 (regexp-quote (format zk-link-format id))))
-         (choice (if (length= files 1) ;; presumes self-link in header
-                                       ;; error if only one, ie, self-link
-                     (user-error "No backlinks - no notes link to this note")
-                   (zk--select-file
-                    ;;remove self-links
-                    (remove (zk--parse-id 'file-path id) files)))))
-    (find-file choice)))
+                 (regexp-quote (format zk-link-format id)))))
+    (if files
+        (find-file (zk--select-file files))
+      (user-error "No backlinks found"))))
 
 ;;; Insert Link
 
