@@ -1,4 +1,4 @@
-;;; zk.el --- Functions to deal with link-connected notes, with no backend -*- lexical-binding: t; -*-
+;;; zk.el --- Functions for dealing with link-connected notes -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022 Grant Rosson
 
@@ -124,7 +124,7 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--id-list ()
   "Return a list of IDs for all notes in 'zk-directory'."
-  (let* ((files (directory-files zk-directory t zk-id-regexp))
+  (let* ((files (zk--directory-files t))
          (all-ids))
     (dolist (file files)
       (progn
@@ -141,15 +141,33 @@ The ID is created using `zk-id-time-string-format'."
   "Return id of current note."
   (if (not (string=
             default-directory
-            (expand-file-name (concat zk-directory "/"))))
+            (concat (expand-file-name zk-directory) "/")))
       (user-error "Not a zk file")
     (string-match zk-id-regexp buffer-file-name))
   (match-string 0 buffer-file-name))
 
+(defun zk--directory-files (&optional full regexp)
+  "Return list of notes' filenames in 'zk-directory' .
+Excludes lockfiles, autosave files, and backupfiles. When FULL is
+non-nil, return full file-paths. If REGEXP is non-nil, it must be
+a regexp to replace the default, 'zk-id-regexp'."
+  (let* ((regexp (if regexp regexp
+                  zk-id-regexp))
+         (list (directory-files zk-directory full regexp))
+         (files (remq nil (mapcar
+                           (lambda (x)
+                             (unless (string-match-p "^[.]\\|[#|~]$"
+                                                     (file-name-nondirectory x))
+                               (abbreviate-file-name x)))
+                           list))))
+    files))
+
 (defun zk--grep-file-list (str)
   "Return a list of files containing STR."
   (let* ((files (shell-command-to-string (concat
-                                          "grep -lir -e "
+                                          "grep -lir --include \\*."
+                                          zk-file-extension
+                                          " -e "
                                           (regexp-quote str)
                                           " "
                                           zk-directory
@@ -168,10 +186,10 @@ The ID is created using `zk-id-time-string-format'."
     (delete-dups list)))
 
 (defun zk--select-file (&optional list)
-  "Wrapper around `completing-read' to select zk-file from LIST."
-  (let* ((list (if list list
-                 (directory-files zk-directory t zk-id-regexp)))
-         (files (mapcar 'abbreviate-file-name list)))
+  "Wrapper around `completing-read' to select zk-file.
+Optional argument LIST."
+  (let* ((files (if list list
+                  (zk--directory-files t))))
     (completing-read
      "Select File: "
      (lambda (string predicate action)
@@ -183,7 +201,7 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--parse-id (target id)
   "Return TARGET, ie, 'file-path, 'file-name, or 'title, from file with ID."
-  (let ((file (car (directory-files zk-directory nil id)))
+  (let ((file (car (zk--directory-files nil id)))
         (return (pcase target
                   ('file-path '0)
                   ('file-name '0)
@@ -203,7 +221,6 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--parse-file (target file)
   "Return TARGET, either 'id or 'title, from FILE.
-
 A note's title is understood to be the portion of its filename
 following the ID, in the format 'zk-id-regexp', and preceding the
 file extension."
@@ -395,8 +412,10 @@ function, 'zk-consult-current-notes', is provided in
          (files (zk--grep-file-list
                  (regexp-quote (format zk-link-format id))))
          (choice (if (length= files 1) ;; presumes self-link in header
+                                       ;; error if only one, ie, self-link
                      (user-error "No backlinks - no notes link to this note")
                    (zk--select-file
+                    ;;remove self-links
                     (remove (zk--parse-id 'file-path id) files)))))
     (find-file choice)))
 
@@ -428,17 +447,18 @@ for additional configurations."
                        `((?i . ,id)(?t . ,title)))))
 
 (defun zk-completion-at-point ()
-  (let ((case-fold-search t))
+  (let ((case-fold-search t)
+        (pt (point)))
     (save-excursion
       (when (re-search-backward "\\[\\[" nil t)
         (list (match-beginning 0)
-              (point)
+              pt
               (zk--completion-at-point-list)
               :exclusive 'no)))))
 
 (defun zk--completion-at-point-list ()
   "Return a list of candidates for 'zk-completion-at-point'."
-  (let* ((files (directory-files zk-directory zk-id-regexp))
+  (let* ((files (zk--directory-files))
          (output))
     (dolist (file files)
       (progn
