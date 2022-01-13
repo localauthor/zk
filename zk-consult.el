@@ -1,6 +1,14 @@
 ;;; zk-consult.el --- Consult integration for zk  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021 Grant Rosson
+;; Copyright (C) 2022 Grant Rosson
+
+;; Author: Grant Rosson <https://github.com/localauthor>
+;; Created: January 4, 2022
+;; License: GPL-3.0-or-later
+;; Version: 0.1
+;; Homepage: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "24.3") (consult "0.14"))
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

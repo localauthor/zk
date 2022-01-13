@@ -1,6 +1,13 @@
 ;;; zk-org.el --- Org-Link integration for zk.el  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021 Grant Rosson
+;; Copyright (C) 2022 Grant Rosson
+
+;; Author: Grant Rosson <https://github.com/localauthor>
+;; Created: January 4, 2022
+;; License: GPL-3.0-or-later
+;; Version: 0.1
+;; Homepage: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "24.3"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -24,7 +31,7 @@
 (require 'zk)
 (require 'org)
 
-(defun zk-try-to-follow-link (func &optional arg)
+(defun zk-org-try-to-follow-link (func &optional arg)
   "When 'org-open-at-point' FUNC fails, try 'zk-follow-ilnk-at-point'.
 Optional ARG."
   (let ((org-link-search-must-match-exact-headline t))
@@ -32,7 +39,7 @@ Optional ARG."
 	(apply func arg)
       (error (zk-follow-link-at-point)))))
 
-(advice-add 'org-open-at-point :around #'zk-try-to-follow-link)
+(advice-add 'org-open-at-point :around #'zk-org-try-to-follow-link)
 
 (provide 'zk-org)
 

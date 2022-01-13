@@ -1,6 +1,14 @@
 ;;; zk-embark.el --- Embark integration for zk  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021 Grant Rosson
+;; Copyright (C) 2022 Grant Rosson
+
+;; Author: Grant Rosson <https://github.com/localauthor>
+;; Created: January 4, 2022
+;; License: GPL-3.0-or-later
+;; Version: 0.1
+;; Homepage: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "24.3") (embark "0.14"))
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -39,13 +47,13 @@
 (defvar embark-zk-file-map)
 
 ;;;###autoload
-(defun embark-target-zk-id-at-point ()
+(defun zk-embark-target-zk-id-at-point ()
   "Target zk-id at point."
   (when (thing-at-point-looking-at zk-id-regexp)
     (let ((zk-id (thing-at-point 'symbol t)))
       `(zk-id ,zk-id . ,(bounds-of-thing-at-point 'symbol)))))
 
-(add-to-list 'embark-target-finders 'embark-target-zk-id-at-point)
+(add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
 
 (eval-when-compile
   (embark-define-keymap embark-zk-id-map

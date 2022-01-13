@@ -1,6 +1,14 @@
 ;;; zk-link-hint.el --- Link-Hint integration for zk  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2021 Grant Rosson
+;; Copyright (C) 2022 Grant Rosson
+
+;; Author: Grant Rosson <https://github.com/localauthor>
+;; Created: January 4, 2022
+;; License: GPL-3.0-or-later
+;; Version: 0.1
+;; Homepage: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "24.3") (link-hint "0.1"))
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,11 +37,11 @@
 (require 'zk)
 (require 'link-hint)
 
-(defun link-hint--zk-id-at-point-p ()
+(defun zk-link-hint--zk-id-at-point-p ()
   "Return the zk-id at the point or nil."
   (thing-at-point-looking-at zk-id-regexp))
 
-(defun link-hint--next-zk-id (&optional bound)
+(defun zk-link-hint--next-zk-id (&optional bound)
   "Find the next file link.
 Only search the range between just after the point and BOUND."
   (link-hint--next-regexp zk-id-regexp bound))
@@ -45,7 +53,7 @@ Only search the range between just after the point and BOUND."
     :open #'zk-follow-link-at-point
     :copy #'kill-new))
 
-(push 'link-hint-zk-id link-hint-types)
+(push 'zk-link-hint-zk-id link-hint-types)
 
 (provide 'zk-link-hint)
 

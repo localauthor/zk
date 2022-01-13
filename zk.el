@@ -2,6 +2,13 @@
 
 ;; Copyright (C) 2022 Grant Rosson
 
+;; Author: Grant Rosson <https://github.com/localauthor>
+;; Created: January 4, 2022
+;; License: GPL-3.0-or-later
+;; Version: 0.1
+;; Homepage: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "24.3"))
+
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
 ;; Software Foundation, either version 3 of the License, or (at your option)
@@ -253,8 +260,8 @@ a regexp to replace the default, 'zk-id-regexp'."
                                           zk-directory
                                           " 2>/dev/null")))
          (list (split-string files "\n" t)))
-    (unless (null list)
-      (mapcar 'abbreviate-file-name list))))
+    (when list
+      (mapcar #'abbreviate-file-name list))))
 
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
@@ -296,7 +303,7 @@ Optional argument LIST."
           (if (eq target 'file-path)
               (concat zk-directory "/" (match-string return file))
             (match-string return file)))
-      (user-error (format "No file associated with %s" id)))))
+      (user-error "No file associated with %s" id))))
 
 (defun zk--parse-file (target file)
   "Return TARGET, either 'id or 'title, from FILE.
@@ -354,7 +361,7 @@ file extension."
                             (concat (expand-file-name zk-directory)
                                     "/")))
               (and (eq zk-new-note-link-insert 'ask)
-                   (y-or-n-p "Insert link at point?")))
+                   (y-or-n-p "Insert link at point? ")))
       (zk-insert-link-and-title new-id title))
     (find-file (concat (format "%s/%s %s.%s"
                                zk-directory
@@ -396,7 +403,7 @@ title."
                          (line-end-position)))))
          (new-title))
     (if (not (string= file-title header-title))
-      (if (y-or-n-p (format "Change from \"%s\" to \"%s\"?" file-title header-title))
+      (if (y-or-n-p (format "Change from \"%s\" to \"%s\"? " file-title header-title))
           (setq new-title header-title)
         (setq new-title (read-string "New title: " file-title)))
       (setq new-title (read-string "New title: " file-title)))
@@ -437,7 +444,7 @@ title."
         (find-file (completing-read
                     (format "Files containing \"%s\": " str)
                     files nil t))
-      (user-error (format "No results for \"%s\"" str)))))
+      (user-error "No results for \"%s\"" str))))
 
 ;;;###autoload
 (defun zk-current-notes ()
@@ -509,7 +516,7 @@ for additional configurations."
          (title (zk--parse-id 'title id)))
     (cond
      ((or (and (not pref-arg) (eq 't zk-link-and-title))
-          (and pref-arg (eq 'nil zk-link-and-title)))
+          (and pref-arg (not zk-link-and-title)))
       (zk-insert-link-and-title id title))
      ((and (not pref-arg) (eq 'ask zk-link-and-title))
       (if (y-or-n-p "Include title? ")
