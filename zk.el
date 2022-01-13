@@ -33,22 +33,22 @@
 ;; form of an ID number enclosed in double-brackets, eg, [[202012091130]]. A
 ;; note's ID number, by default, is a twelve-digit string corresponding to
 ;; the date and time the note was originally created. For example, a note
-;; created on December 9th, 2020 at 11:30 will have the ID "202012091130".
+;; created on December 9th, 2020 at 11:30 will have the zk ID "202012091130".
 ;; Linking to such a note involves nothing more than placing the string
 ;; [[202012091130]] into another note in the directory.
 
 ;; There are several ways to follow links. The most basic way, which works in
 ;; any mode, is to simply call the function 'zk-follow-link-at-point' with
-;; the point on an ID. This function could be bound to a convenient key.
+;; the point on a zk ID. This function could be bound to a convenient key.
 ;; Other ways of following links rely on external packages. If notes are in
 ;; 'org-mode', load the file 'zk-org.el' to enable click-to-follow links. If
 ;; 'Embark' (https://github.com/oantolin/embark) is installed, load
 ;; 'zk-embark.el' to enable 'embark-act' to target links at point as well as
 ;; filenames in a completion interface. If 'link-hint.el'
 ;; (https://github.com/noctuid/link-hint.el) is installed, load
-;; 'zk-link-hint.el' to allow 'link-hint.el' to find visible IDs in a buffer.
+;; 'zk-link-hint.el' to allow 'link-hint.el' to find visible zk IDs in a buffer.
 
-;; A note's filename is constructed as follows: the ID number followed by the
+;; A note's filename is constructed as follows: the zk ID number followed by the
 ;; title of the note followed by the file extension, e.g. "202012091130 On
 ;; the origin of species.txt". A key consequence of this ID/linking scheme is
 ;; that a note's title can change without any existing links to the note
@@ -68,63 +68,133 @@
 
 ;;; Variables
 
-(defvar zk-directory nil)
+(defgroup zk nil
+  "A zettelkasten on top of deft."
+  :group 'text
+  :group 'files
+  :prefix "zk-")
 
-(defvar zk-file-extension nil)
+(defcustom zk-directory nil
+    "Main zettelkasten directory."
+  :type 'string
+  :group 'zk)
 
-(defvar zk-id-regexp "[0-9]\\{12\\}")
+(defcustom zk-file-extension nil
+  "The extension for zk files."
+  :type 'string
+  :group 'zk)
 
-(defvar zk-id-time-string-format "%Y%m%d%H%M")
+(defcustom zk-id-time-string-format "%Y%m%d%H%M"
+  "Format for new zk IDs.
+For supported options, please consult `format-time-string'.
+Note: the regexp to find zk IDs is set separately.
+If you change this value, set `zk-id-regexp' so that
+the zk IDs can be found."
+  :type 'string
+  :group 'zk)
 
-(defvar zk-new-note-header-function #'zk-new-note-header)
+(defcustom zk-id-regexp "[0-9]\\{12\\}"
+  "The regular expression used to search for zk IDs.
+Set it so that it matches strings generated with
+`zetteldeft-id-format'."
+  :type 'regexp
+  :group 'zk)
 
-(defvar zk-new-note-link-insert t
-  "If non-nil,'zk-new-note' inserts link to new note at point.
-When set to t, a link is always inserted; when set to 'zk, a link
-is inserted only when 'zk-new-note' is called inside an existing
-note in 'zk-directory'; when set to 'ask, the user is asked if a
-link should be inserted; when set to nil, a link is not inserted.
+(defcustom zk-new-note-header-function #'zk-new-note-header
+  "Function called by 'zk-new-note' to insert header in a new note.
+A user-defined function should use 'insert' to insert a string or
+strings. The arguments NEW-ID, TITLE, and ORIG-ID can be used to
+those corresponding values from 'zk-new-note' available for
+insertion. See 'zk-new-note-header' for an example."
+   :type 'function
+   :group 'zk)
+
+(defcustom zk-new-note-link-insert t
+  "Should 'zk-new-note' insert link to new note at point?
+
+Options:
+1. t - Always insert a link
+2. 'zk - Ansert link only inside an existing note
+3. 'ask - Ask user, yes or no
+4. nil - Never insert a link
+
 Calling 'zk-new-note' with a prefix-argument inserts a link
-regardless of how 'zk-new-note-link-insert' is set.")
+regardless of how 'zk-new-note-link-insert' is set."
+  :type '(choice (const :tag "Always" t)
+                 (const :tag "Ask" 'ask)
+                 (const :tag "Only in zk notes" 'zk)
+                 (const :tag "Never" nil))
+  :group 'zk)
 
 
-(defvar zk-search-function #'zk-grep)
+(defcustom zk-search-function #'zk-grep
+  "Function used by 'zk-search'.
+Must take a single STRING argument."
+  :type 'function
+  :group 'zk)
 
-(defvar zk-tag-regexp "[#][[:alnum:]_-]+")
+(defcustom zk-tag-search-function #'zk-grep
+  "Function used by 'zk-tag-search'.
+Must take a single STRING argument."
+  :type 'function
+  :group 'zk)
 
-(defvar zk-tag-search-function #'zk-grep)
-
-(defvar zk-link-format "[[%s]]"
-  "Set format for inserting link.
+(defcustom zk-link-format "[[%s]]"
+  "Format for inserted links.
 Used in conjunction with 'format', the string '%s' will be
-replaced by a note's ID.")
+replaced by a note's ID."
+    :type 'string
+    :group 'zk)
 
-(defvar zk-link-and-title nil
-  "If non-nil, 'zk-insert-link' inserts both link and title.
-If set to 'ask, 'zk-insert-link' asks each time whether to
-include a title. In both cases, calling 'zk-insert-link' with a
-prefix-argument reverts to default behavior and inserts only a
-link. The format in which link and title are inserted can be
-configured by setting the variable
-'zk-link-and-title-format'.")
+(defcustom zk-link-and-title nil
+  "Should 'zk-insert-link' insert both link and title?
 
-(defvar zk-link-and-title-format "[%t] [[%i]]"
-  "Set format for inserting link and title togethers.
-Used with 'format-spec', the string '%t' will be replaced by the
-note's title and '%i' will be replaced by its ID.")
+Options:
+1. t - Always inserts link and title; with 'prefix-arg', only link
+2. 'ask - Ask user, yes or no; with 'prefix-arg', only link
+3. nil - Only insert link, not title; 'with prefix-arg', include title
 
-(defvar zk-default-backlink nil)
+The format in which link and title are inserted can be configured
+by setting the variable 'zk-link-and-title-format'."
+  :type '(choice (const :tag "Always" t)
+                 (const :tag "Ask" 'ask)
+                 (const :tag "Never" nil))
+  :group 'zk)
 
-(defvar zk-current-notes-function nil)
+(defcustom zk-link-and-title-format "[%t] [[%i]]"
+  "Format for link and title when inserted to together.
 
-(defvar zk-completion-at-point-format "[[%i]] %t")
+The string '%t' will be replaced by the note's title and '%i'
+will be replaced by its ID."
+  :type 'string
+  :group 'zk)
+
+(defcustom zk-default-backlink nil
+  "When non-nil, should be a single zk ID.
+See 'zk-new-note' for details."
+  :type 'string
+  :group 'zk)
+
+(defcustom zk-current-notes-function nil
+  "User-defined function for listing currently open notes.
+See 'zk-current-notes' for details."
+  :type 'function
+  :group 'zk)
+
+(defcustom zk-completion-at-point-format "[[%i]] %t"
+  "Format for completion table used by 'zk-completion-at-point'.
+
+The string '%t' will be replaced by the note's title and '%i'
+will be replaced by its ID."
+  :type 'string
+  :group 'zk)
 
 (defvar zk-history nil)
 
 ;;; Low-Level Functions
 
 (defun zk--generate-id ()
-  "Generate and return a note ID.
+  "Generate and return a zk ID.
 The ID is created using `zk-id-time-string-format'."
   (let ((id (format-time-string zk-id-time-string-format)))
     (while (zk--id-unavailable-p id)
@@ -133,7 +203,7 @@ The ID is created using `zk-id-time-string-format'."
     id))
 
 (defun zk--id-list ()
-  "Return a list of IDs for all notes in 'zk-directory'."
+  "Return a list of zk IDs for all notes in 'zk-directory'."
   (let* ((files (zk--directory-files t))
          (all-ids))
     (dolist (file files)
@@ -189,7 +259,7 @@ a regexp to replace the default, 'zk-id-regexp'."
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
   (let* ((files (shell-command-to-string (concat
-                                          "grep -ohir -e '#[a-z0-9]\\+' "
+                                          "grep -ohir -e '#[a-zA-Z0-9]\\+' "
                                           zk-directory " 2>/dev/null")))
          (list (split-string files "\n" t)))
     (delete-dups list)))
@@ -231,7 +301,7 @@ Optional argument LIST."
 (defun zk--parse-file (target file)
   "Return TARGET, either 'id or 'title, from FILE.
 A note's title is understood to be the portion of its filename
-following the ID, in the format 'zk-id-regexp', and preceding the
+following the zk ID, in the format 'zk-id-regexp', and preceding the
 file extension."
   (let ((return (pcase target
                   ('id '1)
@@ -391,7 +461,7 @@ function, 'zk-consult-current-notes', is provided in
 
 ;;;###autoload
 (defun zk-follow-link-at-point ()
-  "Open note that corresponds with the zk-id at point."
+  "Open note that corresponds with the zk ID at point."
   (interactive)
   (when (thing-at-point-looking-at zk-id-regexp)
     (find-file (zk--parse-id 'file-path (match-string-no-properties 0)))))
@@ -450,7 +520,7 @@ for additional configurations."
       (insert (format zk-link-format id))))))
 
 (defun zk-insert-link-and-title (id title)
-  "Insert ID and TITLE according to 'zk-link-and-title-format'."
+  "Insert zk ID and TITLE according to 'zk-link-and-title-format'."
   (insert (format-spec zk-link-and-title-format
                        `((?i . ,id)(?t . ,title)))))
 
