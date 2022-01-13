@@ -30,19 +30,20 @@
 (require 'link-hint)
 
 (defun link-hint--zk-id-at-point-p ()
+  "Return the zk-id at the point or nil."
   (thing-at-point-looking-at zk-id-regexp))
 
 (defun link-hint--next-zk-id (&optional bound)
+  "Find the next file link.
+Only search the range between just after the point and BOUND."
   (link-hint--next-regexp zk-id-regexp bound))
 
-(defun link-hint--open-zk-id ()
-  (zk-follow-link-at-point))
-
-(link-hint-define-type 'zk-id
-  :next #'link-hint--next-zk-id
-  :at-point-p #'link-hint--zk-id-at-point-p
-  :open #'link-hint--open-zk-id
-  :copy #'kill-new)
+(eval-when-compile
+  (link-hint-define-type 'zk-id
+    :next #'link-hint--next-zk-id
+    :at-point-p #'link-hint--zk-id-at-point-p
+    :open #'zk-follow-link-at-point
+    :copy #'kill-new))
 
 (push 'link-hint-zk-id link-hint-types)
 

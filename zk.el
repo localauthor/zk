@@ -64,13 +64,18 @@
 ;;; Code:
 
 (require 'grep)
+(require 'thingatpt)
 
 ;;; Variables
 
 (defvar zk-directory nil)
+
 (defvar zk-file-extension nil)
+
 (defvar zk-id-regexp "[0-9]\\{12\\}")
+
 (defvar zk-id-time-string-format "%Y%m%d%H%M")
+
 (defvar zk-new-note-header-function #'zk-new-note-header)
 
 (defvar zk-new-note-link-insert t
@@ -84,7 +89,9 @@ regardless of how 'zk-new-note-link-insert' is set.")
 
 
 (defvar zk-search-function #'zk-grep)
+
 (defvar zk-tag-regexp "[#][[:alnum:]_-]+")
+
 (defvar zk-tag-search-function #'zk-grep)
 
 (defvar zk-link-format "[[%s]]"
@@ -107,8 +114,11 @@ Used with 'format-spec', the string '%t' will be replaced by the
 note's title and '%i' will be replaced by its ID.")
 
 (defvar zk-default-backlink nil)
+
 (defvar zk-current-notes-function nil)
+
 (defvar zk-completion-at-point-format "[[%i]] %t")
+
 (defvar zk-history nil)
 
 ;;; Low-Level Functions
@@ -286,7 +296,8 @@ file extension."
     (save-buffer)))
 
 (defun zk-new-note-header (title new-id &optional orig-id)
-  "Insert header in new notes."
+  "Insert header in new notes with args TITLE and NEW-ID.
+Optionally use ORIG-ID for backlink."
   (insert (format "# %s %s \n===\ntags: \n" new-id title))
   (when orig-id
     (progn
@@ -397,7 +408,7 @@ function, 'zk-consult-current-notes', is provided in
           (let ((note
                  (condition-case nil
                      (zk--parse-id 'file-path (match-string-no-properties 0))
-                   (error "no-file"))))
+                   (error "No file"))))
             (when (file-exists-p note)
               (push note files))))))
         (find-file (zk--select-file (delete-dups files)))))
@@ -419,7 +430,7 @@ function, 'zk-consult-current-notes', is provided in
 
 ;;;###autoload
 (defun zk-insert-link (id)
-  "Insert link to note, with 'completing-read'.
+  "Insert link to note with ID.
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable 'zk-link-and-title'
 for additional configurations."
@@ -439,10 +450,14 @@ for additional configurations."
       (insert (format zk-link-format id))))))
 
 (defun zk-insert-link-and-title (id title)
+  "Insert ID and TITLE according to 'zk-link-and-title-format'."
   (insert (format-spec zk-link-and-title-format
                        `((?i . ,id)(?t . ,title)))))
 
 (defun zk-completion-at-point ()
+  "Completion-at-point function for zk-links.
+Whent added to 'completion-at-point-functions', typing two
+brackets \"[[\" initiates completion."
   (let ((case-fold-search t)
         (pt (point)))
     (save-excursion

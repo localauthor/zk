@@ -24,10 +24,12 @@
 (require 'zk)
 (require 'org)
 
-(defun zk-try-to-follow-link (orig-org-open-at-point &optional arg)
+(defun zk-try-to-follow-link (func &optional arg)
+  "When 'org-open-at-point' FUNC fails, try 'zk-follow-ilnk-at-point'.
+Optional ARG."
   (let ((org-link-search-must-match-exact-headline t))
     (condition-case nil
-	(apply orig-org-open-at-point arg)
+	(apply func arg)
       (error (zk-follow-link-at-point)))))
 
 (advice-add 'org-open-at-point :around #'zk-try-to-follow-link)
