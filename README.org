@@ -19,9 +19,9 @@ can be inserted into an open buffer.
 The structural simplicity of this set of functions is---one hopes, at
 least---in line with the structural simplicity of the so-called "Zettelkasten
 method," of which much can be read in many places, including at
-https://www.zettelkasten.de. With a core code-base of around 300 lines, this
-package aims to be a lean, understandable, and eminently forkable
-Zettelkasten implementation for Emacs. Fork away, and make it your own.
+https://www.zettelkasten.de. Ultimately, this package aims to be a lean,
+understandable, and eminently forkable Zettelkasten implementation for Emacs.
+Fork away, and make it your own.
 
 ** File Structure
 
@@ -48,7 +48,10 @@ broken, wherever they might be in the directory.
 
 ** Completion
 
-For the best experience completing filenames and links, it is *highly* recommended to use the =orderless= completion style, from [[https://github.com/oantolin/orderless][the package of the same name]]. Another high recommendation is [[https://github.com/minad/vertico][=vertico=]], for completion in the minibuffer.
+For the best experience completing filenames and links, it is *highly*
+recommended to use the =orderless= completion style, from [[https://github.com/oantolin/orderless][the package of the
+same name]]. Another high recommendation is [[https://github.com/minad/vertico][vertico]], for completion in the
+minibuffer.
 
 * Key Features
 
@@ -70,7 +73,8 @@ variable =zk-current-note-function= to the name of a function.
 One such function is available in =zk-consult.el=: =zk-consult-current-notes=
 presents the list of current notes as a narrowed =consult-buffer-source=.
 Note that this source can also be included in the primary =consult-buffer=
-interface by adding =zk-consult-source= to list =consult-buffer-sources=. (This is *not* done by default.)
+interface by adding =zk-consult-source= to list =consult-buffer-sources=.
+(This is *not* done by default.)
 
 ** Insert Links via Function or Completion-at-Point
 
@@ -213,8 +217,8 @@ called:
 #+begin_src emacs-lisp
 On the origin of species
 
-It is not knowledge we lack. What is missing is the courage
-to understand what we know and to draw conclusions.
+It is not knowledge we lack. What is missing is the courage to understand
+what we know and to draw conclusions.
 #+end_src
 
 The title of the new note in this case will be "On the origin of species."

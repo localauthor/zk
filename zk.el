@@ -500,7 +500,9 @@ function, 'zk-consult-current-notes', is provided in
                    (error "No file"))))
             (when (file-exists-p note)
               (push note files))))))
-        (find-file (zk--select-file "Links: " (delete-dups files)))))
+    (if files
+        (find-file (zk--select-file "Links: " (delete-dups files)))
+      (user-error "No links found"))))
 
 ;;; List Backlinks
 
