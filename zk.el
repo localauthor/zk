@@ -107,6 +107,11 @@ Set it so that it matches strings generated with
   :type 'regexp
   :group 'zk)
 
+(defcustom zk-tag-regexp "#[a-zA-Z0-9]\\+"
+  "The regular expression used to search for tags."
+  :type 'regexp
+  :group 'zk)
+
 (defcustom zk-new-note-header-function #'zk-new-note-header
   "Function called by 'zk-new-note' to insert header in a new note.
 A user-defined function should use 'insert' to insert a string or
@@ -132,7 +137,6 @@ regardless of how 'zk-new-note-link-insert' is set."
                  (const :tag "Only in zk notes" 'zk)
                  (const :tag "Never" nil))
   :group 'zk)
-
 
 (defcustom zk-search-function #'zk-grep
   "Function used by 'zk-search'.
@@ -255,7 +259,8 @@ a regexp to replace the default, 'zk-id-regexp'."
                                           "grep -lir --include \\*."
                                           zk-file-extension
                                           " -e "
-                                          (regexp-quote str)
+                                          (shell-quote-argument
+                                          (regexp-quote str))
                                           " "
                                           zk-directory
                                           " 2>/dev/null")))
@@ -266,7 +271,10 @@ a regexp to replace the default, 'zk-id-regexp'."
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
   (let* ((files (shell-command-to-string (concat
-                                          "grep -ohir -e '#[a-zA-Z0-9]\\+' "
+                                          "grep -ohir -e "
+                                          (shell-quote-argument
+                                           zk-tag-regexp)
+                                          " "
                                           zk-directory " 2>/dev/null")))
          (list (split-string files "\n" t)))
     (delete-dups list)))
@@ -422,7 +430,8 @@ title."
                      new-title
                      "." zk-file-extension)))
       (rename-file buffer-file-name new-file t)
-      (set-visited-file-name new-file t t))))
+      (set-visited-file-name new-file t t)
+      (save-buffer))))
 
 ;;; Find File
 
@@ -501,7 +510,7 @@ function, 'zk-consult-current-notes', is provided in
   (interactive)
   (let* ((id (zk--current-id))
          (files (zk--grep-file-list
-                 (regexp-quote (format zk-link-format id)))))
+                 (format zk-link-format id))))
     (if files
         (find-file (zk--select-file "Backlinks: " files))
       (user-error "No backlinks found"))))
