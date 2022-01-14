@@ -363,6 +363,7 @@ file extension."
               (and (eq zk-new-note-link-insert 'ask)
                    (y-or-n-p "Insert link at point? ")))
       (zk-insert-link-and-title new-id title))
+    (save-buffer)
     (find-file (concat (format "%s/%s %s.%s"
                                zk-directory
                                new-id
@@ -376,7 +377,7 @@ file extension."
   "Insert header in new notes with args TITLE and NEW-ID.
 Optionally use ORIG-ID for backlink."
   (insert (format "# %s %s \n===\ntags: \n" new-id title))
-  (when orig-id
+  (when (ignore-errors (zk--parse-id 'title orig-id)) ;; check for file
     (progn
       (insert "===\n<- ")
       (zk-insert-link-and-title orig-id (zk--parse-id 'title orig-id))
