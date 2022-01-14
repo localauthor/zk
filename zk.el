@@ -271,13 +271,15 @@ a regexp to replace the default, 'zk-id-regexp'."
          (list (split-string files "\n" t)))
     (delete-dups list)))
 
-(defun zk--select-file (&optional list)
+(defun zk--select-file (&optional prompt list)
   "Wrapper around `completing-read' to select zk-file.
-Optional argument LIST."
+Offers candidates from 'zk--directory-files', or from LIST when
+supplied. Can take a PROMPT argument."
   (let* ((files (if list list
                   (zk--directory-files t))))
     (completing-read
-     "Select File: "
+     (if prompt prompt
+         "Select File: ")
      (lambda (string predicate action)
        (if (eq action 'metadata)
            `(metadata
@@ -376,7 +378,7 @@ file extension."
 (defun zk-new-note-header (title new-id &optional orig-id)
   "Insert header in new notes with args TITLE and NEW-ID.
 Optionally use ORIG-ID for backlink."
-  (insert (format "# %s %s \n===\ntags: \n" new-id title))
+  (insert (format "# %s %s\n===\ntags: \n" new-id title))
   (when (ignore-errors (zk--parse-id 'title orig-id)) ;; check for file
     (progn
       (insert "===\n<- ")
@@ -428,7 +430,7 @@ title."
 (defun zk-find-file ()
   "Search and open file in 'zk-directory'."
   (interactive)
-  (find-file (zk--select-file)))
+  (find-file (zk--select-file "Find file: ")))
 
 ;;;###autoload
 (defun zk-find-file-by-id (id)
@@ -489,7 +491,7 @@ function, 'zk-consult-current-notes', is provided in
                    (error "No file"))))
             (when (file-exists-p note)
               (push note files))))))
-        (find-file (zk--select-file (delete-dups files)))))
+        (find-file (zk--select-file "Links: " (delete-dups files)))))
 
 ;;; List Backlinks
 
@@ -501,7 +503,7 @@ function, 'zk-consult-current-notes', is provided in
          (files (zk--grep-file-list
                  (regexp-quote (format zk-link-format id)))))
     (if files
-        (find-file (zk--select-file files))
+        (find-file (zk--select-file "Backlinks: " files))
       (user-error "No backlinks found"))))
 
 ;;; Insert Link
@@ -512,7 +514,7 @@ function, 'zk-consult-current-notes', is provided in
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable 'zk-link-and-title'
 for additional configurations."
-  (interactive (list (zk--parse-file 'id (zk--select-file))))
+  (interactive (list (zk--parse-file 'id (zk--select-file "Insert link: "))))
   (let* ((pref-arg current-prefix-arg)
          (title (zk--parse-id 'title id)))
     (cond
