@@ -249,7 +249,7 @@ a regexp to replace the default, 'zk-id-regexp'."
                            (lambda (x)
                              (unless (string-match-p "^[.]\\|[#|~]$"
                                                      (file-name-nondirectory x))
-                               (abbreviate-file-name x)))
+                               x))
                            list))))
     files))
 
@@ -263,10 +263,8 @@ a regexp to replace the default, 'zk-id-regexp'."
                                           (regexp-quote str))
                                           " "
                                           zk-directory
-                                          " 2>/dev/null")))
-         (list (split-string files "\n" t)))
-    (when list
-      (mapcar #'abbreviate-file-name list))))
+                                          " 2>/dev/null"))))
+    (split-string files "\n" t)))
 
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
@@ -291,15 +289,21 @@ supplied. Can take a PROMPT argument."
      (lambda (string predicate action)
        (if (eq action 'metadata)
            `(metadata
+             (group-function . zk--group-function)
              (category . zk-file))
          (complete-with-action action files string predicate)))
      nil t nil 'zk-history)))
 
+(defun zk--group-function (cand transform)
+  "Remove 'zk-directory' from completion candidates."
+  (if transform
+      (file-name-nondirectory cand)
+    "zk"))
+
 (defun zk--parse-id (target id)
   "Return TARGET, ie, 'file-path, 'file-name, or 'title, from file with ID."
-  (let ((file (car (zk--directory-files nil id)))
+  (let ((file (car (zk--directory-files t id)))
         (return (pcase target
-                  ('file-path '0)
                   ('file-name '0)
                   ('title '2))))
     (if file
@@ -310,9 +314,13 @@ supplied. Can take a PROMPT argument."
                               zk-file-extension
                               ".*")
                         file)
-          (if (eq target 'file-path)
-              (concat zk-directory "/" (match-string return file))
-            (match-string return file)))
+          (cond
+           ((eq target 'file-path)
+            file)
+           ((eq target 'file-name)
+              (match-string return file))
+           ((eq target 'title)
+            (match-string return file))))
       (user-error "No file associated with %s" id))))
 
 (defun zk--parse-file (target file)
