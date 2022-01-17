@@ -493,13 +493,13 @@ function, 'zk-consult-current-notes', is provided in
   (when (thing-at-point-looking-at zk-id-regexp)
     (find-file (zk--parse-id 'file-path (match-string-no-properties 0)))))
 
-;;;###autoload
-(defun zk-links-in-note ()
-  "Select from list of notes linked to in the current note."
-  (interactive)
+(defun zk--links-in-note-list (id)
+  "Return list of files linked to in current note."
   (let (files)
-    (save-excursion
-      (goto-char (point-min))
+    (with-temp-buffer
+      (insert-file-contents (zk--parse-id 'file-path id))
+      ;; skip id in header
+      (goto-line 2)
       (save-match-data
         (while (re-search-forward zk-id-regexp nil t)
           (let ((note
@@ -507,20 +507,31 @@ function, 'zk-consult-current-notes', is provided in
                      (zk--parse-id 'file-path (match-string-no-properties 0))
                    (error "No file"))))
             (when (file-exists-p note)
-              (push note files))))))
+              (push note files)))))
+      files)))
+
+;;;###autoload
+(defun zk-links-in-note ()
+  "Select from list of notes linked to in the current note."
+  (interactive)
+  (let* ((id (zk--current-id))
+         (files (zk--links-in-note-list id)))
     (if files
         (find-file (zk--select-file "Links: " (delete-dups files)))
       (user-error "No links found"))))
 
 ;;; List Backlinks
 
+(defun zk--backlinks-list (id)
+  "Return list of notes that link to a current note."
+  (zk--grep-file-list (format zk-link-format id)))
+
 ;;;###autoload
 (defun zk-backlinks ()
   "Select from list of all notes that link to the current note."
   (interactive)
   (let* ((id (zk--current-id))
-         (files (zk--grep-file-list
-                 (format zk-link-format id))))
+         (files (zk--backlinks-list id)))
     (if files
         (find-file (zk--select-file "Backlinks: " files))
       (user-error "No backlinks found"))))
@@ -563,10 +574,10 @@ brackets \"[[\" initiates completion."
       (when (re-search-backward "\\[\\[" nil t)
         (list (match-beginning 0)
               pt
-              (zk--completion-at-point-list)
+              (zk--completion-at-point-candidates)
               :exclusive 'no)))))
 
-(defun zk--completion-at-point-list ()
+(defun zk--completion-at-point-candidates ()
   "Return a list of candidates for 'zk-completion-at-point'."
   (let* ((files (zk--directory-files))
          (output))
