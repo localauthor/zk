@@ -7,7 +7,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
 ;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "24.4"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -138,13 +138,13 @@ regardless of how 'zk-new-note-link-insert' is set."
                  (const :tag "Never" nil))
   :group 'zk)
 
-(defcustom zk-search-function #'zk-grep
+(defcustom zk-grep-function #'zk-grep
   "Function used by 'zk-search'.
 Must take a single STRING argument."
   :type 'function
   :group 'zk)
 
-(defcustom zk-tag-search-function #'zk-grep
+(defcustom zk-tag-grep-function #'zk-grep
   "Function used by 'zk-tag-search'.
 Must take a single STRING argument."
   :type 'function
@@ -437,18 +437,18 @@ title."
 
 ;;;###autoload
 (defun zk-find-file ()
-  "Search and open file in 'zk-directory'."
+  "Find file in 'zk-directory'."
   (interactive)
   (find-file (zk--select-file "Find file: ")))
 
 ;;;###autoload
 (defun zk-find-file-by-id (id)
-  "Open file associated with ID."
+  "Find file associated with ID."
   (find-file (zk--parse-id 'file-path id)))
 
 ;;;###autoload
 (defun zk-find-file-by-full-text-search (str)
-  "Search for and open file containing STR."
+  "Find files containing STR."
   (interactive
    (list (read-string "Search string: ")))
   (let ((files (zk--grep-file-list str)))
@@ -582,10 +582,10 @@ brackets \"[[\" initiates completion."
 
 ;;;###autoload
 (defun zk-search (string)
-  "Search for STRING using function set in 'zk-search-function'.
+  "Search for STRING using function set in 'zk-grep-function'.
 Defaults to 'zk-grep.'"
   (interactive "sSearch: ")
-  (funcall zk-search-function string))
+  (funcall zk-grep-function string))
 
 (defun zk-grep (regexp)
   "Wrapper around 'lgrep' to search for REGEXP in all notes.
@@ -601,7 +601,7 @@ Opens search results in a grep buffer."
 Select TAG, with completion, from list of all tags in zk notes.
 Defaults to 'zk-grep'."
   (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
-  (funcall zk-tag-search-function tag))
+  (funcall zk-tag-grep-function tag))
 
 ;;;###autoload
 (defun zk-tag-insert (tag)
