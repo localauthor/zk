@@ -73,6 +73,14 @@
 (require 'grep)
 (require 'thingatpt)
 
+
+;;; Variable Declarations
+
+(defvar embark-keymap-alist)
+(defvar embark-target-finders)
+(defvar embark-general-map)
+(defvar embark-file-map)
+
 ;;; Variables
 
 (defgroup zk nil
@@ -202,6 +210,36 @@ will be replaced by its ID."
 
 (defvar zk-history nil)
 
+;;; Embark Integration
+
+(defvar zk-id-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "s") #'zk-search)
+    (define-key map (kbd "RET") #'zk-follow-link-at-point)
+    map)
+  "Keymap for Embark zk-id at-point actions.")
+
+(defvar zk-file-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "i") #'zk-insert-link)
+    (define-key map (kbd "f") #'zk-find-file)
+    map)
+  "Keymap for Embark zk-file minibuffer actions.")
+
+;;;###autoload
+(defun zk-embark-target-zk-id-at-point ()
+  "Target zk-id at point."
+  (when (thing-at-point-looking-at zk-id-regexp)
+    (let ((zk-id (thing-at-point 'symbol t)))
+      `(zk-id ,zk-id . ,(bounds-of-thing-at-point 'symbol)))))
+
+(with-eval-after-load 'embark
+  (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
+  (add-to-list 'embark-keymap-alist '(zk-id . zk-id-map))
+  (add-to-list 'embark-keymap-alist '(zk-file . zk-file-map))
+  (set-keymap-parent zk-id-map embark-general-map)
+  (set-keymap-parent zk-file-map embark-file-map))
+
 ;;; Low-Level Functions
 
 (defun zk--generate-id ()
@@ -230,9 +268,8 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--current-id ()
   "Return id of current note."
-  (if (not (string=
-            default-directory
-            (concat (expand-file-name zk-directory) "/")))
+  (if (not (file-in-directory-p default-directory
+                                zk-directory))
       (user-error "Not a zk file")
     (string-match zk-id-regexp buffer-file-name))
   (match-string 0 buffer-file-name))
@@ -375,12 +412,11 @@ file extension."
     (when (or pref-arg
               (eq zk-new-note-link-insert 't)
               (and (eq zk-new-note-link-insert 'zk)
-                   (string= default-directory
-                            (concat (expand-file-name zk-directory)
-                                    "/")))
+                   (file-in-directory-p default-directory
+                                        zk-directory))
               (and (eq zk-new-note-link-insert 'ask)
                    (y-or-n-p "Insert link at point? ")))
-      (zk-insert-link-and-title new-id title))
+      (zk-insert-link new-id title))
     (save-buffer)
     (find-file (concat (format "%s/%s %s.%s"
                                zk-directory
@@ -496,6 +532,7 @@ function, 'zk-consult-current-notes', is provided in
 (defun zk--links-in-note-list (id)
   "Return list of files linked to in current note."
   (let (files)
+    (save-buffer)
     (with-temp-buffer
       (insert-file-contents (zk--parse-id 'file-path id))
       ;; skip id in header
@@ -539,14 +576,15 @@ function, 'zk-consult-current-notes', is provided in
 ;;; Insert Link
 
 ;;;###autoload
-(defun zk-insert-link (id)
+(defun zk-insert-link (id &optional title)
   "Insert link to note with ID.
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable 'zk-link-and-title'
 for additional configurations."
   (interactive (list (zk--parse-file 'id (zk--select-file "Insert link: "))))
   (let* ((pref-arg current-prefix-arg)
-         (title (zk--parse-id 'title id)))
+         (title (if title title
+                  (zk--parse-id 'title id))))
     (cond
      ((or (and (not pref-arg) (eq 't zk-link-and-title))
           (and pref-arg (not zk-link-and-title)))
