@@ -44,17 +44,6 @@
 ;; Linking to such a note involves nothing more than placing the string
 ;; [[202012091130]] into another note in the directory.
 
-;; There are several ways to follow links. The most basic way, which works in
-;; any mode, is to simply call the function 'zk-follow-link-at-point' with
-;; the point on a zk ID. This function could be bound to a convenient key.
-;; Other ways of following links rely on external packages. If notes are in
-;; 'org-mode', load the file 'zk-org.el' to enable click-to-follow links. If
-;; 'Embark' (https://github.com/oantolin/embark) is installed, load
-;; 'zk-embark.el' to enable 'embark-act' to target links at point as well as
-;; filenames in a completion interface. If 'link-hint.el'
-;; (https://github.com/noctuid/link-hint.el) is installed, load
-;; 'zk-link-hint.el' to allow 'link-hint.el' to find visible zk IDs in a buffer.
-
 ;; A note's filename is constructed as follows: the zk ID number followed by the
 ;; title of the note followed by the file extension, e.g. "202012091130 On
 ;; the origin of species.txt". A key consequence of this ID/linking scheme is
@@ -72,7 +61,7 @@
 
 (require 'grep)
 (require 'thingatpt)
-
+(require 'button)
 
 ;;; Variable Declarations
 
@@ -108,7 +97,7 @@ the zk IDs can be found."
   :type 'string
   :group 'zk)
 
-(defcustom zk-id-regexp "[0-9]\\{12\\}"
+(defcustom zk-id-regexp "\\([0-9]\\{12\\}\\)"
   "The regular expression used to search for zk IDs.
 Set it so that it matches strings generated with
 `zetteldeft-id-format'."
@@ -180,7 +169,7 @@ by setting the variable 'zk-link-and-title-format'."
                  (const :tag "Never" nil))
   :group 'zk)
 
-(defcustom zk-link-and-title-format "[%t] [[%i]]"
+(defcustom zk-link-and-title-format "%t [[%i]]"
   "Format for link and title when inserted to together.
 
 The string '%t' will be replaced by the note's title and '%i'
@@ -208,6 +197,7 @@ will be replaced by its ID."
   :type 'string
   :group 'zk)
 
+(defvar zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
 (defvar zk-history nil)
 
 ;;; Embark Integration
@@ -276,7 +266,7 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--directory-files (&optional full regexp)
   "Return list of notes' filenames in 'zk-directory' .
-Excludes lockfiles, autosave files, and backupfiles. When FULL is
+Excludes lockfiles, autosave files, and backup files. When FULL is
 non-nil, return full file-paths. If REGEXP is non-nil, it must be
 a regexp to replace the default, 'zk-id-regexp'."
   (let* ((regexp (if regexp regexp
@@ -332,14 +322,16 @@ supplied. Can take a PROMPT argument."
      nil t nil 'zk-history)))
 
 (defun zk--group-function (cand transform)
-  "Remove 'zk-directory' from completion candidates."
+  "TRANSFORM completion CAND to remove 'zk-directory' path."
   (if transform
       (file-name-nondirectory cand)
     "zk"))
 
 (defun zk--parse-id (target id)
   "Return TARGET, ie, 'file-path, 'file-name, or 'title, from file with ID."
-  (let ((file (car (zk--directory-files t id)))
+  (let ((file (if (string-match-p zk-id-regexp id)
+                  (car (zk--directory-files t id))
+              (error "Not a zk-id")))
         (return (pcase target
                   ('file-name '0)
                   ('title '2))))
@@ -375,6 +367,32 @@ file extension."
                               ".*")
                   file)
     (match-string return file)))
+
+;;; Buttons
+
+(define-button-type 'zk-id
+  'action 'zk-follow-link-at-point
+  'follow-link t
+  'help-echo '(lambda (win obj pos)
+		(format "%s"
+			(zk--parse-id 'title
+				      (button-label pos)))))
+
+(defun zk-make-link-buttons ()
+  "Make zk-id link buttons in current note."
+  (interactive)
+  (when (file-in-directory-p default-directory zk-directory)
+    (save-excursion
+	(goto-char (point-min))
+	(while (re-search-forward zk-link-regexp nil t)
+	  (let ((beg (match-beginning 1))
+		(end (match-end 1)))
+	    (when (ignore-errors (zk--parse-id 'file-path (match-string 1)))
+	      (progn
+		(make-text-button beg end :type 'zk-id)
+		(save-buffer))))))))
+
+(add-hook 'find-file-hook 'zk-make-link-buttons)
 
 ;;; Note Functions
 
@@ -425,6 +443,7 @@ file extension."
                                zk-file-extension)))
     (funcall zk-new-note-header-function title new-id orig-id)
     (when body (insert body))
+    (zk-refresh-link-buttons)
     (save-buffer)))
 
 (defun zk-new-note-header (title new-id &optional orig-id)
@@ -506,9 +525,7 @@ title."
 (defun zk-current-notes ()
   "Select from list of currently open notes.
 Optionally call a custom function by setting the variable
-'zk-current-notes-function' to a function name. One such
-function, 'zk-consult-current-notes', is provided in
-'zk-consult.el'."
+'zk-current-notes-function' to a function name."
   (interactive)
   (if zk-current-notes-function
       (funcall zk-current-notes-function)
@@ -523,20 +540,21 @@ function, 'zk-consult-current-notes', is provided in
 ;;; Follow Links
 
 ;;;###autoload
-(defun zk-follow-link-at-point ()
+(defun zk-follow-link-at-point (&optional _)
   "Open note that corresponds with the zk ID at point."
   (interactive)
   (when (thing-at-point-looking-at zk-id-regexp)
     (find-file (zk--parse-id 'file-path (match-string-no-properties 0)))))
 
 (defun zk--links-in-note-list (id)
-  "Return list of files linked to in current note."
+  "Return list of links in note with ID."
   (let (files)
     (save-buffer)
     (with-temp-buffer
       (insert-file-contents (zk--parse-id 'file-path id))
       ;; skip id in header
-      (goto-line 2)
+      (goto-char (point-min))
+      (forward-line 2)
       (save-match-data
         (while (re-search-forward zk-id-regexp nil t)
           (let ((note
@@ -560,7 +578,7 @@ function, 'zk-consult-current-notes', is provided in
 ;;; List Backlinks
 
 (defun zk--backlinks-list (id)
-  "Return list of notes that link to a current note."
+  "Return list of notes that link to note with ID."
   (zk--grep-file-list (format zk-link-format id)))
 
 ;;;###autoload
@@ -577,7 +595,7 @@ function, 'zk-consult-current-notes', is provided in
 
 ;;;###autoload
 (defun zk-insert-link (id &optional title)
-  "Insert link to note with ID.
+  "Insert link to note with ID and optional TITLE.
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable 'zk-link-and-title'
 for additional configurations."
@@ -595,7 +613,8 @@ for additional configurations."
         (insert (format zk-link-format id))))
      ((or t
           (and pref-arg (eq 't zk-link-and-title)))
-      (insert (format zk-link-format id))))))
+      (insert (format zk-link-format id)))))
+  (zk-refresh-link-buttons))
 
 (defun zk-insert-link-and-title (id title)
   "Insert zk ID and TITLE according to 'zk-link-and-title-format'."
@@ -604,7 +623,7 @@ for additional configurations."
 
 (defun zk-completion-at-point ()
   "Completion-at-point function for zk-links.
-Whent added to 'completion-at-point-functions', typing two
+When added to 'completion-at-point-functions', typing two
 brackets \"[[\" initiates completion."
   (let ((case-fold-search t)
         (pt (point)))

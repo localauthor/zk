@@ -16,6 +16,14 @@ To that end, these functions rely, at the lowest level, on simple calls to
 function =completing-read=, from which files can be opened and links and tags
 can be inserted into an open buffer.
 
+Out of the box, links are buttons made with the built-in =button.el=. This
+means that links will work the same in any major mode --- fundamental-mode,
+text-mode, outline-mode, markdown-mode, etc. (Note
+that in Org-Mode, links in the default zk-link-format, ie, an ID in double-brackets, are
+treated as Org-Links. Making them function properly as zk-links only requires
+adding simple advice to the function =org-open-at-point=. See below for
+details.)
+
 The structural simplicity of this set of functions is---one hopes, at
 least---in line with the structural simplicity of the so-called "Zettelkasten
 method," of which much can be read in many places, including at
@@ -135,32 +143,65 @@ the following variables accordingly:
 (setq zk-tag-search-function 'zk-consult-grep-tag-search)
 #+end_src
 
-** Several Ways to Follow Links
+** Following Links
 
-There are two ways to follow links that will work in any mode. The first is
-by calling the command =zk-follow-link-at-point= when there is a link at
-point. The second is with the command =zk-links-in-note=, which
-presents a =completing-read= list of all notes that the current note links
-to. Selecting a note opens it in the current window.
+Links are buttons made with the built-in package =button.el=: they are
+clickable text that work the same way in any major mode. Whether in
+fundamental-mode, text-mode, outline-mode, or markdown-mode, etc.,
+clicking or pressing =RET= on a zk-link opens the corresponding note. The
+only exception is Org-Mode. (See below.) configuring clickable links in
+Org-Mode, see below.)
 
-Other ways to follow links rely on external packages but are far more
-accommodating. The following can be used together or separately, in any
-combination:
+It is also possible to call the command =zk-follow-link-at-point=
+when a link is at point, or call the command =zk-links-in-note= to be
+presented with a =completing-read= list of all links in the current note.
 
-*** In Org-Mode
+*** Using Org-Mode /and/ double-bracketed links
 
-When using notes in =org-mode=, load the file =zk-org.el= to enable
-click-to-follow links.
+In Org-Mode, when zk-links are in the default format =zk-link-format= ---,
+that is IDs between double-brackets --- Org will want to treat them as
+internal links, to headings or targets. This means they won't work as
+zk-links in Org-Mode out of the box. 
 
-*** With Embark
+You can get around this, however, by adding advice to the function
+=org-open-at-point=, to instruct Org to try to follow a zk-link whenever
+=org-open-at-point= fails:
 
-With [[https://github.com/oantolin/embark][Embark]] installed, load =zk-embark.el= to enable =embark-act= to target
-links at point, as well as filenames in a completion interface.
+#+begin_src emacs-lisp
+(defun zk-org-try-to-follow-link (fn &optional arg)
+  "When 'org-open-at-point' FN fails, try 'zk-follow-link-at-point'.
+Optional ARG."
+  (let (org-link-search-must-match-exact-headline t)
+    (condition-case nil
+	(apply fn arg)
+      (error (zk-follow-link-at-point)))))
 
-*** With link-hint.el
+(advice-add 'org-open-at-point :around #'zk-org-try-to-follow-link)
+#+end_src
 
-With [[https://github.com/noctuid/link-hint.el][link-hint.el]] installed, load =zk-link-hint.el= to allow =link-hint.el=
-to find visible IDs in a buffer.
+An alternative solution for using Org-Mode would be to change
+=zk-link-format=, for example, to single brackets.
+
+*** link-hint.el
+
+In any mode, even Org-Mode, if [[https://github.com/noctuid/link-hint.el][link-hint.el]] is loaded, then
+=link-hint-open-link= will find visible IDs. This is highly recommended!
+
+**  Embark Integration
+
+This package includes out-of-the-box support for [[https://github.com/oantolin/embark][Embark]], both on
+links-at-point and in the minibuffer.
+
+When Embark is loaded, calling =embark-act= on a zk-id at point makes
+available the functions in the keymap =zk-id-map=. This is a convenient way
+to follow links or to search for instances of the ID at point in all notes,
+with =zk-search=.
+
+Calling =embark-act= in the minibuffer makes available the functions in
+=zk-file-map=. This offers a convenient way to open notes or insert links.
+
+Additionally, adding =zk-search= to other Embark keymaps is a convenient way
+to search all notes for any Embark target.
 
 ** Dynamic, Context-Sensitive New-Note Creation
 
