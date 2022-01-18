@@ -1,6 +1,21 @@
-#+title: zk.el - A dead-simple Zettelkasten implementation for Emacs
+#+title: zk.el - A dead-simple, feature-rich Zettelkasten implementation for Emacs
 #+author: Grant Rosson
 #+language: en
+
+- [[#introduction][Introduction]]
+
+- [[#features][Features]]
+  - [[#follow-links][Follow Links]]
+    - [[#using-org-mode-and-org-links][Using Org-Mode and Org-Links]]
+  - [[#list-backlinks][List Backlinks]]
+  - [[#smart-new-note-creation][Smart New-Note Creation]]
+  - [[#insert-links][Insert Links]]
+  - [[#search][Search]]
+    - [[#alternative-search-functions-using-consult-grep][Alternative Search Functions, using Consult-Grep]]
+  - [[#embark-integration][Embark Integration]]
+  - [[#list-current-notes][List Current Notes]]
+
+- [[#comparable-zettelkasten-like-implementations][Comparable Zettelkasten(-like) Implementations]]
 
 * Introduction
 
@@ -59,28 +74,65 @@ recommended to use the =orderless= completion style, from [[https://github.com/o
 same name]]. Another high recommendation is [[https://github.com/minad/vertico][Vertico]], for completion in the
 minibuffer.
 
-* Key Features
+* Features
+
+** Follow Links
+
+Links are buttons made with the built-in package =button.el=: they are
+clickable text that work the same way in any major mode. Whether in
+fundamental-mode, text-mode, outline-mode, or markdown-mode, etc.,
+clicking or pressing =RET= on a zk-link opens the corresponding note. The
+only exception is Org-Mode. (See below.) configuring clickable links in
+Org-Mode, see below.)
+
+It is also possible to call the command =zk-follow-link-at-point=
+when a link is at point, or call the command =zk-links-in-note= to be
+presented with a =completing-read= list of all links in the current note.
+
+*** Using Org-Mode and Org-Links
+
+In Org-Mode, links in the default format =zk-link-format= (an ID in
+double-brackets) will be treated as internal links. This means that when they
+are clicked, Org will, by default, look for an in-buffer heading or target
+that is named, or contains, the given ID. To make Org treat zk-links /as/
+zk-links and open the corresponding note, it is only necessary to advise the
+function =org-open-at-point= as follows:
+
+#+begin_src emacs-lisp
+(defun zk-org-try-to-follow-link (fn &optional arg)
+  "When 'org-open-at-point' FN fails, try 'zk-follow-link-at-point'.
+Optional ARG."
+  (let (org-link-search-must-match-exact-headline t)
+    (condition-case nil
+	(apply fn arg)
+      (error (zk-follow-link-at-point)))))
+
+(advice-add 'org-open-at-point :around #'zk-org-try-to-follow-link)
+#+end_src
+
+Briefly, this function instructs =org-open-at-point= to try calling
+=zk-follow-link-at-point= when a link is not an internal link.
+
+An alternative solution for using Org-Mode would be to change
+=zk-link-format= to use, for example, single brackets instead of double
+brackets. With this change, the default link buttons will work as expected.
+
+Note that using Org links makes the creation of link buttons, via
+=zk-make-link-buttons=, redundant. This link button aspects of the package
+can be disabled by setting =zk-enable-link-buttons= to nil.
+
+*** link-hint.el
+
+In any mode, even Org-Mode, if [[https://github.com/noctuid/link-hint.el][link-hint.el]] is loaded, then
+=link-hint-open-link= will find visible IDs. (This package is highly
+recommended!)
 
 ** List Backlinks
 
 Calling =zk-backlinks= in any note presents a list, with completion, of all
 notes that contain at least one link to the current note.
 
-** List Current Notes
-
-The function =zk-current-notes= presents a list of all currently open notes.
-Selecting a note opens it in the current frame.
-
-The command can be set to use custom function, however, by setting the
-variable =zk-current-note-function= to the name of a function.
-
-One such function is available in =zk-consult.el=: =zk-consult-current-notes=
-presents the list of current notes as a narrowed =consult-buffer-source=.
-Note that this source can also be included in the primary =consult-buffer=
-interface by adding =zk-consult-source= to list =consult-buffer-sources=.
-(This is *not* done by default.)
-
-** Dynamic, Context-Sensitive New-Note Creation
+** Smart New-Note Creation
 
 The function =zk-new-note= prompts for a title and generates a unique ID
 number for the new note based on the current date and time. A new file with
@@ -149,33 +201,43 @@ trivial to alter this function to behave perhaps more sensibly, for example
 by using the selected region in its entirety as the body and prompting for a
 title. For now, though, custom prevails.
 
-** Insert Links via Function or Completion-at-Point
+** Insert Links
 
-*** Link-Insert Functions
+*** Insert Links via Function
 
 Calling =zk-insert-link= presents a list, with completion, of all notes in
-the =zk-directory=. By default this function inserts only the link itself. To
-insert both a link and title, either use a prefix-argument before calling
-=zk-insert-link= or set the variable =zk-link-insert-title= to =t=. When this
-variable is set to =t=, calling =zk-insert-link= with a prefix-argument
-temporarily restores the default behavior and inserts the link without a
-title. To be prompted with a yes-or-no query, asking whether to insert a
-title with the link or insert only a link by itself, set
-=zk-link-insert-title= to ='ask=. With this setting, a prefix-argument also
-restores the default behavior.
+the =zk-directory=. By default this function inserts only the link itself,
+like so: =[[202012091130]]=.
+
+To insert both a link and title, either use a prefix-argument before calling
+=zk-insert-link= or set the variable =zk-link-insert-title= to =t=, to always
+insert link and title together. Note that when =zk-link-insert-title= is set
+to =t=, calling =zk-insert-link= with a prefix-argument temporarily restores
+the default behavior and inserts the link without a title.
+
+To be prompted with a yes-or-no query, asking whether to insert a title with
+the link or insert only a link by itself, set =zk-link-insert-title= to
+=ask=. With this setting, a prefix-argument also restores the default
+behavior of inserting only a link.
+
+The format in which link and title are inserted can be configured with the
+variable =zk-link-and-title-format=.
 
 *** Completion-at-Point
 
 This package includes a completion-at-point-function,
-=zk-completion-at-point= for inserting link. Completion candidates are
-formatted as a link followed by a title, i.e., =[[202012091130]] On the
-origin of species=, such that typing =[[= will initiate completion. To
-enable, add this function to =completion-at-point-functions= by evaluating
-the following:
+=zk-completion-at-point=, for inserting links. Completion candidates are
+formatted as links followed by a title, i.e., =[[202012091130]] On the origin
+of species=, such that typing =[[= will initiate completion. To enable this
+functionality, add =zk-completion-at-point= function to
+=completion-at-point-functions=, by evaluating the following:
 
 =(add-hook 'completion-at-point-functions #'zk-completion-at-point 'append)=
 
-** Various Search Options
+Consider using [[https://github.com/minad/corfu][Corfu]] or [[https://github.com/company-mode/company-mode][Company]] as a convenient interface for such
+completions.
+
+** Search
 
 *** Note Search
 
@@ -188,7 +250,7 @@ The function =zk-find-file-by-full-text-search= presents, via
 of a give search string somewhere in the body of the note. Compare this to
 =zk-file-file= which returns matches only from the filename.
 
-*** Tag Search and Insert
+*** Tag Search (and Insert)
 
 There are two functions that query all notes in the =zk-directory= for tags
 in following form: =#tag=. One of the functions, =zk-tag-search=, opens a
@@ -208,58 +270,7 @@ the following variables accordingly:
 (setq zk-tag-search-function 'zk-consult-grep-tag-search)
 #+end_src
 
-** Following Links
-
-Links are buttons made with the built-in package =button.el=: they are
-clickable text that work the same way in any major mode. Whether in
-fundamental-mode, text-mode, outline-mode, or markdown-mode, etc.,
-clicking or pressing =RET= on a zk-link opens the corresponding note. The
-only exception is Org-Mode. (See below.) configuring clickable links in
-Org-Mode, see below.)
-
-It is also possible to call the command =zk-follow-link-at-point=
-when a link is at point, or call the command =zk-links-in-note= to be
-presented with a =completing-read= list of all links in the current note.
-
-*** Using Org-Mode /and/ double-bracketed links
-
-In Org-Mode, links in the default format =zk-link-format= (an ID in
-double-brackets) will be treated as internal links. This means that when they
-are clicked, Org will, by default, look for an in-buffer heading or target
-that is named, or contains, the given ID. To make Org treat zk-links /as/
-zk-links and open the corresponding note, it is only necessary to advise the
-function =org-open-at-point= as follows:
-
-#+begin_src emacs-lisp
-(defun zk-org-try-to-follow-link (fn &optional arg)
-  "When 'org-open-at-point' FN fails, try 'zk-follow-link-at-point'.
-Optional ARG."
-  (let (org-link-search-must-match-exact-headline t)
-    (condition-case nil
-	(apply fn arg)
-      (error (zk-follow-link-at-point)))))
-
-(advice-add 'org-open-at-point :around #'zk-org-try-to-follow-link)
-#+end_src
-
-Briefly, this function instructs =org-open-at-point= to try calling
-=zk-follow-link-at-point= when a link is not an internal link.
-
-An alternative solution for using Org-Mode would be to change
-=zk-link-format= to use, for example, single brackets instead of double
-brackets. With this change, the default link buttons will work as expected.
-
-Note that using Org links makes the creation of link buttons, via
-=zk-make-link-buttons=, redundant. This link button aspects of the package
-can be disabled by setting =zk-enable-link-buttons= to nil.
-
-*** link-hint.el
-
-In any mode, even Org-Mode, if [[https://github.com/noctuid/link-hint.el][link-hint.el]] is loaded, then
-=link-hint-open-link= will find visible IDs. (This package is highly
-recommended!)
-
-**  Embark Integration
+** Embark Integration
 
 This package includes out-of-the-box support for [[https://github.com/oantolin/embark][Embark]], both on
 links-at-point and in the minibuffer.
@@ -279,6 +290,20 @@ available through =embark-act=. This makes killing open notes a snap!
 Last note: adding =zk-search= to other Embark keymaps is a convenient way to
 search all notes for a given Embark target. Consider adding it to the
 =embark-region-map=, for example, with a memorable keybinding --- like "z"!
+
+** List Current Notes
+
+The function =zk-current-notes= presents a list of all currently open notes.
+Selecting a note opens it in the current frame.
+
+The command can be set to use custom function, however, by setting the
+variable =zk-current-note-function= to the name of a function.
+
+One such function is available in =zk-consult.el=: =zk-consult-current-notes=
+presents the list of current notes as a narrowed =consult-buffer-source=.
+Note that this source can also be included in the primary =consult-buffer=
+interface by adding =zk-consult-source= to list =consult-buffer-sources=.
+(This is *not* done by default.)
 
 * Comparable Zettelkasten(-like) Implementations 
 
