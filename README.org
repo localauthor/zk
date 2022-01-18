@@ -16,13 +16,11 @@ To that end, these functions rely, at the lowest level, on simple calls to
 function =completing-read=, from which files can be opened and links and tags
 can be inserted into an open buffer.
 
-Out of the box, links are buttons made with the built-in =button.el=. This
-means that links will work the same in any major mode --- fundamental-mode,
-text-mode, outline-mode, markdown-mode, etc. (Note
-that in Org-Mode, links in the default zk-link-format, ie, an ID in double-brackets, are
-treated as Org-Links. Making them function properly as zk-links only requires
-adding simple advice to the function =org-open-at-point=. See below for
-details.)
+Out of the box, links are clickable buttons made with the built-in
+=button.el=. This means that links will work the same way in (almost) any
+major mode: fundamental-mode, text-mode, outline-mode, markdown-mode, etc.
+The key exception is Org-Mode, where a minor change is necessary to enable
+clickable zk-links. (See below for details.)
 
 The structural simplicity of this set of functions is---one hopes, at
 least---in line with the structural simplicity of the so-called "Zettelkasten
@@ -50,30 +48,28 @@ time the note was originally created. For example, a note created on December
 involves nothing more than placing the string =[[202012091130]]= into another
 note in the directory.
 
-A key consequence of the ID and file-naming scheme used by these functions is
-that a note's title can change without any existing links to the note being
-broken, wherever they might be in the directory.
+A key consequence of this ID and file-naming scheme is that a note's title
+can change without any existing links to the note being broken, wherever they
+might be in the directory.
 
 ** Completion
 
 For the best experience completing filenames and links, it is *highly*
 recommended to use the =orderless= completion style, from [[https://github.com/oantolin/orderless][the package of the
-same name]]. Another high recommendation is [[https://github.com/minad/vertico][vertico]], for completion in the
+same name]]. Another high recommendation is [[https://github.com/minad/vertico][Vertico]], for completion in the
 minibuffer.
 
 * Key Features
 
 ** List Backlinks
 
-Calling =zk-backlinks= in any note presents a list with completion of all
-notes in the =zk-directory= containing at least one link to the current note.
+Calling =zk-backlinks= in any note presents a list, with completion, of all
+notes that contain at least one link to the current note.
 
 ** List Current Notes
 
-The function =zk-current-notes= presents a list, with completion, of all
-currently open notes. Selecting a note opens it in the current frame. By
-default the function uses =read-buffer=, meaning all Embark buffer actions
-are automatically available through =embark-act=.
+The function =zk-current-notes= presents a list of all currently open notes.
+Selecting a note opens it in the current frame.
 
 The command can be set to use custom function, however, by setting the
 variable =zk-current-note-function= to the name of a function.
@@ -83,6 +79,75 @@ presents the list of current notes as a narrowed =consult-buffer-source=.
 Note that this source can also be included in the primary =consult-buffer=
 interface by adding =zk-consult-source= to list =consult-buffer-sources=.
 (This is *not* done by default.)
+
+** Dynamic, Context-Sensitive New-Note Creation
+
+The function =zk-new-note= prompts for a title and generates a unique ID
+number for the new note based on the current date and time. A new file with
+that ID and title will be created in the =zk-directory=.
+
+*** New-Note Header and Backlink
+
+The header of the new note is inserted by means of a function, the name of
+which must be set to the variable =zk-new-note-header-function=.
+
+The default header function, =zk-new-note-header=, behaves differently
+depending on the context in which =zk-new-note= is initiated. If
+=zk-new-note= is called within an existing note, from within the
+=zk-directory=, the new note's header will contain a backlink to that note.
+If =zk-new-note= is called from outside of the =zk-directory=, there are two
+possible behaviors, depending on the setting of the variable
+=zk-default-backlink=. If this variable is set to nil, the header of the new
+note will contain no backlink. If this variable is set to an ID (as a
+string), the header will contain a link and title corresponding with that ID.
+This can be useful if the directory contains a something like a "home" note
+or an "inbox" note.
+
+*** Insert New-Note Link at Point of Creation
+
+By default, a link to the new note, along with the new note's title, will be
+placed at point wherever =zk-new-note= was called. This behavior can be
+configured with the variable =zk-new-note-link-insert=: when set to =t=, a
+link is always inserted; when set to =zk=, a link is inserted only when
+=zk-new-note= is initiated inside an existing note in =zk-directory=; when
+set to =ask=, the user is asked whether or not a link should be inserted;
+when set to =nil=, a link is not inserted. Calling =zk-new-note= with a
+prefix-argument will insert a link regardless of setting of
+=zk-new-note-link-insert=.
+
+*** ID Format
+
+By default, the date/time of a generated ID only goes to the minute, though
+this can be configured with the variable =zk-id-time-string-format=. In the
+default case, however, if more than one note is created in the same minute,
+the ID will be incremented by 1 until it is unique, allowing for rapid note
+creation.
+
+*** New-Note from Region
+
+Finally, a new note can be created from a selected region of text. The
+convention for this feature is that the first line of the region will be used
+as the new note's title, while the subsequent lines will be used as the body,
+with the exception of a single separator line between title and body. To
+clarify, consider the following as the region selected swhen =zk-new-note= is
+called:
+
+#+begin_src emacs-lisp
+On the origin of species
+
+It is not knowledge we lack. What is missing is the courage to understand
+what we know and to draw conclusions.
+#+end_src
+
+The title of the new note in this case will be "On the origin of species."
+The body will be the two sentences that follow it. The empty line separating
+title from body is necessary and should not be excluded.
+
+Note: This behavior is derived from the behavior of an earlier, long-used
+Zettelkasten implementation and it persists here by custom only. It would be
+trivial to alter this function to behave perhaps more sensibly, for example
+by using the selected region in its entirety as the body and prompting for a
+title. For now, though, custom prevails.
 
 ** Insert Links via Function or Completion-at-Point
 
@@ -158,14 +223,12 @@ presented with a =completing-read= list of all links in the current note.
 
 *** Using Org-Mode /and/ double-bracketed links
 
-In Org-Mode, when zk-links are in the default format =zk-link-format= ---,
-that is IDs between double-brackets --- Org will want to treat them as
-internal links, to headings or targets. This means they won't work as
-zk-links in Org-Mode out of the box. 
-
-You can get around this, however, by adding advice to the function
-=org-open-at-point=, to instruct Org to try to follow a zk-link whenever
-=org-open-at-point= fails:
+In Org-Mode, links in the default format =zk-link-format= (an ID in
+double-brackets) will be treated as internal links. This means that when they
+are clicked, Org will, by default, look for an in-buffer heading or target
+that is named, or contains, the given ID. To make Org treat zk-links /as/
+zk-links and open the corresponding note, it is only necessary to advise the
+function =org-open-at-point= as follows:
 
 #+begin_src emacs-lisp
 (defun zk-org-try-to-follow-link (fn &optional arg)
@@ -179,13 +242,22 @@ Optional ARG."
 (advice-add 'org-open-at-point :around #'zk-org-try-to-follow-link)
 #+end_src
 
+Briefly, this function instructs =org-open-at-point= to try calling
+=zk-follow-link-at-point= when a link is not an internal link.
+
 An alternative solution for using Org-Mode would be to change
-=zk-link-format=, for example, to single brackets.
+=zk-link-format= to use, for example, single brackets instead of double
+brackets. With this change, the default link buttons will work as expected.
+
+Note that using Org links makes the creation of link buttons, via
+=zk-make-link-buttons=, redundant. This link button aspects of the package
+can be disabled by setting =zk-enable-link-buttons= to nil.
 
 *** link-hint.el
 
 In any mode, even Org-Mode, if [[https://github.com/noctuid/link-hint.el][link-hint.el]] is loaded, then
-=link-hint-open-link= will find visible IDs. This is highly recommended!
+=link-hint-open-link= will find visible IDs. (This package is highly
+recommended!)
 
 **  Embark Integration
 
@@ -194,83 +266,19 @@ links-at-point and in the minibuffer.
 
 When Embark is loaded, calling =embark-act= on a zk-id at point makes
 available the functions in the keymap =zk-id-map=. This is a convenient way
-to follow links or to search for instances of the ID at point in all notes,
-with =zk-search=.
+to follow links or to search for instances of the ID in all notes using
+=zk-search=.
 
 Calling =embark-act= in the minibuffer makes available the functions in
-=zk-file-map=. This offers a convenient way to open notes or insert links.
+=zk-file-map=. This is a convenient way to open notes or insert links.
 
-Additionally, adding =zk-search= to other Embark keymaps is a convenient way
-to search all notes for any Embark target.
+Additionally, note that because the function =zk-current-notes= uses
+=read-buffer= by default, all Embark buffer actions are automatically
+available through =embark-act=. This makes killing open notes a snap!
 
-** Dynamic, Context-Sensitive New-Note Creation
-
-The function =zk-new-note= prompts for a title and generates a unique ID
-number for the new note based on the current date and time. A new file with
-that ID and title will be created in the =zk-directory=.
-
-*** New-Note Header and Backlink
-
-The header of the new note is inserted by means of a function, the name of
-which must be set to the variable =zk-new-note-header-function=.
-
-The default header function, =zk-new-note-header=, behaves differently
-depending on the context in which =zk-new-note= is initiated. If
-=zk-new-note= is called within an existing note, from within the
-=zk-directory=, the new note's header will contain a backlink to that note.
-If =zk-new-note= is called from outside of the =zk-directory=, there are two
-possible behaviors, depending on the setting of the variable
-=zk-default-backlink=. If this variable is set to nil, the header of the new
-note will contain no backlink. If this variable is set to an ID (as a
-string), the header will contain a link and title corresponding with that ID.
-This can be useful if the directory contains a something like a "home" note
-or an "inbox" note.
-
-*** Insert New-Note Link at Point of Creation
-
-By default, a link to the new note, along with the new note's title, will be
-placed at point wherever =zk-new-note= was called. This behavior can be
-configured with the variable =zk-new-note-link-insert=: when set to =t=, a
-link is always inserted; when set to =zk=, a link is inserted only when
-=zk-new-note= is initiated inside an existing note in =zk-directory=; when
-set to =ask=, the user is asked whether or not a link should be inserted;
-when set to =nil=, a link is not inserted. Calling =zk-new-note= with a
-prefix-argument will insert a link regardless of setting of
-=zk-new-note-link-insert=.
-
-*** ID Format
-
-By default, the date/time of a generated ID only goes to the minute, though
-this can be configured with the variable =zk-id-time-string-format=. In the
-default case, however, if more than one note is created in the same minute,
-the ID will be incremented by 1 until it is unique, allowing for rapid note
-creation.
-
-*** New-Note from Region
-
-Finally, a new note can be created from a selected region of text. The
-convention for this feature is that the first line of the region will be used
-as the new note's title, while the subsequent lines will be used as the body,
-with the exception of a single separator line between title and body. To
-clarify, consider the following as the region selected swhen =zk-new-note= is
-called:
-
-#+begin_src emacs-lisp
-On the origin of species
-
-It is not knowledge we lack. What is missing is the courage to understand
-what we know and to draw conclusions.
-#+end_src
-
-The title of the new note in this case will be "On the origin of species."
-The body will be the two sentences that follow it. The empty line separating
-title from body is necessary and should not be excluded.
-
-Note: This behavior is derived from the behavior of an earlier, long-used
-Zettelkasten implementation and it persists here by custom only. It would be
-trivial to alter this function to behave perhaps more sensibly, for example
-by using the selected region in its entirety as the body and prompting for a
-title. For now, though, custom prevails.
+Last note: adding =zk-search= to other Embark keymaps is a convenient way to
+search all notes for a given Embark target. Consider adding it to the
+=embark-region-map=, for example, with a memorable keybinding --- like "z"!
 
 * Comparable Zettelkasten(-like) Implementations 
 

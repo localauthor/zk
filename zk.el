@@ -59,9 +59,7 @@
 
 ;;; Code:
 
-(require 'grep)
 (require 'thingatpt)
-(require 'button)
 
 ;;; Variable Declarations
 
@@ -73,19 +71,26 @@
 ;;; Variables
 
 (defgroup zk nil
-  "A zettelkasten on top of deft."
+  "A Zettelkasten implementation for Emacs."
   :group 'text
   :group 'files
   :prefix "zk-")
 
 (defcustom zk-directory nil
-    "Main zettelkasten directory."
+  "Main zk directory."
   :type 'string
   :group 'zk)
 
 (defcustom zk-file-extension nil
   "The extension for zk files."
   :type 'string
+  :group 'zk)
+
+(defcustom zk-enable-link-buttons t
+  "When non-nil, valid zk-id links will be clickable buttons.
+Allows 'zk-make-link-buttons' to be added to 'find-file-hook', so
+buttons will be automatically created when a note is opened."
+  :type 'boolean
   :group 'zk)
 
 (defcustom zk-id-time-string-format "%Y%m%d%H%M"
@@ -100,7 +105,7 @@ the zk IDs can be found."
 (defcustom zk-id-regexp "\\([0-9]\\{12\\}\\)"
   "The regular expression used to search for zk IDs.
 Set it so that it matches strings generated with
-`zetteldeft-id-format'."
+`zk-id-format'."
   :type 'regexp
   :group 'zk)
 
@@ -115,8 +120,8 @@ A user-defined function should use 'insert' to insert a string or
 strings. The arguments NEW-ID, TITLE, and ORIG-ID can be used to
 those corresponding values from 'zk-new-note' available for
 insertion. See 'zk-new-note-header' for an example."
-   :type 'function
-   :group 'zk)
+  :type 'function
+  :group 'zk)
 
 (defcustom zk-new-note-link-insert t
   "Should 'zk-new-note' insert link to new note at point?
@@ -151,8 +156,8 @@ Must take a single STRING argument."
   "Format for inserted links.
 Used in conjunction with 'format', the string '%s' will be
 replaced by a note's ID."
-    :type 'string
-    :group 'zk)
+  :type 'string
+  :group 'zk)
 
 (defcustom zk-link-and-title nil
   "Should 'zk-insert-link' insert both link and title?
@@ -370,29 +375,30 @@ file extension."
 
 ;;; Buttons
 
+(cond (zk-enable-link-buttons
+       (add-hook 'find-file-hook 'zk-make-link-buttons)))
+
 (define-button-type 'zk-id
   'action 'zk-follow-link-at-point
   'follow-link t
   'help-echo '(lambda (win obj pos)
-		(format "%s"
-			(zk--parse-id 'title
-				      (button-label pos)))))
+        	(format "%s"
+        		(zk--parse-id 'title
+        			      (button-label pos)))))
 
 (defun zk-make-link-buttons ()
   "Make zk-id link buttons in current note."
   (interactive)
-  (when (file-in-directory-p default-directory zk-directory)
-    (save-excursion
+  (when (and (file-in-directory-p default-directory zk-directory)
+             zk-enable-link-buttons)
+    (let ((ids (zk--id-list)))
+      (save-excursion
 	(goto-char (point-min))
 	(while (re-search-forward zk-link-regexp nil t)
 	  (let ((beg (match-beginning 1))
 		(end (match-end 1)))
-	    (when (ignore-errors (zk--parse-id 'file-path (match-string 1)))
-	      (progn
-		(make-text-button beg end :type 'zk-id)
-		(save-buffer))))))))
-
-(add-hook 'find-file-hook 'zk-make-link-buttons)
+	    (when (member (match-string-no-properties 1) ids)
+	      (make-text-button beg end :type 'zk-id))))))))
 
 ;;; Note Functions
 
@@ -443,7 +449,7 @@ file extension."
                                zk-file-extension)))
     (funcall zk-new-note-header-function title new-id orig-id)
     (when body (insert body))
-    (zk-refresh-link-buttons)
+    (when zk-enable-link-buttons (zk-make-link-buttons))
     (save-buffer)))
 
 (defun zk-new-note-header (title new-id &optional orig-id)
@@ -614,7 +620,7 @@ for additional configurations."
      ((or t
           (and pref-arg (eq 't zk-link-and-title)))
       (insert (format zk-link-format id)))))
-  (zk-refresh-link-buttons))
+  (when zk-enable-link-buttons (zk-make-link-buttons)))
 
 (defun zk-insert-link-and-title (id title)
   "Insert zk ID and TITLE according to 'zk-link-and-title-format'."
