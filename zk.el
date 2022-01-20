@@ -44,10 +44,10 @@
 ;; Linking to such a note involves nothing more than placing the string
 ;; [[202012091130]] into another note in the directory.
 
-;; A note's filename is constructed as follows: the zk ID number followed by the
-;; title of the note followed by the file extension, e.g. "202012091130 On
-;; the origin of species.txt". A key consequence of this ID/linking scheme is
-;; that a note's title can change without any existing links to the note
+;; A note's filename is constructed as follows: the zk ID number followed by
+;; the title of the note followed by the file extension, e.g. "202012091130
+;; On the origin of species.txt". A key consequence of this ID/linking scheme
+;; is that a note's title can change without any existing links to the note
 ;; being broken, wherever they might be in the directory.
 
 ;; The directory is a single folder containing all notes.
@@ -209,8 +209,9 @@ will be replaced by its ID."
 
 (defvar zk-id-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "s") #'zk-search)
     (define-key map (kbd "RET") #'zk-follow-link-at-point)
+    (define-key map (kbd "k") #'zk-copy-link-and-title)
+    (define-key map (kbd "s") #'zk-search)
     map)
   "Keymap for Embark zk-id at-point actions.")
 
@@ -218,6 +219,7 @@ will be replaced by its ID."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "i") #'zk-insert-link)
     (define-key map (kbd "f") #'zk-find-file)
+    (define-key map (kbd "k") #'zk-copy-link-and-title)
     map)
   "Keymap for Embark zk-file minibuffer actions.")
 
@@ -225,7 +227,7 @@ will be replaced by its ID."
 (defun zk-embark-target-zk-id-at-point ()
   "Target zk-id at point."
   (when (thing-at-point-looking-at zk-id-regexp)
-    (let ((zk-id (thing-at-point 'symbol t)))
+    (let ((zk-id (match-string-no-properties 0)))
       `(zk-id ,zk-id . ,(bounds-of-thing-at-point 'symbol)))))
 
 (with-eval-after-load 'embark
@@ -275,12 +277,13 @@ Excludes lockfiles, autosave files, and backup files. When FULL is
 non-nil, return full file-paths. If REGEXP is non-nil, it must be
 a regexp to replace the default, 'zk-id-regexp'."
   (let* ((regexp (if regexp regexp
-                  zk-id-regexp))
+                   zk-id-regexp))
          (list (directory-files zk-directory full regexp))
          (files (remq nil (mapcar
                            (lambda (x)
-                             (unless (string-match-p "^[.]\\|[#|~]$"
-                                                     (file-name-nondirectory x))
+                             (unless (string-match-p
+                                      "^[.]\\|[#|~]$"
+                                      (file-name-nondirectory x))
                                x))
                            list))))
     files))
@@ -331,6 +334,11 @@ supplied. Can take a PROMPT argument."
   (if transform
       (file-name-nondirectory cand)
     "zk"))
+
+(defun zk--id-at-point ()
+  "Return ID at point."
+  (when (thing-at-point-looking-at zk-id-regexp)
+    (match-string-no-properties 0)))
 
 (defun zk--parse-id (target id)
   "Return TARGET, ie, 'file-path, 'file-name, or 'title, from file with ID."
@@ -522,9 +530,8 @@ title."
    (list (read-string "Search string: ")))
   (let ((files (zk--grep-file-list str)))
     (if files
-        (find-file (completing-read
-                    (format "Files containing \"%s\": " str)
-                    files nil t))
+        (find-file (zk--select-file
+                    (format "Files containing \"%s\": " str) files))
       (user-error "No results for \"%s\"" str))))
 
 ;;;###autoload
@@ -549,8 +556,7 @@ Optionally call a custom function by setting the variable
 (defun zk-follow-link-at-point (&optional _)
   "Open note that corresponds with the zk ID at point."
   (interactive)
-  (when (thing-at-point-looking-at zk-id-regexp)
-    (find-file (zk--parse-id 'file-path (match-string-no-properties 0)))))
+  (find-file (zk--parse-id 'file-path (zk--id-at-point))))
 
 (defun zk--links-in-note-list (id)
   "Return list of links in note with ID."
@@ -580,22 +586,6 @@ Optionally call a custom function by setting the variable
     (if files
         (find-file (zk--select-file "Links: " (delete-dups files)))
       (user-error "No links found"))))
-
-;;; List Backlinks
-
-(defun zk--backlinks-list (id)
-  "Return list of notes that link to note with ID."
-  (zk--grep-file-list (format zk-link-format id)))
-
-;;;###autoload
-(defun zk-backlinks ()
-  "Select from list of all notes that link to the current note."
-  (interactive)
-  (let* ((id (zk--current-id))
-         (files (zk--backlinks-list id)))
-    (if files
-        (find-file (zk--select-file "Backlinks: " files))
-      (user-error "No backlinks found"))))
 
 ;;; Insert Link
 
@@ -659,6 +649,32 @@ brackets \"[[\" initiates completion."
                                `((?i . ,id)(?t . ,title)))
                   output)))))
     output))
+
+;;; Copy Link and Title
+
+;;;###autoload
+(defun zk-copy-link-and-title (&optional id)
+  (interactive (list (zk--parse-file 'id (zk--select-file "Copy link: "))))
+  (let* ((id (if id id (zk--id-at-point)))
+         (title (zk--parse-id 'title id)))
+    (kill-new (format-spec zk-completion-at-point-format
+                           `((?i . ,id)(?t . ,title))))))
+
+;;; List Backlinks
+
+(defun zk--backlinks-list (id)
+  "Return list of notes that link to note with ID."
+  (zk--grep-file-list (format zk-link-format id)))
+
+;;;###autoload
+(defun zk-backlinks ()
+  "Select from list of all notes that link to the current note."
+  (interactive)
+  (let* ((id (zk--current-id))
+         (files (zk--backlinks-list id)))
+    (if files
+        (find-file (zk--select-file "Backlinks: " files))
+      (user-error "No backlinks found"))))
 
 ;;; Search
 
