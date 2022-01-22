@@ -249,13 +249,11 @@ The ID is created using `zk-id-time-string-format'."
     id))
 
 (defun zk--id-list ()
-  "Return a list of zk IDs for all notes in 'zk-directory'."
-  (let* ((files (zk--directory-files t))
+  "Return a list of zk IDs for notes in 'zk-directory'."
+  (let* ((list (zk--directory-files t))
          (all-ids))
-    (dolist (file files)
-      (progn
-        (string-match zk-id-regexp file)
-        (push (match-string 0 file) all-ids)))
+    (dolist (file list)
+      (push (zk--parse-file 'id file)  all-ids))
     all-ids))
 
 (defun zk--id-unavailable-p (str)
@@ -387,7 +385,7 @@ file extension."
        (add-hook 'find-file-hook 'zk-make-link-buttons)))
 
 (define-button-type 'zk-id
-  'action 'zk-follow-link-at-point
+  'action #'zk-follow-link-at-point
   'follow-link t
   'help-echo '(lambda (win obj pos)
         	(format "%s"
@@ -654,6 +652,7 @@ brackets \"[[\" initiates completion."
 
 ;;;###autoload
 (defun zk-copy-link-and-title (&optional id)
+  "Copy link and title for ID at point."
   (interactive (list (zk--parse-file 'id (zk--select-file "Copy link: "))))
   (let* ((id (if id id (zk--id-at-point)))
          (title (zk--parse-id 'title id)))
