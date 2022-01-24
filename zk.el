@@ -713,10 +713,10 @@ Defaults to 'zk-grep.'"
   (funcall zk-grep-function string))
 
 (defun zk-grep (regexp)
-  "Wrapper around 'lgrep' to search for REGEXP in all notes.
+  "Wrapper around 'rgrep' to search for REGEXP in all notes.
 Opens search results in a grep buffer."
   (grep-compute-defaults)
-  (lgrep regexp (concat "*." zk-file-extension) zk-directory nil))
+  (rgrep regexp (concat "*." zk-file-extension) zk-directory nil))
 
 ;;; Tag Functions
 
