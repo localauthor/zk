@@ -3,7 +3,7 @@
 #+language: en
 
 - [[#introduction][Introduction]]
-
+- [[#setup][Setup]]
 - [[#features][Features]]
   - [[#follow-links][Follow Links]]
     - [[#using-org-mode-and-org-links][Using Org-Mode and Org-Links]]
@@ -73,6 +73,33 @@ For the best experience completing filenames and links, it is *highly*
 recommended to use the =orderless= completion style, from [[https://github.com/oantolin/orderless][the package of the
 same name]]. Another high recommendation is [[https://github.com/minad/vertico][Vertico]], for completion in the
 minibuffer.
+
+* Setup
+
+The easiest way to install is from [[https://melpa.org/#/zk][MELPA]].
+
+Or, manually add =zk.el= to your loadpath and include =(require 'zk)= in your
+init.el file.
+
+At a minimum, you must set the variables =zk-directory= and
+=zk-file-extension=:
+
+#+begin_src emacs-lisp
+(setq zk-directory "~/path/to/your/zk-directory")
+(setq zk-file-extension "md") ;; any plaintext file extension, eg, "org" or "txt"
+#+end_src
+
+Or with =use-package=:
+
+#+begin_src emacs-lisp
+(use-package zk
+  :custom
+  (zk-directory "~/path/to/zk-directory")
+  (zk-file-extension "md"))
+#+end_src
+
+Once =zk= is loaded, call =M-x zk-new-note= to create a note or =M-x zk-find-file= to
+open an existing note.
 
 * Features
 
