@@ -123,9 +123,28 @@ can be disabled by setting =zk-enable-link-buttons= to nil.
 
 *** link-hint.el
 
-In any mode, even Org-Mode, if [[https://github.com/noctuid/link-hint.el][link-hint.el]] is loaded, then
-=link-hint-open-link= will find visible IDs. (This package is highly
-recommended!)
+To allow link-hint.el to find zk-links, it is necessary to add a new
+link type, as follows:
+
+#+begin_src emacs-lisp
+(defun zk-link-hint--zk-link-at-point-p ()
+  "Return the id of the zk-link at point or nil."
+  (thing-at-point-looking-at zk-link-regexp))
+
+(defun zk-link-hint--next-zk-link (&optional bound)
+  "Find the next zk-link.
+Only search the range between just after the point and BOUND."
+  (link-hint--next-regexp zk-id-regexp bound))
+
+(eval-when-compile
+  (link-hint-define-type 'zk-link
+    :next #'zk-link-hint--next-zk-link
+    :at-point-p #'zk-link-hint--zk-link-at-point-p
+    :open #'zk-follow-link-at-point
+    :copy #'kill-new))
+
+(push 'link-hint-zk-link link-hint-types)
+  #+end_src
 
 ** List Backlinks
 
