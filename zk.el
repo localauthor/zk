@@ -1,4 +1,4 @@
-;;; zk.el --- Functions for dealing with link-connected notes -*- lexical-binding: t; -*-
+;;; zk.el --- Functions for working with Zettelkasten-style linked notes -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022 Grant Rosson
 
@@ -60,6 +60,7 @@
 ;;; Code:
 
 (require 'thingatpt)
+(require 'format-spec)
 
 ;;; Variable Declarations
 
@@ -382,7 +383,7 @@ file extension."
 ;;; Buttons
 
 (cond (zk-enable-link-buttons
-       (add-hook 'find-file-hook 'zk-make-link-buttons)))
+       (add-hook 'find-file-hook #'zk-make-link-buttons)))
 
 (define-button-type 'zk-id
   'action #'zk-follow-link-at-point
