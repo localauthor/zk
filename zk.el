@@ -297,7 +297,7 @@ a regexp to replace the default, 'zk-id-regexp'."
                                           zk-file-extension
                                           " -e "
                                           (shell-quote-argument
-                                          (regexp-quote str))
+                                           (regexp-quote str))
                                           " "
                                           zk-directory
                                           " 2>/dev/null"))))
@@ -322,7 +322,7 @@ supplied. Can take a PROMPT argument."
                   (zk--directory-files t))))
     (completing-read
      (if prompt prompt
-         "Select File: ")
+       "Select File: ")
      (lambda (string predicate action)
        (if (eq action 'metadata)
            `(metadata
@@ -353,16 +353,16 @@ supplied. Can take a PROMPT argument."
     (if file
         (progn
           (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
+                                zk-id-regexp
+                                "\\).\\(?2:.*?\\)\\."
+                                zk-file-extension
+                                ".*")
                         file)
           (cond
            ((eq target 'file-path)
             file)
            ((eq target 'file-name)
-              (match-string return file))
+            (match-string return file))
            ((eq target 'title)
             (match-string return file))))
       (user-error "No file associated with %s" id))))
@@ -375,11 +375,11 @@ file extension."
   (let ((return (pcase target
                   ('id '1)
                   ('title '2))))
-            (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
+    (string-match (concat "\\(?1:"
+                          zk-id-regexp
+                          "\\).\\(?2:.*?\\)\\."
+                          zk-file-extension
+                          ".*")
                   file)
     (match-string return file)))
 
@@ -389,16 +389,16 @@ file extension."
        (add-hook 'find-file-hook #'zk-make-link-buttons)))
 
 (eval-and-compile
-(define-button-type 'zk-link
-  'action 'zk-follow-link-at-point
-  'follow-link t
-  'help-echo (lambda (_win _obj pos)
-               (format
-                "%s"
-                (zk--parse-id
-                 'title
-                 (button-label
-                  (button-at pos)))))))
+  (define-button-type 'zk-link
+    'action 'zk-follow-link-at-point
+    'follow-link t
+    'help-echo (lambda (_win _obj pos)
+                 (format
+                  "%s"
+                  (zk--parse-id
+                   'title
+                   (button-label
+                    (button-at pos)))))))
 
 (defun zk-make-link-buttons ()
   "Make zk-link-regexps in current buffer into zk-link buttons."
@@ -419,7 +419,7 @@ file extension."
   "Find 'zk-link-regexp' before point and make it a zk-link button."
   (save-excursion
     (re-search-backward zk-link-regexp (line-beginning-position))
-    (make-button (match-beginning 0) (match-end 0)
+    (make-button (match-beginning 1) (match-end 1)
                  'type 'zk-link)))
 
 ;;; Note Functions
@@ -495,18 +495,18 @@ title."
   (let* ((id (zk--current-id))
          (file-title (zk--parse-id 'title id))
          (header-title (progn
-                      (save-excursion
-                        (goto-char (point-min))
-                        (re-search-forward id)
-                        (re-search-forward " ")
-                        (buffer-substring-no-properties
-                         (point)
-                         (line-end-position)))))
+                         (save-excursion
+                           (goto-char (point-min))
+                           (re-search-forward id)
+                           (re-search-forward " ")
+                           (buffer-substring-no-properties
+                            (point)
+                            (line-end-position)))))
          (new-title))
     (if (not (string= file-title header-title))
-      (if (y-or-n-p (format "Change from \"%s\" to \"%s\"? " file-title header-title))
-          (setq new-title header-title)
-        (setq new-title (read-string "New title: " file-title)))
+        (if (y-or-n-p (format "Change from \"%s\" to \"%s\"? " file-title header-title))
+            (setq new-title header-title)
+          (setq new-title (read-string "New title: " file-title)))
       (setq new-title (read-string "New title: " file-title)))
     (save-excursion
       (goto-char (point-min))
@@ -571,7 +571,7 @@ Optionally call a custom function by setting the variable
   (interactive)
   (find-file (zk--parse-id 'file-path (zk--id-at-point))))
 
-(defun zk--links-in-note-list (id) ;; TODO make id optional, unless id, search current buffer?
+(defun zk--links-in-note-list (id)
   "Return list of links in note with ID."
   (let (files)
     (save-buffer)
@@ -627,15 +627,15 @@ for additional configurations."
 (defun zk--insert-link (id)
   "Insert link to note with ID, with button optional."
   (insert (format zk-link-format id))
-    (when zk-enable-link-buttons
-      (zk--make-button-before-point)))
+  (when zk-enable-link-buttons
+    (zk--make-button-before-point)))
 
 (defun zk--insert-link-and-title (id title)
   "Insert zk ID and TITLE according to 'zk-link-and-title-format'."
   (insert (format-spec zk-link-and-title-format
                        `((?i . ,id)(?t . ,title))))
-    (when zk-enable-link-buttons
-      (zk--make-button-before-point)))
+  (when zk-enable-link-buttons
+    (zk--make-button-before-point)))
 
 (defun zk-completion-at-point ()
   "Completion-at-point function for zk-links.
@@ -650,7 +650,7 @@ brackets \"[[\" initiates completion."
               (zk--completion-at-point-candidates)
               :exclusive 'no)))))
 
-;; add post completion hook, to optionally make button before point
+;; TODO add post completion hook, to optionally make button before point?
 
 (defun zk--completion-at-point-candidates (&optional files)
   "Return a list of formatted candidates for 'zk-completion-at-point'.
@@ -660,7 +660,7 @@ be formatted as completion candidates."
   (let* ((list (if files files
                  (zk--directory-files)))
          (output))
-         (dolist (file list)
+    (dolist (file list)
       (progn
         (string-match (concat "\\(?1:"
                               zk-id-regexp
