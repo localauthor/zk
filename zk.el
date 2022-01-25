@@ -342,30 +342,47 @@ supplied. Can take a PROMPT argument."
   (when (thing-at-point-looking-at zk-id-regexp)
     (match-string-no-properties 0)))
 
-(defun zk--parse-id (target id)
-  "Return TARGET, ie, 'file-path, 'file-name, or 'title, from file with ID."
-  (let ((file (if (string-match-p zk-id-regexp id)
-                  (car (zk--directory-files t id))
-                (error "Not a zk-id")))
-        (return (pcase target
-                  ('file-name '0)
-                  ('title '2))))
-    (if file
-        (progn
-          (string-match (concat "\\(?1:"
-                                zk-id-regexp
-                                "\\).\\(?2:.*?\\)\\."
-                                zk-file-extension
-                                ".*")
-                        file)
-          (cond
-           ((eq target 'file-path)
-            file)
-           ((eq target 'file-name)
-            (match-string return file))
-           ((eq target 'title)
-            (match-string return file))))
-      (user-error "No file associated with %s" id))))
+(defun zk--alist ()
+  "Return an alist ID, title, and file-path triples."
+  (mapcar
+   (lambda (file)
+     (progn
+       (string-match (concat "\\(?1:"
+                             zk-id-regexp
+                             "\\).\\(?2:.*?\\)\\."
+                             zk-file-extension
+                             ".*")
+                     file)
+       `(,(match-string-no-properties 1 file) ,(match-string-no-properties 2 file) ,file)))
+   (zk--directory-files t)))
+
+(defun zk--parse-id (target ids)
+  "Return TARGET, either 'file-path or 'title, from files with IDS."
+  (let* ((zk-alist (zk--alist))
+         (return
+          (cond ((eq target 'file-path)
+                 (cond ((stringp ids)
+                        (if (member ids (zk--id-list))
+                            (cddr (assoc ids zk-alist))
+                          (user-error "No file associated with %s" ids)))
+                       ((listp ids)
+                        (mapcar
+                         (lambda (x)
+                           (caddr (assoc x zk-alist)))
+                         ids))))
+                ((eq target 'title)
+                 (cond ((stringp ids)
+                        (if (member ids (zk--id-list))
+                            (cadr (assoc ids zk-alist))
+                          (user-error "No file associated with %s" ids)))
+                       ((listp ids)
+                        (mapcar
+                         (lambda (x)
+                           (cadr (assoc x zk-alist)))
+                         ids)))))))
+    (if (eq 1 (length return))
+        (car return)
+      return)))
 
 (defun zk--parse-file (target file)
   "Return TARGET, either 'id or 'title, from FILE.
