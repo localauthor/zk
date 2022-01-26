@@ -1,55 +1,22 @@
 ;;; zk-index.el --- Index and desktop for zk         -*- lexical-binding: t; -*-
 
+;;; Commentary:
+
+;; A semi-persistent, curated selection of notes titles.
+
+;; For making more persistent, more curated selections, use zk-desktop.
+
 ;;; Code:
 
 (require 'zk)
 (require 'zk-extras)
 
-;;; ZK Desktop
+;; TODO make focus and search case-insensitive
+;; TODO remove anything not general, and in zk-extras
 
-;;;###autoload
-(defun zk-index-desktop ()
-  "Open ZK-Desktop."
-  (interactive)
-  ;; make new desktop, or add to existing
-  ;; list existing desktops
-  (let ((buffer "*ZK-Desktop*"))
-    (when (string= (buffer-name) "*ZK-Index*")
-        (progn
-          (read-only-mode -1)
-          (let ((items (if (use-region-p)
-                           (buffer-substring (save-excursion
-                                               (goto-char (region-beginning))
-                                               (line-beginning-position))
-                                             (save-excursion
-                                               (goto-char (region-end))
-                                               (line-end-position)))
-                         (buffer-substring (line-beginning-position)(line-end-position)))))
-            (read-only-mode)
-            (unless (get-buffer buffer)
-              (generate-new-buffer buffer))
-            (with-current-buffer buffer
-              (goto-char (point-max))
-              (newline)
-              (insert items)
-              (newline)
-              (unless (bound-and-true-p truncate-lines)
-                (toggle-truncate-lines))
-              (goto-char (point-max))))))
-      (unless (get-buffer-window buffer 'visible)
-        (progn
-          (display-buffer buffer
-                          '(display-buffer-pop-up-frame
-                            (inhibit-switch-frame . t)))
-          (set-frame-position (selected-frame) 850 80)))))
+;; how to stack sort functions? luhmann and modified, for example
 
-;;; ZK Index View
-
-;; a semi-persistent curated selection of notes
-;; for more persistent selections, use ZK Desktop
-
-;; make focus and search case-insensitive
-;; but how to stack sort functions? luhmann and modified, for example
+;;; Variables
 
 (defvar zk-index-last-sort-function nil
   "Set to the name of the last sort function used.
@@ -59,15 +26,30 @@ If no sort function, gets set to nil.")
   "Set to the name of the last format function used.
 If no format function, gets set to nil.")
 
-;; (zk-index (zk--directory-files t) nil 'zk-index--sort-latest-modified)
+(defvar zk-index-map
+  (let ((map (make-sparse-keymap)))
+          (define-key map (kbd "n") #'next-line)
+          (define-key map (kbd "p") #'previous-line)
+          (define-key map (kbd "o") #'link-hint-aw-select) ;; not general
+          (define-key map (kbd "f") #'zk-index-focus)
+          (define-key map (kbd "l") #'zk-index-luhmann)
+          (define-key map (kbd "s") #'zk-index-search)
+          (define-key map (kbd "d") #'zk-index-desktop)
+          (define-key map (kbd "g") #'zk-index-refresh)
+          (define-key map (kbd "M") #'zk-index-sort-modified)
+          (define-key map (kbd "C") #'zk-index-sort-created)
+          (define-key map (kbd "L") #'zk-index-sort-luhmann) ;; not general
+          (define-key map (kbd "q") #'delete-window)
+          map)
+  "Keymap for ZK-Index buffer.")
 
-;;;###autoload
-(defun zk-index-luhmann ()
-  "Open index for Luhmann-style notes."
-  (interactive)
-  (zk-index (zk--luhmann-files) 'zk--luhmann-format-candidates 'zk--luhmann-sort))
+(add-to-list 'minor-mode-map-alist (cons 'zk-index-map-enable zk-index-map))
 
-;; (zk-index-refresh (zk--directory-files t) nil 'zk-index--sort-latest-modified)
+(defvar-local zk-index-map-enable nil
+  "Enable or disable 'zk-index-map'.")
+
+
+;;; Main Stack
 
 ;;;###autoload
 (defun zk-index (&optional files format-fn sort-fn)
@@ -83,19 +65,8 @@ If no format function, gets set to nil.")
         (zk-find-file-by-id zk-default-backlink)
         (generate-new-buffer buffer)
         (with-current-buffer buffer
-          (zk-index-sort list format-fn sort-fn)
-          (local-set-key (kbd "n") 'next-line)
-          (local-set-key (kbd "p") 'previous-line)
-          (local-set-key (kbd "o") 'link-hint-aw-select)
-          (local-set-key (kbd "f") 'zk-index-focus)
-          (local-set-key (kbd "l") 'zk-index-luhmann)
-          (local-set-key (kbd "s") 'zk-index-search)
-          (local-set-key (kbd "d") 'zk-index-desktop)
-          (local-set-key (kbd "g") 'zk-index-refresh)
-          (local-set-key (kbd "M") 'zk-index-sort-modified)
-          (local-set-key (kbd "C") 'zk-index-sort-created)
-          (local-set-key (kbd "L") 'zk-index-sort-luhmann)
-          (local-set-key (kbd "q") 'delete-window)
+          (zk-index--sort list format-fn sort-fn)
+          (setq zk-index-map-enable t)
           (read-only-mode 1)
           (toggle-truncate-lines)
           (goto-char (point-min)))))
@@ -114,27 +85,27 @@ If no format function, gets set to nil.")
     (setq line (line-number-at-pos))
     (read-only-mode -1)
     (erase-buffer)
-    (zk-index-sort files format-fn sort-fn)
+    (zk-index--sort files format-fn sort-fn)
     (goto-char (point-min))
     (unless (zk-index-narrowed-p)
       (forward-line line))
     (read-only-mode))))
 
-(defun zk-index-sort (files &optional format-fn sort-fn)
+(defun zk-index--sort (files &optional format-fn sort-fn)
   "Format zk-index candidates."
   (let* ((sort-fn (if sort-fn sort-fn
                    'zk-index--sort-modified))
         (files (nreverse (funcall sort-fn files))))
-    (funcall #'zk-index-format files format-fn)))
+    (funcall #'zk-index--format files format-fn)))
 
-(defun zk-index-format (files &optional format-fn)
+(defun zk-index--format (files &optional format-fn)
   "Format zk-index candidates."
   (let* ((format-fn (if format-fn format-fn
                       'zk--completion-at-point-candidates))
          (candidates (funcall format-fn files)))
-    (zk-index-insert candidates)))
+    (zk-index--insert candidates)))
 
-(defun zk-index-insert (candidates)
+(defun zk-index--insert (candidates)
   (dolist (file candidates)
     (string-match zk-id-regexp file)
     (insert-button file
@@ -149,6 +120,12 @@ If no format function, gets set to nil.")
     (newline))
   (message "Notes: %s" (length candidates)))
 
+(defun zk-index-narrowed-p ()
+  (with-current-buffer "*ZK-Index*"
+    (if (< (count-lines (point-min) (point-max))
+           (length (zk--id-list)))
+        t nil)))
+
 (defun zk-index-quit ()
   (interactive)
   (if (zk-index-narrowed-p)
@@ -157,19 +134,44 @@ If no format function, gets set to nil.")
         (delete-window))
     (delete-window)))
 
-(defun zk-index-narrowed-p ()
-  (with-current-buffer "*ZK-Index*"
-    (if (< (count-lines (point-min) (point-max))
-           (length (zk--id-list)))
-        t nil)))
 
-;; Index Sort Functions
+;;; Index Luhmann
 
-(defun zk-index-current-file-list ()
+;;;###autoload
+(defun zk-index-luhmann ()
+  "Open index for Luhmann-style notes."
+  (interactive)
+  (zk-index (zk--luhmann-files) 'zk--luhmann-format-candidates 'zk--luhmann-sort))
+
+(defun zk-index-sort-luhmann ()
+  (interactive)
+  (if (eq zk-index-last-format-function 'zk--luhmann-format-candidates)
+      (zk-index-refresh (zk-index--current-file-list)
+                        zk-index-last-format-function
+                        #'zk--luhmann-sort)
+    (error "Not Luhmann format - press \"l\" to switch")))
+
+
+;;; Index Sort Functions
+
+(defun zk-index-sort-modified ()
+  (interactive)
+  (zk-index-refresh (zk-index--current-file-list)
+                    zk-index-last-format-function
+                    #'zk-index--sort-modified))
+
+(defun zk-index-sort-created ()
+  (interactive)
+  (zk-index-refresh (zk-index--current-file-list)
+                    zk-index-last-format-function
+                    #'zk-index--sort-created))
+
+
+(defun zk-index--current-file-list ()
   "Return narrowed list of candidates.
 Asks whether to search all files or only those in current index."
   (interactive)
-  (let* ((ids (zk-index-current-id-list))
+  (let* ((ids (zk-index--current-id-list))
          (files (zk--parse-id 'file-path ids)))
     (when files
       files)))
@@ -200,37 +202,18 @@ Asks whether to search all files or only those in current index."
                    (gethash b ht)))
               (time-less-p two one))))))
 
-(defun zk-index-sort-modified ()
-  (interactive)
-  (zk-index-refresh (zk-index-current-file-list)
-                    zk-index-last-format-function
-                    #'zk-index--sort-modified))
-
-(defun zk-index-sort-created ()
-  (interactive)
-  (zk-index-refresh (zk-index-current-file-list)
-                    zk-index-last-format-function
-                    #'zk-index--sort-created))
-
-(defun zk-index-sort-luhmann ()
-  (interactive)
-  (if (eq zk-index-last-format-function 'zk--luhmann-format-candidates)
-      (zk-index-refresh (zk-index-current-file-list)
-                        zk-index-last-format-function
-                        #'zk--luhmann-sort)
-    (error "Not Luhmann format - press \"l\" to switch")))
-  
 (defun zk-index--sort-size (list)
   "Sort LIST for latest modification."
   (sort list
         (lambda (a b)
-          (let ((one  
+          (let ((one
                  (file-attribute-size (file-attributes a)))
                 (two
                  (file-attribute-size (file-attributes b))))
             (time-less-p two one)))))
 
-;;;; Index Narrowing Functions
+
+;;; Narrowing Functions
 
 (defun zk-index-narrowed-files ()
   "Return narrowed list of candidates.
@@ -238,7 +221,7 @@ Asks whether to search all files or only those in current index."
   (let* ((command this-command)
          (scope (if (zk-index-narrowed-p)
                     (if (y-or-n-p "Query subset only? ")
-                        (zk-index-current-id-list)
+                        (zk-index--current-id-list)
                       (zk--id-list))
                   (zk--id-list)))
          (string (read-string "Search: "))
@@ -260,7 +243,7 @@ Asks whether to search all files or only those in current index."
     (if files files
       (error "No matches for \"%s\"" string))))
 
-(defun zk-index-current-id-list ()
+(defun zk-index--current-id-list ()
   "Return list of IDs for current index, as filepaths."
   (let (ids)
     (with-current-buffer "*ZK-Index*"
@@ -279,7 +262,9 @@ Asks whether to search all files or only those in current index."
        (zk--parse-file 'id x))
      files)))
 
-;;;; zk-index-focus
+
+;;; Index Focus
+
 ;; narrow index based on search of note titles (case sensitive)
 ;; an alternative to consult-focus-lines
 
@@ -288,13 +273,54 @@ Asks whether to search all files or only those in current index."
   (interactive)
   (zk-index-refresh (zk-index-narrowed-files) zk-index-last-format-function zk-index-last-sort-function))
 
-;;;; zk-index-search
+
+;;; Index Search
 ;; narrow index based on search of notes' full text
 
 (defun zk-index-search ()
   "Narrow index based on search of note titles."
   (interactive)
   (zk-index-refresh (zk-index-narrowed-files) zk-index-last-format-function zk-index-last-sort-function))
+
+
+;;; Desktop
+;; index's less rigid cousin; a place to collect and order note titles
+
+;;;###autoload
+(defun zk-index-desktop ()
+  "Open ZK-Desktop."
+  (interactive)
+  ;; TODO make new desktop, or add to existing?
+  ;; TODO list existing desktops?
+  (let ((buffer "*ZK-Desktop*"))
+    (when (string= (buffer-name) "*ZK-Index*")
+        (progn
+          (read-only-mode -1)
+          (let ((items (if (use-region-p)
+                           (buffer-substring (save-excursion
+                                               (goto-char (region-beginning))
+                                               (line-beginning-position))
+                                             (save-excursion
+                                               (goto-char (region-end))
+                                               (line-end-position)))
+                         (buffer-substring (line-beginning-position)(line-end-position)))))
+            (read-only-mode)
+            (unless (get-buffer buffer)
+              (generate-new-buffer buffer))
+            (with-current-buffer buffer
+              (goto-char (point-max))
+              (newline)
+              (insert items)
+              (newline)
+              (unless (bound-and-true-p truncate-lines)
+                (toggle-truncate-lines))
+              (goto-char (point-max))))))
+      (unless (get-buffer-window buffer 'visible)
+        (progn
+          (display-buffer buffer
+                          '(display-buffer-pop-up-frame
+                            (inhibit-switch-frame . t)))
+          (set-frame-position (selected-frame) 850 80)))))
 
 (provide 'zk-index)
 
