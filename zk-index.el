@@ -9,6 +9,7 @@
 ;;; Code:
 
 (require 'zk)
+(require 'view)
 (require 'zk-extras)
 
 ;; TODO make focus and search case-insensitive
@@ -28,8 +29,8 @@ If no format function, gets set to nil.")
 
 (defvar zk-index-map
   (let ((map (make-sparse-keymap)))
-          (define-key map (kbd "n") #'next-line)
-          (define-key map (kbd "p") #'previous-line)
+          (define-key map (kbd "n") #'zk-index-next-line)
+          (define-key map (kbd "p") #'zk-index-previous-line)
           (define-key map (kbd "o") #'link-hint-aw-select) ;; not general
           (define-key map (kbd "f") #'zk-index-focus)
           (define-key map (kbd "l") #'zk-index-luhmann)
@@ -126,6 +127,9 @@ If no format function, gets set to nil.")
            (length (zk--id-list)))
         t nil)))
 
+
+;;; Keymap Commands
+
 (defun zk-index-quit ()
   (interactive)
   (if (zk-index-narrowed-p)
@@ -134,6 +138,25 @@ If no format function, gets set to nil.")
         (delete-window))
     (delete-window)))
 
+(defun zk-index-next-line ()
+  (interactive)
+  (other-window 1)
+  (if (derived-mode-p view-mode)
+      (View-quit)
+    (other-window -1))
+  (forward-line)
+  (push-button nil t)
+  (other-window -1))
+
+(defun zk-index-previous-line ()
+  (interactive)
+  (other-window 1)
+  (if (derived-mode-p view-mode)
+      (View-quit)
+    (other-window -1))
+  (forward-line -1)
+  (push-button nil t)
+  (other-window -1))
 
 ;;; Index Luhmann
 
