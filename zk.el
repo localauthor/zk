@@ -240,9 +240,10 @@ will be replaced by its ID."
 
 ;;; Low-Level Functions
 
-(defun zk-directory-p ()
-  "Return t if buffer is in 'zk-directory'; nil otherwise."
-  (file-in-directory-p default-directory zk-directory))
+(defun zk-file-p ()
+  "Return t if buffer is a zk-file; nil otherwise."
+  (and (string-match-p zk-id-regexp buffer-file-name)
+       (file-in-directory-p default-directory zk-directory)))
 
 (defun zk--generate-id ()
   "Generate and return a zk ID.
@@ -268,7 +269,7 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--current-id ()
   "Return id of current note."
-  (unless (zk-directory-p)
+  (unless (zk-file-p)
     (user-error "Not a zk file"))
   (string-match zk-id-regexp buffer-file-name)
   (match-string 0 buffer-file-name))
@@ -420,7 +421,7 @@ file extension."
 (defun zk-make-link-buttons ()
   "Make zk-link-regexps in current buffer into zk-link buttons."
   (interactive)
-  (when (and (zk-directory-p)
+  (when (and (zk-file-p)
              zk-enable-link-buttons)
     (let ((ids (zk--id-list)))
       (save-excursion
@@ -475,7 +476,7 @@ file extension."
     (when (or pref-arg
               (eq zk-new-note-link-insert 't)
               (and (eq zk-new-note-link-insert 'zk)
-                   (zk-directory-p))
+                   (zk-file-p))
               (and (eq zk-new-note-link-insert 'ask)
                    (y-or-n-p "Insert link at point? ")))
       (zk-insert-link new-id title))
