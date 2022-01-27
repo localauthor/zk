@@ -38,16 +38,13 @@ Defaults to 'zk-directory'.")
   "Basename for ZK-Desktops.
 The names of all ZK-Desktops should begin with this string.")
 
-
 (defvar zk-index-map
   (let ((map (make-sparse-keymap)))
           (define-key map (kbd "n") #'zk-index-next-line)
           (define-key map (kbd "p") #'zk-index-previous-line)
-          (define-key map (kbd "RET") #'zk-index-open-note)
           (define-key map (kbd "v") #'zk-index-view-note)
           (define-key map (kbd "o") #'other-window)
           (define-key map (kbd "f") #'zk-index-focus)
-          (define-key map (kbd "l") #'zk-index-luhmann)
           (define-key map (kbd "s") #'zk-index-search)
           (define-key map (kbd "d") #'zk-index-send-to-desktop)
           (define-key map (kbd "D") #'zk-index-switch-to-desktop)
@@ -55,7 +52,6 @@ The names of all ZK-Desktops should begin with this string.")
           (define-key map (kbd "g") #'zk-index-refresh)
           (define-key map (kbd "M") #'zk-index-sort-modified)
           (define-key map (kbd "C") #'zk-index-sort-created)
-          (define-key map (kbd "L") #'zk-index-sort-luhmann) ;; not general
           (define-key map (kbd "q") #'delete-window)
           map)
   "Keymap for ZK-Index buffer.")
@@ -389,22 +385,6 @@ If 'zk-index-auto-scroll' is non-nil, show note in other-window."
                                                                      (height . 35)))))
           (switch-to-buffer-other-frame buffer))
       (switch-to-buffer buffer))))
-
-;;; Index Luhmann
-
-;;;###autoload
-(defun zk-index-luhmann ()
-  "Open index for Luhmann-style notes."
-  (interactive)
-  (zk-index (zk--luhmann-files) nil 'zk--luhmann-sort))
-
-(defun zk-index-sort-luhmann ()
-  (interactive)
-  (if (eq zk-index-last-sort-function 'zk--luhmann-sort)
-      (zk-index-refresh (zk-index--current-file-list)
-                        zk-index-last-format-function
-                        #'zk--luhmann-sort)
-    (error "Not in Luhmann index - press \"l\" to switch")))
 
 
 ;;; Desktop
