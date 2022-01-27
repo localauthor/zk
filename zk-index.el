@@ -139,10 +139,12 @@ If no format function, gets set to nil.")
     (read-only-mode))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
-  "Format zk-index candidates."
+  "Sort zk-index candidates."
   (let* ((sort-fn (if sort-fn sort-fn
                    'zk-index--sort-modified))
-        (files (nreverse (funcall sort-fn files))))
+         (files (if (eq 1 (length files))
+                    files
+                  (nreverse (funcall sort-fn files)))))
     (funcall #'zk-index--format files format-fn)))
 
 (defun zk-index--format (files &optional format-fn)
@@ -203,6 +205,8 @@ If no format function, gets set to nil.")
                x))
            query))
          (files (zk--parse-id 'file-path (remq nil focus))))
+    (when (stringp files)
+      (setq files (list files)))
     (if files files
       (error "No matches for \"%s\"" string))))
 
