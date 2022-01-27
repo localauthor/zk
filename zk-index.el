@@ -12,10 +12,15 @@
 (require 'view)
 (require 'zk-extras)
 
-;; TODO make focus and search case-insensitive
+;; TODO make focus and search case-insensitive?
+
 ;; TODO remove anything not general, and in zk-extras
 
 ;; how to stack sort functions? luhmann and modified, for example
+
+;; NOTE zk-index uses text buttons to allow buttons to be sent to zk-desktop
+;; so link-hint becomes unmanagable, bc it finds ids and buttons
+;; disable zk-link-hint in buffer?
 
 ;;; Variables
 
@@ -31,11 +36,14 @@ If no format function, gets set to nil.")
   (let ((map (make-sparse-keymap)))
           (define-key map (kbd "n") #'zk-index-next-line)
           (define-key map (kbd "p") #'zk-index-previous-line)
-          (define-key map (kbd "o") #'link-hint-aw-select) ;; not general
+          (define-key map (kbd "RET") #'zk-index-open-note)
+          (define-key map (kbd "v") #'zk-index-view-note)
+          (define-key map (kbd "o") #'other-window)
           (define-key map (kbd "f") #'zk-index-focus)
           (define-key map (kbd "l") #'zk-index-luhmann)
           (define-key map (kbd "s") #'zk-index-search)
-          (define-key map (kbd "d") #'zk-index-desktop)
+          (define-key map (kbd "d") #'zk-index-send-to-desktop)
+          (define-key map (kbd "D") #'zk-index-switch-to-desktop)
           (define-key map (kbd "g") #'zk-index-refresh)
           (define-key map (kbd "M") #'zk-index-sort-modified)
           (define-key map (kbd "C") #'zk-index-sort-created)
@@ -49,6 +57,24 @@ If no format function, gets set to nil.")
 (defvar-local zk-index-map-enable nil
   "Enable or disable 'zk-index-map'.")
 
+(defvar zk-index-auto-scroll t
+  "Enable automatically showing note at point in ZK-Index.")
+
+(defvar zk-index-desktop-map
+  (let ((map (make-sparse-keymap)))
+          (define-key map [remap move-line-up] #'zk-index-move-line-up) ;; why is remap needed?
+          (define-key map [remap move-line-down] #'zk-index-move-line-down)
+          (define-key map (kbd "i") #'zk-index-switch-to-index)
+          (define-key map (kbd "C-+") #'zk-index-desktop-edit-mode)
+          (define-key map (kbd "o") #'other-window)
+          (define-key map (kbd "q") #'delete-window)
+          map)
+  "Keymap for ZK-Desktop buffer.")
+
+(add-to-list 'minor-mode-map-alist (cons 'zk-index-desktop-map-enable zk-index-desktop-map))
+
+(defvar-local zk-index-desktop-map-enable nil
+  "Enable or disable 'zk-index-desktop-map'.")
 
 ;;; Main Stack
 
@@ -63,7 +89,8 @@ If no format function, gets set to nil.")
                  (zk--directory-files t))))
     (unless (get-buffer buffer)
       (progn
-        (zk-find-file-by-id zk-default-backlink)
+        (unless (zk-directory-p)
+          (zk-find-file-by-id zk-default-backlink))
         (generate-new-buffer buffer)
         (with-current-buffer buffer
           (zk-index--sort list format-fn sort-fn)
@@ -109,13 +136,13 @@ If no format function, gets set to nil.")
 (defun zk-index--insert (candidates)
   (dolist (file candidates)
     (string-match zk-id-regexp file)
-    (insert-button file
+    (insert-text-button file
                    'follow-link t
                    'face 'default
                    'action
                    `(lambda (_)
                       (progn
-                        (view-file-other-window
+                        (find-file-other-window
                          (zk--parse-id 'file-path
                                        ,(match-string 0 file))))))
     (newline))
@@ -130,33 +157,71 @@ If no format function, gets set to nil.")
 
 ;;; Keymap Commands
 
-(defun zk-index-quit ()
+(defun zk-index-open-note ()
   (interactive)
-  (if (zk-index-narrowed-p)
-      (if (y-or-n-p "Refresh index? ")
-          (zk-index)
-        (delete-window))
-    (delete-window)))
+  (push-button nil t)
+  (other-window -1))
+
+(defun zk-index-view-note ()
+  (interactive)
+  (push-button nil t)
+  (view-mode)
+  (other-window -1))
 
 (defun zk-index-next-line ()
+  "Move to next line.
+If 'zk-index-auto-scroll' is non-nil, show note in other-window."
   (interactive)
-  (other-window 1)
-  (if (derived-mode-p view-mode)
-      (View-quit)
-    (other-window -1))
-  (forward-line)
-  (push-button nil t)
-  (other-window -1))
+  (if zk-index-auto-scroll
+      (progn
+        (other-window 1)
+        (when view-mode
+          (kill-buffer))
+        (other-window -1)
+        (forward-line)
+        (push-button nil t)
+        (view-mode)
+        (other-window -1))
+    (forward-line)))
 
 (defun zk-index-previous-line ()
+  "Move to previous line.
+If 'zk-index-auto-scroll' is non-nil, show note in other-window."
   (interactive)
-  (other-window 1)
-  (if (derived-mode-p view-mode)
-      (View-quit)
-    (other-window -1))
-  (forward-line -1)
-  (push-button nil t)
-  (other-window -1))
+  (if zk-index-auto-scroll
+      (progn
+        (other-window 1)
+        (when view-mode
+          (kill-buffer))
+        (other-window -1)
+        (forward-line -1)
+        (push-button nil t)
+        (view-mode)
+        (other-window -1))
+    (forward-line -1)))
+
+(defun zk-index-move-line-down ()
+  "Move line at point down in 'read-only-mode'."
+  (interactive)
+  (read-only-mode -1)
+   (forward-line 1)
+   (transpose-lines 1)
+   (forward-line -1)
+  (read-only-mode))
+
+(defun zk-index-move-line-up ()
+  "Move line at point up in 'read-only-mode'."
+  (interactive)
+  (read-only-mode -1)
+  (transpose-lines 1)
+  (forward-line -2)
+  (read-only-mode))
+
+(defun zk-index-switch-to-desktop ()
+  "Switch to *ZK-Desktop* in other frame."
+  (interactive)
+  (switch-to-buffer-other-frame "*ZK-Desktop*"))
+
 
 ;;; Index Luhmann
 
@@ -236,16 +301,13 @@ Asks whether to search all files or only those in current index."
             (time-less-p two one)))))
 
 
-;;; Narrowing Functions
+;;; Querying Functions
 
-(defun zk-index-narrowed-files ()
-  "Return narrowed list of candidates.
-Asks whether to search all files or only those in current index."
+(defun zk-index-query-files ()
+  "Return narrowed list of notes, based on focus or search query."
   (let* ((command this-command)
          (scope (if (zk-index-narrowed-p)
-                    (if (y-or-n-p "Query subset only? ")
-                        (zk-index--current-id-list)
-                      (zk--id-list))
+                    (zk-index--current-id-list)
                   (zk--id-list)))
          (string (read-string "Search: "))
          (query (cond
@@ -294,7 +356,7 @@ Asks whether to search all files or only those in current index."
 (defun zk-index-focus ()
   "Narrow index based on search of note titles."
   (interactive)
-  (zk-index-refresh (zk-index-narrowed-files) zk-index-last-format-function zk-index-last-sort-function))
+  (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
 
 
 ;;; Index Search
@@ -303,18 +365,20 @@ Asks whether to search all files or only those in current index."
 (defun zk-index-search ()
   "Narrow index based on search of note titles."
   (interactive)
-  (zk-index-refresh (zk-index-narrowed-files) zk-index-last-format-function zk-index-last-sort-function))
+  (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
 
 
 ;;; Desktop
 ;; index's less rigid cousin; a place to collect and order note titles
 
+;; TODO allow multiple, saved desktops?
+;; TODO make new desktop or add to existing?
+;; TODO list existing desktops?
+
 ;;;###autoload
-(defun zk-index-desktop ()
-  "Open ZK-Desktop."
+(defun zk-index-send-to-desktop ()
+  "Send notes at point, or notes in active region, to ZK-Desktop."
   (interactive)
-  ;; TODO make new desktop, or add to existing?
-  ;; TODO list existing desktops?
   (let ((buffer "*ZK-Desktop*"))
     (when (string= (buffer-name) "*ZK-Index*")
         (progn
@@ -331,19 +395,43 @@ Asks whether to search all files or only those in current index."
             (unless (get-buffer buffer)
               (generate-new-buffer buffer))
             (with-current-buffer buffer
+              (read-only-mode -1)
+              (setq zk-index-desktop-map-enable t)
               (goto-char (point-max))
               (newline)
               (insert items)
-              (newline)
               (unless (bound-and-true-p truncate-lines)
                 (toggle-truncate-lines))
-              (goto-char (point-max))))))
-      (unless (get-buffer-window buffer 'visible)
-        (progn
-          (display-buffer buffer
-                          '(display-buffer-pop-up-frame
-                            (inhibit-switch-frame . t)))
-          (set-frame-position (selected-frame) 850 80)))))
+              (goto-char (point-max))
+              (beginning-of-line)
+              (read-only-mode)))))
+    (unless (get-buffer-window buffer 'visible)
+      (special-display-popup-frame "*ZK-Desktop*"
+                                   '((top . 80)
+                                     (left . 850)
+                                     (width . 80)
+                                     (height . 35)
+                                     (no-focus-on-map . t))))))
+
+(defun zk-index-switch-to-index ()
+  "Switch to ZK-Index buffer."
+  (interactive)
+  (when (get-buffer "*ZK-Index*")
+    (switch-to-buffer-other-frame "*ZK-Index*")))
+
+(defun zk-index-desktop-edit-mode ()
+  "Toggle 'read-only-mode' in ZK-Desktop."
+  (interactive)
+  (if zk-index-desktop-map-enable
+      (progn
+        (read-only-mode -1)
+        (local-set-key (kbd "C-+") #'zk-index-desktop-edit-mode)
+        (setq zk-index-desktop-map-enable nil)
+        (message "ZK-Desktop Edit Mode"))
+    (progn
+      (read-only-mode)
+      (local-unset-key (kbd "C-+"))
+      (setq zk-index-desktop-map-enable t))))
 
 (provide 'zk-index)
 
