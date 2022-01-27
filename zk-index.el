@@ -64,7 +64,7 @@ If no format function, gets set to nil.")
   (let ((map (make-sparse-keymap)))
           (define-key map [remap move-line-up] #'zk-index-move-line-up) ;; why is remap needed?
           (define-key map [remap move-line-down] #'zk-index-move-line-down)
-          (define-key map (kbd "i") #'zk-index-switch-to-index)
+          (define-key map (kbd "I") #'zk-index-switch-to-index)
           (define-key map (kbd "C-+") #'zk-index-desktop-edit-mode)
           (define-key map (kbd "o") #'other-window)
           (define-key map (kbd "q") #'delete-window)
@@ -86,7 +86,7 @@ If no format function, gets set to nil.")
   (setq zk-index-last-sort-function sort-fn)
   (let ((buffer "*ZK-Index*")
         (list (if files files
-                 (zk--directory-files t))))
+                (zk--directory-files t))))
     (unless (get-buffer buffer)
       (progn
         (unless (zk-directory-p)
@@ -100,7 +100,8 @@ If no format function, gets set to nil.")
           (goto-char (point-min)))))
     (when files
       (zk-index-refresh files format-fn sort-fn))
-    (pop-to-buffer buffer)))
+    (pop-to-buffer buffer
+                '(display-buffer-at-bottom . ((window-height . 0.38))))))
 
 (defun zk-index-refresh (&optional files format-fn sort-fn)
   (interactive)
@@ -179,7 +180,7 @@ If 'zk-index-auto-scroll' is non-nil, show note in other-window."
           (kill-buffer))
         (other-window -1)
         (forward-line)
-        (push-button nil t)
+        (push-button)
         (view-mode)
         (other-window -1))
     (forward-line)))
@@ -220,8 +221,16 @@ If 'zk-index-auto-scroll' is non-nil, show note in other-window."
 (defun zk-index-switch-to-desktop ()
   "Switch to *ZK-Desktop* in other frame."
   (interactive)
-  (switch-to-buffer-other-frame "*ZK-Desktop*"))
-
+  (let ((buffer "*ZK-Desktop*"))
+    (if current-prefix-arg
+        (if (get-buffer-window buffer 'visible)
+          (display-buffer-pop-up-frame buffer
+                                       '((pop-up-frame-parameters . ((top . 80) ;; not general
+                                                                     (left . 850)
+                                                                     (width . 80)
+                                                                     (height . 35)))))
+          (switch-to-buffer-other-frame buffer))
+      (switch-to-buffer buffer))))
 
 ;;; Index Luhmann
 
@@ -404,20 +413,15 @@ Asks whether to search all files or only those in current index."
                 (toggle-truncate-lines))
               (goto-char (point-max))
               (beginning-of-line)
-              (read-only-mode)))))
-    (unless (get-buffer-window buffer 'visible)
-      (special-display-popup-frame "*ZK-Desktop*"
-                                   '((top . 80)
-                                     (left . 850)
-                                     (width . 80)
-                                     (height . 35)
-                                     (no-focus-on-map . t))))))
+              (read-only-mode)
+              (message "Sent to %s - press D to switch" buffer)))))))
+
 
 (defun zk-index-switch-to-index ()
   "Switch to ZK-Index buffer."
   (interactive)
   (when (get-buffer "*ZK-Index*")
-    (switch-to-buffer-other-frame "*ZK-Index*")))
+    (switch-to-buffer "*ZK-Index*")))
 
 (defun zk-index-desktop-edit-mode ()
   "Toggle 'read-only-mode' in ZK-Desktop."
