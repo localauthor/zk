@@ -24,13 +24,20 @@
 
 ;;; Variables
 
-(defvar zk-index-last-sort-function nil
-  "Set to the name of the last sort function used.
-If no sort function, gets set to nil.")
+(defvar zk-index--default-format 'zk--completion-at-point-candidates
+  "Default format for ZK-Index candidates.")
 
-(defvar zk-index-last-format-function nil
-  "Set to the name of the last format function used.
-If no format function, gets set to nil.")
+(defvar zk-index-auto-scroll t
+  "Enable automatically showing note at point in ZK-Index.")
+
+(defvar zk-index-desktop-directory zk-directory
+  "Directory for saved ZK-Desktops.
+Defaults to 'zk-directory'.")
+
+(defvar zk-index-desktop-basename "*ZK-Desktop:"
+  "Basename for ZK-Desktops.
+The names of all ZK-Desktops should begin with this string.")
+
 
 (defvar zk-index-map
   (let ((map (make-sparse-keymap)))
@@ -57,24 +64,35 @@ If no format function, gets set to nil.")
 (defvar-local zk-index-map-enable nil
   "Enable or disable 'zk-index-map'.")
 
-(defvar zk-index-auto-scroll t
-  "Enable automatically showing note at point in ZK-Index.")
+(defvar zk-index-last-sort-function nil
+  "Name of the last sort function used.
+If no sort function, gets set to nil.")
+
+(defvar zk-index-last-format-function nil
+  "Name of the last format function used.
+If no format function, gets set to nil.")
 
 (defvar zk-index-desktop-map
   (let ((map (make-sparse-keymap)))
-          (define-key map [remap move-line-up] #'zk-index-move-line-up) ;; why is remap needed?
+          (define-key map [remap move-line-up] #'zk-index-move-line-up)  ;; why is remap needed?
           (define-key map [remap move-line-down] #'zk-index-move-line-down)
           (define-key map (kbd "I") #'zk-index-switch-to-index)
           (define-key map (kbd "C-+") #'zk-index-desktop-edit-mode)
+          (define-key map (kbd "v") #'zk-index-view-note)
+          (define-key map (kbd "S") #'zk-index-desktop-select)
           (define-key map (kbd "o") #'other-window)
           (define-key map (kbd "q") #'delete-window)
           map)
-  "Keymap for ZK-Desktop buffer.")
+  "Keymap for ZK-Desktop buffers.")
 
 (add-to-list 'minor-mode-map-alist (cons 'zk-index-desktop-map-enable zk-index-desktop-map))
 
 (defvar-local zk-index-desktop-map-enable nil
   "Enable or disable 'zk-index-desktop-map'.")
+
+(defvar zk-index-desktop-current nil
+  "Name of currently active ZK-Desktop.")
+
 
 ;;; Main Stack
 
@@ -89,7 +107,7 @@ If no format function, gets set to nil.")
                 (zk--directory-files t))))
     (unless (get-buffer buffer)
       (progn
-        (unless (zk-directory-p)
+        (unless (zk-file-p)
           (zk-find-file-by-id zk-default-backlink))
         (generate-new-buffer buffer)
         (with-current-buffer buffer
@@ -138,176 +156,27 @@ If no format function, gets set to nil.")
   (dolist (file candidates)
     (string-match zk-id-regexp file)
     (insert-text-button file
+                   'type 'zk-index
                    'follow-link t
                    'face 'default
                    'action
                    `(lambda (_)
-                      (progn
                         (find-file-other-window
                          (zk--parse-id 'file-path
-                                       ,(match-string 0 file))))))
+                                       ,(match-string 0 file)))))
     (newline))
   (message "Notes: %s" (length candidates)))
+
+(eval-and-compile
+  (define-button-type 'zk-index
+    'follow-link t
+    'face 'default))
 
 (defun zk-index-narrowed-p ()
   (with-current-buffer "*ZK-Index*"
     (if (< (count-lines (point-min) (point-max))
            (length (zk--id-list)))
         t nil)))
-
-
-;;; Keymap Commands
-
-(defun zk-index-open-note ()
-  (interactive)
-  (push-button nil t)
-  (other-window -1))
-
-(defun zk-index-view-note ()
-  (interactive)
-  (push-button nil t)
-  (view-mode)
-  (other-window -1))
-
-(defun zk-index-next-line ()
-  "Move to next line.
-If 'zk-index-auto-scroll' is non-nil, show note in other-window."
-  (interactive)
-  (if zk-index-auto-scroll
-      (progn
-        (other-window 1)
-        (when view-mode
-          (kill-buffer))
-        (other-window -1)
-        (forward-line)
-        (push-button)
-        (view-mode)
-        (other-window -1))
-    (forward-line)))
-
-(defun zk-index-previous-line ()
-  "Move to previous line.
-If 'zk-index-auto-scroll' is non-nil, show note in other-window."
-  (interactive)
-  (if zk-index-auto-scroll
-      (progn
-        (other-window 1)
-        (when view-mode
-          (kill-buffer))
-        (other-window -1)
-        (forward-line -1)
-        (push-button nil t)
-        (view-mode)
-        (other-window -1))
-    (forward-line -1)))
-
-(defun zk-index-move-line-down ()
-  "Move line at point down in 'read-only-mode'."
-  (interactive)
-  (read-only-mode -1)
-   (forward-line 1)
-   (transpose-lines 1)
-   (forward-line -1)
-  (read-only-mode))
-
-(defun zk-index-move-line-up ()
-  "Move line at point up in 'read-only-mode'."
-  (interactive)
-  (read-only-mode -1)
-  (transpose-lines 1)
-  (forward-line -2)
-  (read-only-mode))
-
-(defun zk-index-switch-to-desktop ()
-  "Switch to *ZK-Desktop* in other frame."
-  (interactive)
-  (let ((buffer "*ZK-Desktop*"))
-    (if current-prefix-arg
-        (if (get-buffer-window buffer 'visible)
-          (display-buffer-pop-up-frame buffer
-                                       '((pop-up-frame-parameters . ((top . 80) ;; not general
-                                                                     (left . 850)
-                                                                     (width . 80)
-                                                                     (height . 35)))))
-          (switch-to-buffer-other-frame buffer))
-      (switch-to-buffer buffer))))
-
-;;; Index Luhmann
-
-;;;###autoload
-(defun zk-index-luhmann ()
-  "Open index for Luhmann-style notes."
-  (interactive)
-  (zk-index (zk--luhmann-files) 'zk--luhmann-format-candidates 'zk--luhmann-sort))
-
-(defun zk-index-sort-luhmann ()
-  (interactive)
-  (if (eq zk-index-last-format-function 'zk--luhmann-format-candidates)
-      (zk-index-refresh (zk-index--current-file-list)
-                        zk-index-last-format-function
-                        #'zk--luhmann-sort)
-    (error "Not Luhmann format - press \"l\" to switch")))
-
-
-;;; Index Sort Functions
-
-(defun zk-index-sort-modified ()
-  (interactive)
-  (zk-index-refresh (zk-index--current-file-list)
-                    zk-index-last-format-function
-                    #'zk-index--sort-modified))
-
-(defun zk-index-sort-created ()
-  (interactive)
-  (zk-index-refresh (zk-index--current-file-list)
-                    zk-index-last-format-function
-                    #'zk-index--sort-created))
-
-
-(defun zk-index--current-file-list ()
-  "Return narrowed list of candidates.
-Asks whether to search all files or only those in current index."
-  (interactive)
-  (let* ((ids (zk-index--current-id-list))
-         (files (zk--parse-id 'file-path ids)))
-    (when files
-      files)))
-
-(defun zk-index--sort-created (list)
-  "Sort LIST for latest created."
-  (let ((ht (make-hash-table :test #'equal :size 5000)))
-    (dolist (x list)
-      (puthash x (zk--parse-file 'id x) ht))
-    (sort list
-          (lambda (a b)
-            (let ((one
-                   (gethash a ht))
-                  (two
-                   (gethash b ht)))
-              (string< two one))))))
-
-(defun zk-index--sort-modified (list)
-  "Sort LIST for latest modification."
-  (let ((ht (make-hash-table :test #'equal :size 5000)))
-    (dolist (x list)
-      (puthash x (file-attribute-modification-time (file-attributes x)) ht))
-    (sort list
-          (lambda (a b)
-            (let ((one
-                   (gethash a ht))
-                  (two
-                   (gethash b ht)))
-              (time-less-p two one))))))
-
-(defun zk-index--sort-size (list)
-  "Sort LIST for latest modification."
-  (sort list
-        (lambda (a b)
-          (let ((one
-                 (file-attribute-size (file-attributes a)))
-                (two
-                 (file-attribute-size (file-attributes b))))
-            (time-less-p two one)))))
 
 
 ;;; Querying Functions
@@ -375,6 +244,162 @@ Asks whether to search all files or only those in current index."
   "Narrow index based on search of note titles."
   (interactive)
   (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
+
+
+;;; Index Sort Functions
+
+(defun zk-index-sort-modified ()
+  (interactive)
+  (zk-index-refresh (zk-index--current-file-list)
+                    zk-index-last-format-function
+                    #'zk-index--sort-modified))
+
+(defun zk-index-sort-created ()
+  (interactive)
+  (zk-index-refresh (zk-index--current-file-list)
+                    zk-index-last-format-function
+                    #'zk-index--sort-created))
+
+
+(defun zk-index--current-file-list ()
+  "Return narrowed list of candidates.
+Asks whether to search all files or only those in current index."
+  (interactive)
+  (let* ((ids (zk-index--current-id-list))
+         (files (zk--parse-id 'file-path ids)))
+    (when files
+      files)))
+
+(defun zk-index--sort-created (list)
+  "Sort LIST for latest created."
+  (let ((ht (make-hash-table :test #'equal :size 5000)))
+    (dolist (x list)
+      (puthash x (zk--parse-file 'id x) ht))
+    (sort list
+          (lambda (a b)
+            (let ((one
+                   (gethash a ht))
+                  (two
+                   (gethash b ht)))
+              (string< two one))))))
+
+(defun zk-index--sort-modified (list)
+  "Sort LIST for latest modification."
+  (let ((ht (make-hash-table :test #'equal :size 5000)))
+    (dolist (x list)
+      (puthash x (file-attribute-modification-time (file-attributes x)) ht))
+    (sort list
+          (lambda (a b)
+            (let ((one
+                   (gethash a ht))
+                  (two
+                   (gethash b ht)))
+              (time-less-p two one))))))
+
+(defun zk-index--sort-size (list)
+  "Sort LIST for latest modification."
+  (sort list
+        (lambda (a b)
+          (let ((one
+                 (file-attribute-size (file-attributes a)))
+                (two
+                 (file-attribute-size (file-attributes b))))
+            (time-less-p two one)))))
+
+
+;;; Keymap Commands
+
+(defun zk-index-open-note ()
+  (interactive)
+  (push-button nil t)
+  (other-window -1))
+
+(defun zk-index-view-note ()
+  (interactive)
+  (push-button nil t)
+  (view-mode)
+  (other-window -1))
+
+(defun zk-index-next-line ()
+  "Move to next line.
+If 'zk-index-auto-scroll' is non-nil, show note in other-window."
+  (interactive)
+  (if zk-index-auto-scroll
+      (progn
+        (other-window 1)
+        (when view-mode
+          (kill-buffer))
+        (other-window -1)
+        (forward-line)
+        (push-button)
+        (view-mode)
+        (other-window -1))
+    (forward-line)))
+
+(defun zk-index-previous-line ()
+  "Move to previous line.
+If 'zk-index-auto-scroll' is non-nil, show note in other-window."
+  (interactive)
+  (if zk-index-auto-scroll
+      (progn
+        (other-window 1)
+        (when view-mode
+          (kill-buffer))
+        (other-window -1)
+        (forward-line -1)
+        (push-button nil t)
+        (view-mode)
+        (other-window -1))
+    (forward-line -1)))
+
+(defun zk-index-move-line-down ()
+  "Move line at point down in 'read-only-mode'."
+  (interactive)
+  (read-only-mode -1)
+   (forward-line 1)
+   (transpose-lines 1)
+   (forward-line -1)
+  (read-only-mode))
+
+(defun zk-index-move-line-up ()
+  "Move line at point up in 'read-only-mode'."
+  (interactive)
+  (read-only-mode -1)
+  (transpose-lines 1)
+  (forward-line -2)
+  (read-only-mode))
+
+(defun zk-index-switch-to-desktop ()
+  "Switch to ZK-Desktop in other frame."
+  (interactive)
+  (unless (buffer-live-p zk-index-desktop-current)
+    (zk-index-desktop-select))
+  (let ((buffer zk-index-desktop-current))
+    (if current-prefix-arg
+        (if (get-buffer-window buffer 'visible)
+          (display-buffer-pop-up-frame buffer
+                                       '((pop-up-frame-parameters . ((top . 80) ;; not general
+                                                                     (left . 850)
+                                                                     (width . 80)
+                                                                     (height . 35)))))
+          (switch-to-buffer-other-frame buffer))
+      (switch-to-buffer buffer))))
+
+;;; Index Luhmann
+
+;;;###autoload
+(defun zk-index-luhmann ()
+  "Open index for Luhmann-style notes."
+  (interactive)
+  (zk-index (zk--luhmann-files) nil 'zk--luhmann-sort))
+
+(defun zk-index-sort-luhmann ()
+  (interactive)
+  (if (eq zk-index-last-sort-function 'zk--luhmann-sort)
+      (zk-index-refresh (zk-index--current-file-list)
+                        zk-index-last-format-function
+                        #'zk--luhmann-sort)
+    (error "Not in Luhmann index - press \"l\" to switch")))
 
 
 ;;; Desktop
