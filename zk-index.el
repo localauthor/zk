@@ -51,6 +51,7 @@ The names of all ZK-Desktops should begin with this string.")
           (define-key map (kbd "s") #'zk-index-search)
           (define-key map (kbd "d") #'zk-index-send-to-desktop)
           (define-key map (kbd "D") #'zk-index-switch-to-desktop)
+          (define-key map (kbd "S") #'zk-index-desktop-select)
           (define-key map (kbd "g") #'zk-index-refresh)
           (define-key map (kbd "M") #'zk-index-sort-modified)
           (define-key map (kbd "C") #'zk-index-sort-created)
@@ -126,7 +127,7 @@ If no format function, gets set to nil.")
   (let ((files (if files files
                  (zk--directory-files t)))
         (sort-fn (if sort-fn sort-fn
-                   nil))
+                   (setq zk-index-last-sort-function nil))) ;; reset last-sort-function to nil
         (line))
   (with-current-buffer "*ZK-Index*"
     (setq line (line-number-at-pos))
@@ -150,7 +151,7 @@ If no format function, gets set to nil.")
 (defun zk-index--format (files &optional format-fn)
   "Format zk-index candidates."
   (let* ((format-fn (if format-fn format-fn
-                      'zk--completion-at-point-candidates))
+                      zk-index--default-format))
          (candidates (funcall format-fn files)))
     (zk-index--insert candidates)))
 
@@ -413,37 +414,119 @@ If 'zk-index-auto-scroll' is non-nil, show note in other-window."
 ;; TODO make new desktop or add to existing?
 ;; TODO list existing desktops?
 
+(defun zk-index-desktop-select ()
+  "Select a ZK-Desktop to work with."
+  (interactive)
+  (let ((desktop
+         (completing-read "Set ZK-Desktop to: "
+                         (directory-files
+                          zk-index-desktop-directory
+                          nil
+                          (concat
+                           zk-index-desktop-basename
+                           ".*")))))
+    (setq zk-index-desktop-current
+          (find-file-noselect (concat zk-index-desktop-directory "/" desktop)))
+    (with-current-buffer desktop
+      (setq zk-index-desktop-map-enable t)
+      (setq require-final-newline 'visit-save)
+      (zk-index-desktop-make-buttons)
+      (unless (bound-and-true-p truncate-lines)
+        (toggle-truncate-lines)))
+    (message "Desktop set to: %s" zk-index-desktop-current)))
+
+(defun zk-index-desktop-make-buttons ()
+  "Re-make buttons ZK-Desktop."
+  (interactive)
+  (let ((ids (zk--id-list)))
+    (save-excursion
+      (read-only-mode -1)
+      (goto-char (point-min))
+      (while (re-search-forward zk-link-regexp nil t)
+        (let ((beg (line-beginning-position))
+              (end (line-end-position))
+              (id (match-string-no-properties 1)))
+          (when (member id ids)
+            (make-text-button beg end 'type 'zk-index
+                              'action `(lambda (_)
+                                         (find-file-other-window
+                                          (zk--parse-id 'file-path
+                                                        ,id))))))))
+    (read-only-mode)))
+
 ;;;###autoload
+;; (defun zk-index-send-to-desktop ()
+;;   "Send notes at point, or notes in active region, to ZK-Desktop."
+;;   (interactive)
+;;   (unless (buffer-live-p zk-index-desktop-current)
+;;     (zk-index-desktop-select))
+;;   (let ((buffer zk-index-desktop-current))
+;;     (when (string= (buffer-name) "*ZK-Index*")
+;;         (progn
+;;           (read-only-mode -1)
+;;           (let ((items (if (use-region-p)
+;;                            (buffer-substring (save-excursion
+;;                                                (goto-char (region-beginning))
+;;                                                (line-beginning-position))
+;;                                              (save-excursion
+;;                                                (goto-char (region-end))
+;;                                                (line-end-position)))
+;;                          (buffer-substring (line-beginning-position)(line-end-position)))))
+;;             (read-only-mode)
+;;             (unless (get-buffer buffer)
+;;               (generate-new-buffer buffer))
+;;             (with-current-buffer buffer
+;;               (read-only-mode -1)
+;;               (setq zk-index-desktop-map-enable t)
+;;               (setq require-final-newline 'visit-save)
+;;               (goto-char (point-max))
+;;               (newline)
+;;               (insert items)
+;;               (unless (bound-and-true-p truncate-lines)
+;;                 (toggle-truncate-lines))
+;;               (goto-char (point-max))
+;;               (beginning-of-line)
+;;               (read-only-mode)
+;;               (message "Sent to %s - press D to switch" buffer)))))))
+
 (defun zk-index-send-to-desktop ()
   "Send notes at point, or notes in active region, to ZK-Desktop."
   (interactive)
-  (let ((buffer "*ZK-Desktop*"))
-    (when (string= (buffer-name) "*ZK-Index*")
-        (progn
-          (read-only-mode -1)
-          (let ((items (if (use-region-p)
-                           (buffer-substring (save-excursion
-                                               (goto-char (region-beginning))
-                                               (line-beginning-position))
-                                             (save-excursion
-                                               (goto-char (region-end))
-                                               (line-end-position)))
-                         (buffer-substring (line-beginning-position)(line-end-position)))))
-            (read-only-mode)
-            (unless (get-buffer buffer)
-              (generate-new-buffer buffer))
-            (with-current-buffer buffer
-              (read-only-mode -1)
-              (setq zk-index-desktop-map-enable t)
-              (goto-char (point-max))
-              (newline)
-              (insert items)
-              (unless (bound-and-true-p truncate-lines)
-                (toggle-truncate-lines))
-              (goto-char (point-max))
-              (beginning-of-line)
-              (read-only-mode)
-              (message "Sent to %s - press D to switch" buffer)))))))
+  (unless (buffer-live-p zk-index-desktop-current)
+    (zk-index-desktop-select))
+  (let ((buffer zk-index-desktop-current) (items))
+    (cond ((string= (buffer-name) "*ZK-Index*")
+           (progn
+             (read-only-mode -1)
+             (setq items (if (use-region-p)
+                             (buffer-substring
+                              (save-excursion
+                                (goto-char (region-beginning))
+                                (line-beginning-position))
+                              (save-excursion
+                                (goto-char (region-end))
+                                (line-end-position)))
+                           (buffer-substring
+                            (line-beginning-position)
+                            (line-end-position))))
+             (read-only-mode)))
+          ((zk-file-p)
+           (zk--current-id)))
+    (unless (get-buffer buffer)
+      (generate-new-buffer buffer))
+    (with-current-buffer buffer
+      (read-only-mode -1)
+      (setq zk-index-desktop-map-enable t)
+      (setq require-final-newline 'visit-save)
+      (goto-char (point-max))
+      (newline)
+      (insert items)
+      (unless (bound-and-true-p truncate-lines)
+        (toggle-truncate-lines))
+      (goto-char (point-max))
+      (beginning-of-line)
+      (read-only-mode)
+      (message "Sent to %s - press D to switch" buffer))))
 
 
 (defun zk-index-switch-to-index ()
