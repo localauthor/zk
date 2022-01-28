@@ -248,44 +248,79 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 
 (defun zk-index-query-files ()
   "Return narrowed list of notes, based on focus or search query."
+  ;; use 'last-focus-terms' and 'last-search-terms'
+  ;; and 'zk-index-focus-prefix', 'zk-index-search-prefix'
   (let* ((command this-command)
          (scope (if (zk-index-narrowed-p)
                     (zk-index--current-id-list)
                   (progn
                     (setq zk-index-last-query nil)
                     (zk--id-list))))
-         (string (read-string "Search: "))
+         (string (read-string
+                  (cond
+                   ((eq command 'zk-index-focus)
+                    "Focus: ")
+                   ((eq command 'zk-index-search)
+                    "Search: "))))
          (query (cond
                  ((eq command 'zk-index-focus)
-                    (mapcar
-                     (lambda (x)
-                       (zk--parse-file 'id x))
-                     (zk--directory-files t (regexp-quote string))))
+                  (mapcar
+                   (lambda (x)
+                     (zk--parse-file 'id x))
+                   (zk--directory-files t (regexp-quote string))))
                  ((eq command 'zk-index-search)
                   (zk--grep-id-list string))))
          (mode-line
           (cond ((eq command 'zk-index-focus)
-                (progn
-                  (unless (eq zk-index-last-query 'focus)
-                    (progn
-                      (setq zk-index-last-query 'focus)
-                      (setq zk-index-last-query-terms nil)))
-                  (setq zk-index-last-query-terms
-                        (if zk-index-last-query-terms
-                            (concat zk-index-last-query-terms " + " string)
-                          string))
-                  (concat " [ZK-Focus: \"" zk-index-last-query-terms "\"]")))
+                 (cond
+                  ;;same
+                  ((eq zk-index-last-query 'focus)
+                   ;;outcome
+                   (setq zk-index-last-query-terms
+                         (if zk-index-last-query-terms
+                             (concat zk-index-last-query-terms "\" + \"" string)
+                           string))
+                   (concat " [ZK-Focus: \"" zk-index-last-query-terms "\"]"))
+                  ;;mix 
+                  ((eq zk-index-last-query 'search)
+                   ;;outcome
+                   (setq zk-index-last-query 'focus)
+                   (setq zk-index-last-query-terms
+                         (if zk-index-last-query-terms
+                             (concat " [ZK-Search: \"" zk-index-last-query-terms "\" |")
+                           nil))
+                   (concat zk-index-last-query-terms " ZK-Focus: \"" string "\"]"))
+                  ;;neither
+                  ((eq zk-index-last-query nil)
+                   ;; outcome
+                   (setq zk-index-last-query 'focus)
+                   (setq zk-index-last-query-terms string)
+                   (concat " [ZK-Focus: \"" string "\"]"))))
                 ((eq command 'zk-index-search)
-                (progn
-                  (unless (eq zk-index-last-query 'search)
-                    (progn
-                      (setq zk-index-last-query 'search)
-                      (setq zk-index-last-query-terms nil)))
-                  (setq zk-index-last-query-terms
-                        (if zk-index-last-query-terms
-                            (concat zk-index-last-query-terms " + " string)
-                          string))
-                  (concat " [ZK-Search: \"" zk-index-last-query-terms "\"]")))))
+                 (cond
+                  ;;same
+                  ((eq zk-index-last-query 'search)
+                   ;;outcome
+                   (setq zk-index-last-query-terms
+                         (if zk-index-last-query-terms
+                             (concat zk-index-last-query-terms "\" + \"" string)
+                           string))
+                   (concat " [ZK-Search: \"" zk-index-last-query-terms "\"]"))
+                  ;;mix 
+                  ((eq zk-index-last-query 'focus)
+                   ;;outcome
+                   (setq zk-index-last-query 'search)
+                   (setq zk-index-last-query-terms
+                         (if zk-index-last-query-terms
+                             (concat " [ZK-Focus: \"" zk-index-last-query-terms "\" |")
+                           nil))
+                   (concat zk-index-last-query-terms " ZK-Search: \"" string "\"]"))
+                  ;;neither
+                  ((eq zk-index-last-query nil)
+                   ;; outcome
+                   (setq zk-index-last-query 'search)
+                   (setq zk-index-last-query-terms string)
+                   (concat " [ZK-Search: \"" string "\"]"))))))
          (focus
           (mapcar
            (lambda (x)
