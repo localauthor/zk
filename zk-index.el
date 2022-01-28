@@ -399,85 +399,65 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
 (defun zk-index-desktop-select ()
   "Select a ZK-Desktop to work with."
   (interactive)
-  (let ((desktop
-         (completing-read "Set ZK-Desktop to: "
-                         (directory-files
-                          zk-index-desktop-directory
-                          nil
-                          (concat
-                           zk-index-desktop-basename
-                           ".*")))))
-    (setq zk-index-desktop-current
-          (find-file-noselect (concat zk-index-desktop-directory "/" desktop)))
-    (with-current-buffer desktop
-      (setq zk-index-desktop-map-enable t)
-      (setq require-final-newline 'visit-save)
-      (zk-index-desktop-make-buttons)
-      (unless (bound-and-true-p truncate-lines)
-        (toggle-truncate-lines)))
+  (let* ((desktop
+          (completing-read "Select or Create ZK-Desktop: "
+                           (directory-files
+                            zk-index-desktop-directory
+                            nil
+                            (concat
+                             zk-index-desktop-basename
+                             ".*"))
+                           nil nil zk-index-desktop-basename))
+         (file (concat zk-index-desktop-directory "/" desktop)))
+    (if (file-exists-p (expand-file-name file))
+        (setq zk-index-desktop-current
+              (find-file-noselect file))
+      (generate-new-buffer desktop)
+      (with-current-buffer desktop
+        (setq zk-index-desktop-current desktop)
+        (setq zk-index-desktop-map-enable t)
+        (setq require-final-newline 'visit-save)
+        (zk-index-desktop-make-buttons)
+        (unless (bound-and-true-p truncate-lines)
+          (toggle-truncate-lines))
+        (set-visited-file-name file t t)
+        (save-buffer)))
     (message "Desktop set to: %s" zk-index-desktop-current)))
 
 (defun zk-index-desktop-make-buttons ()
   "Re-make buttons ZK-Desktop."
   (interactive)
-  (let ((ids (zk--id-list)))
-    (save-excursion
-      (read-only-mode -1)
-      (goto-char (point-min))
-      (while (re-search-forward zk-link-regexp nil t)
-        (let ((beg (line-beginning-position))
-              (end (line-end-position))
-              (id (match-string-no-properties 1)))
-          (when (member id ids)
-            (make-text-button beg end 'type 'zk-index
-                              'action `(lambda (_)
-                                         (find-file-other-window
-                                          (zk--parse-id 'file-path
-                                                        ,id))))))))
-    (read-only-mode)))
+  (when (and (string-match-p zk-index-desktop-basename (buffer-name))
+             (file-in-directory-p default-directory zk-index-desktop-directory))
+    (let ((ids (zk--id-list)))
+      (save-excursion
+        (read-only-mode -1)
+        (goto-char (point-min))
+        (while (re-search-forward zk-link-regexp nil t)
+          (let ((beg (line-beginning-position))
+                (end (line-end-position))
+                (id (match-string-no-properties 1)))
+            (when (member id ids)
+              (make-text-button beg end 'type 'zk-index
+                                'action `(lambda (_)
+                                           (find-file-other-window
+                                            (zk--parse-id 'file-path
+                                                          ,id))))))))
+      (setq zk-index-desktop-map-enable t)
+      (read-only-mode))))
 
 ;;;###autoload
-;; (defun zk-index-send-to-desktop ()
-;;   "Send notes at point, or notes in active region, to ZK-Desktop."
-;;   (interactive)
-;;   (unless (buffer-live-p zk-index-desktop-current)
-;;     (zk-index-desktop-select))
-;;   (let ((buffer zk-index-desktop-current))
-;;     (when (string= (buffer-name) "*ZK-Index*")
-;;         (progn
-;;           (read-only-mode -1)
-;;           (let ((items (if (use-region-p)
-;;                            (buffer-substring (save-excursion
-;;                                                (goto-char (region-beginning))
-;;                                                (line-beginning-position))
-;;                                              (save-excursion
-;;                                                (goto-char (region-end))
-;;                                                (line-end-position)))
-;;                          (buffer-substring (line-beginning-position)(line-end-position)))))
-;;             (read-only-mode)
-;;             (unless (get-buffer buffer)
-;;               (generate-new-buffer buffer))
-;;             (with-current-buffer buffer
-;;               (read-only-mode -1)
-;;               (setq zk-index-desktop-map-enable t)
-;;               (setq require-final-newline 'visit-save)
-;;               (goto-char (point-max))
-;;               (newline)
-;;               (insert items)
-;;               (unless (bound-and-true-p truncate-lines)
-;;                 (toggle-truncate-lines))
-;;               (goto-char (point-max))
-;;               (beginning-of-line)
-;;               (read-only-mode)
-;;               (message "Sent to %s - press D to switch" buffer)))))))
-
-(defun zk-index-send-to-desktop ()
-  "Send notes at point, or notes in active region, to ZK-Desktop."
+(defun zk-index-send-to-desktop (&optional files)
+  "Send notes from ZK-Index to ZK-Desktop.
+In ZK-Index, works on note at point or notes in active region.
+Also works on files or group of files in minibuffer, and on zk-id
+at point."
   (interactive)
-  (unless (buffer-live-p zk-index-desktop-current)
+  (unless (buffer-live-p (get-buffer zk-index-desktop-current))
     (zk-index-desktop-select))
   (let ((buffer zk-index-desktop-current) (items))
-    (cond ((string= (buffer-name) "*ZK-Index*")
+    (cond (files (setq items (car (funcall zk-index--default-format files))))
+          ((string= (buffer-name) "*ZK-Index*")
            (progn
              (read-only-mode -1)
              (setq items (if (use-region-p)
@@ -493,7 +473,7 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
                             (line-end-position))))
              (read-only-mode)))
           ((zk-file-p)
-           (zk--current-id)))
+           (list (zk--parse-id 'file-path (zk--current-id)))))
     (unless (get-buffer buffer)
       (generate-new-buffer buffer))
     (with-current-buffer buffer
@@ -510,12 +490,28 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
       (read-only-mode)
       (message "Sent to %s - press D to switch" buffer))))
 
-
 (defun zk-index-switch-to-index ()
   "Switch to ZK-Index buffer."
   (interactive)
   (when (get-buffer "*ZK-Index*")
     (switch-to-buffer "*ZK-Index*")))
+
+(defun zk-index-switch-to-desktop ()
+  "Switch to ZK-Desktop.
+With prefix-argument, raise ZK-Desktop in other frame."
+  (interactive)
+  (unless (buffer-live-p (get-buffer zk-index-desktop-current))
+    (zk-index-desktop-select))
+  (let ((buffer zk-index-desktop-current))
+    (if current-prefix-arg
+        (if (get-buffer-window buffer 'visible)
+          (display-buffer-pop-up-frame buffer
+                                       '((pop-up-frame-parameters . ((top . 80)
+                                                                     (left . 850)
+                                                                     (width . 80)
+                                                                     (height . 35)))))
+          (switch-to-buffer-other-frame buffer))
+      (switch-to-buffer buffer))))
 
 (defun zk-index-desktop-edit-mode ()
   "Toggle 'read-only-mode' in ZK-Desktop."
