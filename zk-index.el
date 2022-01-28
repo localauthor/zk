@@ -81,8 +81,13 @@ If no format function, gets set to nil.")
   (let ((map (make-sparse-keymap)))
           (define-key map [remap move-line-up] #'zk-index-move-line-up)  ;; why is remap needed?
           (define-key map [remap move-line-down] #'zk-index-move-line-down)
+          (define-key map (kbd "n") #'zk-index-next-line)
+          (define-key map (kbd "p") #'zk-index-previous-line)
+          (define-key map (kbd "v") #'zk-index-view-note)
           (define-key map (kbd "I") #'zk-index-switch-to-index)
           (define-key map (kbd "C-+") #'zk-index-desktop-edit-mode)
+          (define-key map (kbd "C-j") #'zk-index-desktop-newline)
+          (define-key map (kbd "C-d") #'zk-index-desktop-delete-empty-line)
           (define-key map (kbd "v") #'zk-index-view-note)
           (define-key map (kbd "S") #'zk-index-desktop-select)
           (define-key map (kbd "o") #'other-window)
@@ -410,7 +415,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (if zk-index-auto-scroll
       (progn
         (other-window 1)
-        (when view-mode
+        (when (and view-mode
+                   (not (buffer-modified-p)))
           (kill-buffer))
         (other-window -1)
         (forward-line)
@@ -426,7 +432,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (if zk-index-auto-scroll
       (progn
         (other-window 1)
-        (when view-mode
+        (when (and view-mode
+                   (not (buffer-modified-p)))
           (kill-buffer))
         (other-window -1)
         (forward-line -1)
@@ -487,6 +494,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
 (defun zk-index-desktop-make-buttons ()
   "Re-make buttons ZK-Desktop."
   (interactive)
+  (unless zk-index-desktop-directory
+    (error "Please set 'zk-index-desktop-directory'"))
   (when (and (string-match-p zk-index-desktop-basename (buffer-name))
              (file-in-directory-p default-directory zk-index-desktop-directory))
     (let ((ids (zk--id-list)))
@@ -580,6 +589,22 @@ With prefix-argument, raise ZK-Desktop in other frame."
           (switch-to-buffer-other-frame buffer))
       (switch-to-buffer buffer))))
 
+(defun zk-index-desktop-newline ()
+  (interactive)   
+  (zk-index-desktop-edit-mode)
+  (newline)
+  (zk-index-desktop-edit-mode))
+
+(defun zk-index-desktop-delete-empty-line ()
+  (interactive)
+  (when
+      (save-excursion
+        (beginning-of-line)
+        (looking-at-p "[[:space:]]*$"))
+    (zk-index-desktop-edit-mode)
+    (delete-char 1)
+    (zk-index-desktop-edit-mode)))
+
 (defun zk-index-desktop-edit-mode ()
   "Toggle 'read-only-mode' in ZK-Desktop."
   (interactive)
@@ -593,6 +618,8 @@ With prefix-argument, raise ZK-Desktop in other frame."
       (read-only-mode)
       (local-unset-key (kbd "C-+"))
       (setq zk-index-desktop-map-enable t))))
+
+
 
 (provide 'zk-index)
 
