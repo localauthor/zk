@@ -1,22 +1,30 @@
-;;; zk-index.el --- Index and desktop for zk         -*- lexical-binding: t; -*-
+;;; zk-index.el --- Index and Desktop for zk   -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2022  Grant Rosson
+
+;; Author: Grant Rosson <https://github.com/localauthor>
+;; Created: January 25, 2022
+;; License: GPL-3.0-or-later
+;; Version: 0.1
+;; Homepage: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "26.1"))
 
 ;;; Commentary:
 
-;; A semi-persistent, curated selection of notes titles.
+;; Offers two additional interfaces for zk:
 
-;; For making more persistent, more curated selections, use zk-desktop.
+;; ZK-Index: A sortable, narrowable, semi-persistent selection of notes titles.
+
+;; ZK-Desktop: An place for collecting, grouping, arranging, and saving selections
+;; of note titles.
 
 ;;; Code:
 
 (require 'zk)
 (require 'view)
-(require 'zk-extras)
 
 ;; TODO make focus and search case-insensitive?
-
 ;; TODO remove anything not general, and in zk-extras
-
-;; how to stack sort functions? luhmann and modified, for example
 
 ;; NOTE zk-index uses text buttons to allow buttons to be sent to zk-desktop
 ;; so link-hint becomes unmanagable, bc it finds ids and buttons
@@ -25,7 +33,7 @@
 ;;; Variables
 
 (defvar zk-index--default-format 'zk--completion-at-point-candidates
-  "Default format for ZK-Index candidates.")
+  "Default formatting function for ZK-Index candidates.")
 
 (defvar zk-index-auto-scroll t
   "Enable automatically showing note at point in ZK-Index.")
@@ -90,6 +98,22 @@ If no format function, gets set to nil.")
 (defvar zk-index-desktop-current nil
   "Name of currently active ZK-Desktop.")
 
+(defvar zk-index-enable-desktop-buttons t)
+
+(cond (zk-index-enable-desktop-buttons
+       (add-hook 'find-file-hook #'zk-index-desktop-make-buttons)))
+
+(declare-function zk-file-p zk)
+(declare-function zk--grep-id-list zk)
+
+(defvar embark-multitarget-actions)
+
+(with-eval-after-load 'embark
+  (add-to-list 'embark-multitarget-actions 'zk-index)
+  (add-to-list 'embark-multitarget-actions 'zk-index-send-to-desktop)
+  (define-key zk-file-map (kbd "I") #'zk-index)
+  (define-key zk-file-map (kbd "D") #'zk-index-send-to-desktop))
+
 
 ;;; Main Stack
 
@@ -116,9 +140,11 @@ If no format function, gets set to nil.")
     (when files
       (zk-index-refresh files format-fn sort-fn))
     (pop-to-buffer buffer
-                '(display-buffer-at-bottom . ((window-height . 0.38))))))
+                   '(display-buffer-at-bottom))))
 
 (defun zk-index-refresh (&optional files format-fn sort-fn)
+  "Refresh the index.
+Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
   (let ((files (if files files
                  (zk--directory-files t)))
@@ -136,7 +162,7 @@ If no format function, gets set to nil.")
     (read-only-mode))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
-  "Sort zk-index candidates."
+  "Sort FILES, with option FORMAT-FN and SORT-FN."
   (let* ((sort-fn (if sort-fn sort-fn
                    'zk-index--sort-modified))
          (files (if (eq 1 (length files))
@@ -145,13 +171,14 @@ If no format function, gets set to nil.")
     (funcall #'zk-index--format files format-fn)))
 
 (defun zk-index--format (files &optional format-fn)
-  "Format zk-index candidates."
+  "Format FILES with optional custom FORMAT-FN."
   (let* ((format-fn (if format-fn format-fn
                       zk-index--default-format))
          (candidates (funcall format-fn files)))
     (zk-index--insert candidates)))
 
 (defun zk-index--insert (candidates)
+  "Insert CANDIDATES into ZK-Index."
   (dolist (file candidates)
     (string-match zk-id-regexp file)
     (insert-text-button file
@@ -172,11 +199,11 @@ If no format function, gets set to nil.")
     'face 'default))
 
 (defun zk-index-narrowed-p ()
+  "Return t when index is narrowed."
   (with-current-buffer "*ZK-Index*"
     (if (< (count-lines (point-min) (point-max))
            (length (zk--id-list)))
         t nil)))
-
 
 ;;; Querying Functions
 
@@ -218,15 +245,6 @@ If no format function, gets set to nil.")
             (push (match-string-no-properties 0) ids)))
         ids))))
 
-(defun zk--grep-id-list (str)
-  "Return a list of IDs for files containing STR."
-  (let ((files (zk--grep-file-list str)))
-    (mapcar
-     (lambda (x)
-       (zk--parse-file 'id x))
-     files)))
-
-
 ;;; Index Focus
 
 ;; narrow index based on search of note titles (case sensitive)
@@ -250,12 +268,14 @@ If no format function, gets set to nil.")
 ;;; Index Sort Functions
 
 (defun zk-index-sort-modified ()
+  "Sort index by last modified."
   (interactive)
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
                     #'zk-index--sort-modified))
 
 (defun zk-index-sort-created ()
+  "Sort index by date created."
   (interactive)
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
@@ -311,11 +331,13 @@ Asks whether to search all files or only those in current index."
 ;;; Keymap Commands
 
 (defun zk-index-open-note ()
+  "Open note."
   (interactive)
   (push-button nil t)
   (other-window -1))
 
 (defun zk-index-view-note ()
+  "View note in view mode."
   (interactive)
   (push-button nil t)
   (view-mode)
@@ -323,7 +345,7 @@ Asks whether to search all files or only those in current index."
 
 (defun zk-index-next-line ()
   "Move to next line.
-If 'zk-index-auto-scroll' is non-nil, show note in other-window."
+If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
   (if zk-index-auto-scroll
       (progn
@@ -339,7 +361,7 @@ If 'zk-index-auto-scroll' is non-nil, show note in other-window."
 
 (defun zk-index-previous-line ()
   "Move to previous line.
-If 'zk-index-auto-scroll' is non-nil, show note in other-window."
+If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
   (if zk-index-auto-scroll
       (progn
@@ -370,29 +392,9 @@ If 'zk-index-auto-scroll' is non-nil, show note in other-window."
   (forward-line -2)
   (read-only-mode))
 
-(defun zk-index-switch-to-desktop ()
-  "Switch to ZK-Desktop in other frame."
-  (interactive)
-  (unless (buffer-live-p zk-index-desktop-current)
-    (zk-index-desktop-select))
-  (let ((buffer zk-index-desktop-current))
-    (if current-prefix-arg
-        (if (get-buffer-window buffer 'visible)
-          (display-buffer-pop-up-frame buffer
-                                       '((pop-up-frame-parameters . ((top . 80) ;; not general
-                                                                     (left . 850)
-                                                                     (width . 80)
-                                                                     (height . 35)))))
-          (switch-to-buffer-other-frame buffer))
-      (switch-to-buffer buffer))))
-
 
 ;;; Desktop
-;; index's less rigid cousin; a place to collect and order note titles
-
-;; TODO allow multiple, saved desktops?
-;; TODO make new desktop or add to existing?
-;; TODO list existing desktops?
+;; index's more flexible, savable cousin; a place to collect and order note titles
 
 (defun zk-index-desktop-select ()
   "Select a ZK-Desktop to work with."
