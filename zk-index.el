@@ -115,6 +115,31 @@ If no format function, gets set to nil.")
   (define-key zk-file-map (kbd "D") #'zk-index-send-to-desktop))
 
 
+;;; ZK-Index Minor Mode Settings
+
+(defvar-local zk-index-mode nil
+  "Toggle 'zk-index-mode'")
+
+(defun zk-index-mode (&optional ARG)
+    (interactive (list 'toggle))
+  (setq zk-index-mode
+        (if (eq ARG 'toggle)
+            (not zk-index-mode)
+          (> ARG 0))))
+
+(defvar zk-index-mode-line '(:eval (zk-index-mode-line-text)))
+(defvar zk-index-query-mode-line nil)
+(defvar zk-index-last-query nil)
+(defvar zk-index-last-query nil)
+(defvar zk-index-last-query-terms nil)
+
+(add-to-list 'minor-mode-map-alist (cons 'zk-index-mode zk-index-map))
+(add-to-list 'minor-mode-alist `(zk-index-mode ,zk-index-mode-line))
+
+(defun zk-index-mode-line-text ()
+  zk-index-query-mode-line)
+
+
 ;;; Main Stack
 
 ;;;###autoload
@@ -158,7 +183,9 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (zk-index--sort files format-fn sort-fn)
     (goto-char (point-min))
     (unless (zk-index-narrowed-p)
-      (forward-line line))
+      (progn
+        (setq zk-index-query-mode-line nil)
+        (forward-line line)))
     (read-only-mode))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
@@ -212,16 +239,41 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (let* ((command this-command)
          (scope (if (zk-index-narrowed-p)
                     (zk-index--current-id-list)
-                  (zk--id-list)))
+                  (progn
+                    (setq zk-index-last-query nil)
+                    (zk--id-list))))
          (string (read-string "Search: "))
          (query (cond
                  ((eq command 'zk-index-focus)
-                  (mapcar
-                   (lambda (x)
-                     (zk--parse-file 'id x))
-                   (zk--directory-files t (regexp-quote string))))
+                    (mapcar
+                     (lambda (x)
+                       (zk--parse-file 'id x))
+                     (zk--directory-files t (regexp-quote string))))
                  ((eq command 'zk-index-search)
                   (zk--grep-id-list string))))
+         (mode-line
+          (cond ((eq command 'zk-index-focus)
+                (progn
+                  (unless (eq zk-index-last-query 'focus)
+                    (progn
+                      (setq zk-index-last-query 'focus)
+                      (setq zk-index-last-query-terms nil)))
+                  (setq zk-index-last-query-terms
+                        (if zk-index-last-query-terms
+                            (concat zk-index-last-query-terms " + " string)
+                          string))
+                  (concat " [ZK-Focus: \"" zk-index-last-query-terms "\"]")))
+                ((eq command 'zk-index-search)
+                (progn
+                  (unless (eq zk-index-last-query 'search)
+                    (progn
+                      (setq zk-index-last-query 'search)
+                      (setq zk-index-last-query-terms nil)))
+                  (setq zk-index-last-query-terms
+                        (if zk-index-last-query-terms
+                            (concat zk-index-last-query-terms " + " string)
+                          string))
+                  (concat " [ZK-Search: \"" zk-index-last-query-terms "\"]")))))
          (focus
           (mapcar
            (lambda (x)
@@ -229,6 +281,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                x))
            query))
          (files (zk--parse-id 'file-path (remq nil focus))))
+    (setq zk-index-query-mode-line mode-line)
     (when (stringp files)
       (setq files (list files)))
     (if files files
