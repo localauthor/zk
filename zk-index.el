@@ -208,15 +208,22 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   "Insert CANDIDATES into ZK-Index."
   (dolist (file candidates)
     (string-match zk-id-regexp file)
-    (insert-text-button file
-                   'type 'zk-index
-                   'follow-link t
-                   'face 'default
-                   'action
-                   `(lambda (_)
-                        (find-file-other-window
-                         (zk--parse-id 'file-path
-                                       ,(match-string 0 file)))))
+    (let ((id (match-string 0 file)))
+      (insert-text-button file
+                          'type 'zk-index
+                          'follow-link t
+                          'face 'default
+                          'action
+                          (lambda (_)
+                            (find-file-other-window
+                             (zk--parse-id 'file-path
+                                           id)))
+                          'help-echo (lambda (_win _obj _pos)
+                                       (format
+                                        "%s"
+                                        (zk--parse-id
+                                         'title
+                                         id)))))
     (newline))
   (message "Notes: %s" (length candidates)))
 
@@ -492,10 +499,17 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
                 (id (match-string-no-properties 1)))
             (when (member id ids)
               (make-text-button beg end 'type 'zk-index
-                                'action `(lambda (_)
+                                'action (lambda (_)
                                            (find-file-other-window
                                             (zk--parse-id 'file-path
-                                                          ,id))))))))
+                                                          id)))
+                                'help-echo (lambda (_win _obj _pos)
+                                             (format
+                                              "%s"
+                                              (zk--parse-id
+                                               'title
+                                               id)))
+                                )))))
       (setq zk-index-desktop-map-enable t)
       (read-only-mode))))
 
