@@ -129,7 +129,7 @@ insertion. See 'zk-new-note-header' for an example."
 
 Options:
 1. t - Always insert a link
-2. 'zk - Ansert link only inside an existing note
+2. 'zk - Insert link only inside an existing note
 3. 'ask - Ask user, yes or no
 4. nil - Never insert a link
 
@@ -160,7 +160,7 @@ replaced by a note's ID."
   :type 'string
   :group 'zk)
 
-(defcustom zk-link-and-title nil
+(defcustom zk-link-and-title t
   "Should 'zk-insert-link' insert both link and title?
 
 Options:
@@ -587,12 +587,15 @@ Optionally call a custom function by setting the variable
   (if zk-current-notes-function
       (funcall zk-current-notes-function)
     (switch-to-buffer
-     (read-buffer
-      "Current Notes: " nil t
-      (lambda (x)
-        (and (string-match zk-id-regexp (car x))
-             (member (match-string 0 (car x))
-                     (zk--id-list))))))))
+     (completing-read
+      "Current Notes: "
+      (remq nil
+            (mapcar
+             (lambda (x)
+               (when (and (buffer-file-name x)
+                          (zk-file-p (buffer-file-name x)))
+                 (buffer-name x)))
+             (buffer-list)))))))
 
 ;;; Follow Links
 
