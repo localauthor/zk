@@ -119,6 +119,7 @@ If no format function, gets set to nil.")
   (define-key zk-file-map (kbd "I") #'zk-index)
   (define-key zk-file-map (kbd "D") #'zk-index-send-to-desktop))
 
+(defvar zk-query-history nil)
 
 ;;; ZK-Index Minor Mode Settings
 
@@ -261,7 +262,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                    ((eq command 'zk-index-focus)
                     "Focus: ")
                    ((eq command 'zk-index-search)
-                    "Search: "))))
+                    "Search: "))
+                  nil 'zk-query-history))
          (query(cond
                  ((eq command 'zk-index-focus)
                   (mapcar
@@ -282,6 +284,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                x))
            query))
          (files (zk--parse-id 'file-path (remq nil focus))))
+    (add-to-history 'zk-query-history string)
     (setq zk-index-query-mode-line mode-line)
     (when (stringp files)
       (setq files (list files)))
