@@ -72,15 +72,13 @@ Select TAG, with completion, from list of all tags in zk notes."
           :state ,#'consult--buffer-state
           :items ,(lambda ()
                     (remq nil
-                          (mapcar
-                           (lambda (x)
-                             (let ((str (buffer-name x)))
-                               (when
-                                   (and (string-match zk-id-regexp str)
-                                        (member (match-string 0 str)
-                                                (zk--id-list)))
-                                 str)))
-                           (buffer-list))))))
+                        (mapcar
+                         (lambda (x)
+                           (when
+                               (and (buffer-file-name x)
+                                    (zk-file-p (buffer-file-name x)))
+                             (buffer-name x)))
+                         (buffer-list))))))
 
 ;; evaluate the following to add this source to 'consult-buffer-sources':
 ;; (add-to-list 'consult-buffer-sources 'zk-consult-source 'append)
