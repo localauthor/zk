@@ -240,10 +240,15 @@ will be replaced by its ID."
 
 ;;; Low-Level Functions
 
-(defun zk-file-p ()
-  "Return t if buffer is a zk-file; nil otherwise."
-  (and (string-match-p zk-id-regexp buffer-file-name)
-       (file-in-directory-p default-directory zk-directory)))
+(defun zk-file-p (&optional file)
+  "Return t if 'current-buffer' is a zk-file.
+With optional argument FILE."
+  (let ((dir (if file file
+               default-directory))
+        (file-name (if file file
+                     buffer-file-name)))
+    (and (file-in-directory-p dir zk-directory)
+         (string-match-p zk-id-regexp file-name))))
 
 (defun zk--generate-id ()
   "Generate and return a zk ID.
@@ -303,6 +308,14 @@ a regexp to replace the default, 'zk-id-regexp'."
                                           zk-directory
                                           " 2>/dev/null"))))
     (split-string files "\n" t)))
+
+(defun zk--grep-id-list (str)
+  "Return a list of IDs for files containing STR."
+  (let ((files (zk--grep-file-list str)))
+    (mapcar
+     (lambda (x)
+       (zk--parse-file 'id x))
+     files)))
 
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
