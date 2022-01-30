@@ -124,7 +124,7 @@ insertion. See 'zk-new-note-header' for an example."
   :type 'function
   :group 'zk)
 
-(defcustom zk-new-note-link-insert t
+(defcustom zk-new-note-link-insert 'ask
   "Should 'zk-new-note' insert link to new note at point?
 
 Options:
