@@ -231,12 +231,16 @@ will be replaced by its ID."
     (let ((zk-id (match-string-no-properties 0)))
       `(zk-id ,zk-id . ,(bounds-of-thing-at-point 'symbol)))))
 
-(with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
-  (add-to-list 'embark-keymap-alist '(zk-id . zk-id-map))
-  (add-to-list 'embark-keymap-alist '(zk-file . zk-file-map))
-  (set-keymap-parent zk-id-map embark-general-map)
-  (set-keymap-parent zk-file-map embark-file-map))
+(defun zk-setup-embark ()
+  "Setup Embark integration for zk.
+Adds zk-id as an Embark target, and adds zk-id-map and
+zk-file-map to embark-keymap-alist."
+  (with-eval-after-load 'embark
+    (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
+    (add-to-list 'embark-keymap-alist '(zk-id . zk-id-map))
+    (add-to-list 'embark-keymap-alist '(zk-file . zk-file-map))
+    (set-keymap-parent zk-id-map embark-general-map)
+    (set-keymap-parent zk-file-map embark-file-map)))
 
 ;;; Low-Level Functions
 
@@ -385,8 +389,11 @@ file extension."
 
 ;;; Buttons
 
-(cond (zk-enable-link-buttons
-       (add-hook 'find-file-hook #'zk-make-link-buttons)))
+(defun zk-setup-auto-link-buttons ()
+  "Enable automatic link creation when zk-file is opened.
+Adds 'zk-make-link-buttons' to 'find-file-hook.'"
+  (setq zk-enable-link-buttons t)
+  (add-hook 'find-file-hook #'zk-make-link-buttons))
 
 (eval-and-compile
 (define-button-type 'zk-link
