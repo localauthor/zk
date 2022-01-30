@@ -231,12 +231,13 @@ will be replaced by its ID."
     (let ((zk-id (match-string-no-properties 0)))
       `(zk-id ,zk-id . ,(bounds-of-thing-at-point 'symbol)))))
 
-(with-eval-after-load 'embark
-  (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
-  (add-to-list 'embark-keymap-alist '(zk-id . zk-id-map))
-  (add-to-list 'embark-keymap-alist '(zk-file . zk-file-map))
-  (set-keymap-parent zk-id-map embark-general-map)
-  (set-keymap-parent zk-file-map embark-file-map))
+(defun zk-setup-embark ()
+  (with-eval-after-load 'embark
+    (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
+    (add-to-list 'embark-keymap-alist '(zk-id . zk-id-map))
+    (add-to-list 'embark-keymap-alist '(zk-file . zk-file-map))
+    (set-keymap-parent zk-id-map embark-general-map)
+    (set-keymap-parent zk-file-map embark-file-map)))
 
 ;;; Low-Level Functions
 

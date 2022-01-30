@@ -318,8 +318,9 @@ the following variables accordingly:
 
 ** Embark Integration
 
-This package includes out-of-the-box support for [[https://github.com/oantolin/embark][Embark]], both on
-links-at-point and in the minibuffer.
+This package includes support for [[https://github.com/oantolin/embark][Embark]], both on links-at-point and in the
+minibuffer. To enable, evaluate the function =zk-setup-embark=. (Include this
+function in your config file to setup Embark integration on startup.)
 
 When Embark is loaded, calling =embark-act= on a zk-id at point makes
 available the functions in the keymap =zk-id-map=. This is a convenient way
