@@ -232,7 +232,10 @@ will be replaced by its ID."
       `(zk-id ,zk-id . ,(bounds-of-thing-at-point 'symbol)))))
 
 (defun zk-setup-embark ()
-  (with-eval-after-load 'embark
+  "Setup Embark integration for zk.
+Adds zk-id as an Embark target, and adds zk-id-map and
+zk-file-map to embark-keymap-alist."
+  (when (featurep 'embark)
     (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
     (add-to-list 'embark-keymap-alist '(zk-id . zk-id-map))
     (add-to-list 'embark-keymap-alist '(zk-file . zk-file-map))
