@@ -307,10 +307,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                   nil 'zk-index-query-history))
          (query (cond
                  ((eq command 'zk-index-focus)
-                  (mapcar
-                   (lambda (x)
-                     (zk--parse-file 'id x))
-                   (zk--directory-files t string)))
+                  (zk--id-list string))
                  ((eq command 'zk-index-search)
                   (zk--grep-id-list string))))
          (mode-line

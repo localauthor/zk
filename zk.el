@@ -264,9 +264,11 @@ The ID is created using `zk-id-time-string-format'."
       (setq id (number-to-string id)))
     id))
 
-(defun zk--id-list ()
-  "Return a list of zk IDs for notes in 'zk-directory'."
-  (let* ((list (zk--directory-files t))
+(defun zk--id-list (&optional str)
+  "Return a list of zk IDs for notes in 'zk-directory'.
+Optional search for regexp STR in note title."
+  (let* ((list (if str (zk--directory-files t str)
+                 (zk--directory-files t)))
          (all-ids))
     (dolist (file list)
       (push (zk--parse-file 'id file)  all-ids))
