@@ -302,13 +302,13 @@ a regexp to replace the default, 'zk-id-regexp'."
     files))
 
 (defun zk--grep-file-list (str)
-  "Return a list of files containing STR."
+  "Return a list of files containing regexp STR."
   (let* ((files (shell-command-to-string (concat
                                           "grep -lir --include \\*."
                                           zk-file-extension
                                           " -e "
                                           (shell-quote-argument
-                                           (regexp-quote str))
+                                           str)
                                           " "
                                           zk-directory
                                           " 2>/dev/null"))))
@@ -577,7 +577,7 @@ title."
 
 ;;;###autoload
 (defun zk-find-file-by-full-text-search (str)
-  "Find files containing STR."
+  "Find files containing regexp STR."
   (interactive
    (list (read-string "Search string: ")))
   (let ((files (zk--grep-file-list str)))
@@ -733,7 +733,7 @@ be formatted as completion candidates."
 
 (defun zk--backlinks-list (id)
   "Return list of notes that link to note with ID."
-  (zk--grep-file-list (format zk-link-format id)))
+  (zk--grep-file-list (regexp-quote (format zk-link-format id))))
 
 ;;;###autoload
 (defun zk-backlinks ()
