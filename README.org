@@ -101,6 +101,12 @@ Or with =use-package=:
 Once =zk= is loaded, call =M-x zk-new-note= to create a note or =M-x zk-find-file= to
 open an existing note.
 
+*** Additional Setup:
+
+- To enable automatic link-creation when opening a zk-file, include the function =(zk-setup-auto-link-buttons)= in your init config. This ensures that =zk-enable-link-buttons= is set to =t= and adds =zk-make-link-buttons= to Emacs's =find-file-hook=.
+
+- To enable Embark integration, include the function =(zk-setup-embark)= in your init config.
+
 * Features
 
 ** Follow Links
@@ -319,8 +325,10 @@ the following variables accordingly:
 ** Embark Integration
 
 This package includes support for [[https://github.com/oantolin/embark][Embark]], both on links-at-point and in the
-minibuffer. To enable, evaluate the function =zk-setup-embark=. (Include this
-function in your config file to setup Embark integration on startup.)
+minibuffer.
+
+To enable Embark integration, evaluate the function =zk-setup-embark=. Include this
+function in your config file to setup Embark integration on startup.
 
 When Embark is loaded, calling =embark-act= on a zk-id at point makes
 available the functions in the keymap =zk-id-map=. This is a convenient way
