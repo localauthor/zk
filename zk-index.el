@@ -5,13 +5,13 @@
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 25, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.1
+;; Version: 0.3
 ;; Homepage: https://github.com/localauthor/zk
 ;; Package-Requires: ((emacs "26.1"))
 
 ;;; Commentary:
 
-;; Two additional interfaces for zk:
+;; Two interfaces for zk:
 
 ;; ZK-Index: A sortable, searchable, narrowable, semi-persistent selection of notes titles.
 
@@ -269,7 +269,26 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
            (length (zk--id-list)))
         t nil)))
 
-;;; Querying Functions
+;;; Index Search and Focus Functions
+
+;;;; Index Search
+;; narrow index based on search of notes' full text
+
+(defun zk-index-search ()
+  "Narrow index based on regexp search of note contents."
+  (interactive)
+  (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
+
+;;;; Index Focus
+;; narrow index based on search of note titles (case sensitive)
+;; an alternative to consult-focus-lines
+
+(defun zk-index-focus ()
+  "Narrow index based on regexp search of note titles."
+  (interactive)
+  (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
+
+;;;; Low-level Query Functions
 
 (defun zk-index-query-files ()
   "Return narrowed list of notes, based on focus or search query."
@@ -291,7 +310,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                   (mapcar
                    (lambda (x)
                      (zk--parse-file 'id x))
-                   (zk--directory-files t (regexp-quote string))))
+                   (zk--directory-files t string)))
                  ((eq command 'zk-index-search)
                   (zk--grep-id-list string))))
          (mode-line
@@ -380,24 +399,6 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
           (while (re-search-forward zk-id-regexp nil t)
             (push (match-string-no-properties 0) ids)))
         ids))))
-
-;;; Index Focus
-
-;; narrow index based on search of note titles (case sensitive)
-;; an alternative to consult-focus-lines
-
-(defun zk-index-focus ()
-  "Narrow index based on search of note titles."
-  (interactive)
-  (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
-
-;;; Index Search
-;; narrow index based on search of notes' full text
-
-(defun zk-index-search ()
-  "Narrow index based on search of note titles."
-  (interactive)
-  (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
 
 ;;; Index Sort Functions
 
