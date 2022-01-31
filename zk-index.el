@@ -649,7 +649,8 @@ at point."
   "Switch to ZK-Desktop.
 With prefix-argument, raise ZK-Desktop in other frame."
   (interactive)
-  (unless (buffer-live-p (get-buffer zk-index-desktop-current))
+  (unless (and zk-index-desktop-current
+               (buffer-live-p (get-buffer zk-index-desktop-current)))
     (zk-index-desktop-select))
   (let ((buffer zk-index-desktop-current))
     (if current-prefix-arg
