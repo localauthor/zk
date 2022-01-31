@@ -89,15 +89,6 @@ At a minimum, you must set the variables =zk-directory= and
 (setq zk-file-extension "md") ;; any plaintext file extension, eg, "org" or "txt"
 #+end_src
 
-Or with =use-package=:
-
-#+begin_src emacs-lisp
-(use-package zk
-  :custom
-  (zk-directory "~/path/to/zk-directory")
-  (zk-file-extension "md"))
-#+end_src
-
 Once =zk= is loaded, call =M-x zk-new-note= to create a note or =M-x zk-find-file= to
 open an existing note.
 
@@ -106,6 +97,37 @@ open an existing note.
 - To enable automatic link-creation when opening a zk-file, include the function =(zk-setup-auto-link-buttons)= in your init config. This ensures that =zk-enable-link-buttons= is set to =t= and adds =zk-make-link-buttons= to Emacs's =find-file-hook=.
 
 - To enable Embark integration, include the function =(zk-setup-embark)= in your init config.
+
+
+*** Sample setup with =use-package=
+
+#+begin_src emacs-lisp
+(use-package zk
+  :custom
+  (zk-directory "~/path/to/zk-directory")
+  (zk-file-extension "md")
+  :config
+  (zk-setup-auto-link-buttons)
+  (zk-setup-embark))
+#+end_src
+
+*** Sample setup with =straight.el= to include optional =zk-consult.el= functions
+
+See [[#alternative-search-functions-using-consult-grep][Alternative Search Functions, using Consult-Grep]]
+
+#+begin_src emacs-lisp
+(use-package zk
+  :straight (zk :files (:defaults "zk-consult.el"))
+  :custom
+  (zk-directory "~/path/to/zk-directory")
+  (zk-file-extension "md")
+  :config
+  (require 'zk-consult)
+  (zk-setup-auto-link-buttons)
+  (zk-setup-embark)
+  (setq zk-tag-grep-function #'zk-consult-grep-tag-search
+        zk-grep-function #'zk-consult-grep))
+#+end_src
 
 * Features
 
