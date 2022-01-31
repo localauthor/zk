@@ -25,19 +25,32 @@
 
 ;;; Custom Variables
 
-(defvar zk-index--default-format 'zk--completion-at-point-candidates
-  "Default formatting function for ZK-Index candidates.")
+(defgroup zk-index nil
+  "Index and Desktop interfaces for zk."
+  :group 'text
+  :group 'files
+  :prefix "zk-index")
 
-(defvar zk-index-auto-scroll t
-  "Enable automatically showing note at point in ZK-Index.")
+(defcustom zk-index--default-format 'zk--completion-at-point-candidates
+  "Default formatting function for ZK-Index candidates."
+  :group 'zk-index
+  :type 'function)
 
-(defvar zk-index-desktop-directory (symbol-value 'zk-directory)
-  "Directory for saved ZK-Desktops.
-Defaults to 'zk-directory'.")
+(defcustom zk-index-auto-scroll t
+  "Enable automatically showing note at point in ZK-Index."
+  :group 'zk-index
+  :type 'boolean)
 
-(defvar zk-index-desktop-basename "*ZK-Desktop:"
+(defcustom zk-index-desktop-directory nil
+  "Directory for saved ZK-Desktops."
+  :group 'zk-index
+  :type 'directory)
+
+(defcustom zk-index-desktop-basename "*ZK-Desktop:"
   "Basename for ZK-Desktops.
-The names of all ZK-Desktops should begin with this string.")
+The names of all ZK-Desktops should begin with this string."
+  :group 'zk-index
+  :type 'string)
 
 
 ;;; ZK-Index Minor Mode Settings
@@ -546,7 +559,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
         (progn
           (switch-to-buffer zk-index-desktop-current)
           (setq zk-index-desktop-mode t))
-      (message "Desktop set to: %s" zk-index-desktop-current))))
+      (message "Desktop set to: %s" zk-index-desktop-current)))
+  zk-index-desktop-current)
 
 ;;;###autoload
 (defun zk-index-desktop-make-buttons ()
@@ -607,7 +621,8 @@ at point."
     (if (and zk-index-desktop-current
              (buffer-live-p (get-buffer zk-index-desktop-current)))
         (setq buffer zk-index-desktop-current)
-      (setq buffer (zk-index-desktop-select)))
+      (setq buffer
+	    (zk-index-desktop-select)))
     (unless (get-buffer buffer)
       (generate-new-buffer buffer))
     (with-current-buffer buffer
