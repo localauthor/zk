@@ -598,8 +598,8 @@ Optionally call a custom function by setting the variable
   (if zk-current-notes-function
       (funcall zk-current-notes-function)
     (switch-to-buffer
-     (completing-read
-      "Current Notes: "
+     (zk--select-file
+      "Current Notes:"
       (remq nil
             (mapcar
              (lambda (x)
