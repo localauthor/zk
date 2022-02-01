@@ -457,8 +457,9 @@ Adds 'zk-make-link-buttons' to 'find-file-hook.'"
             (when (member id ids)
               (make-button beg end 'type 'zk-link))))))))
 
-(defun zk--make-button-before-point ()
+(defun zk-make-button-before-point ()
   "Find 'zk-link-regexp' before point and make it a zk-link button."
+  (interactive)
   (save-excursion
     (re-search-backward zk-link-regexp (line-beginning-position))
     (make-button (match-beginning 1) (match-end 1)
@@ -673,14 +674,14 @@ for additional configurations."
   "Insert link to note with ID, with button optional."
   (insert (format zk-link-format id))
   (when zk-enable-link-buttons
-    (zk--make-button-before-point)))
+    (zk-make-button-before-point)))
 
 (defun zk--insert-link-and-title (id title)
   "Insert zk ID and TITLE according to 'zk-link-and-title-format'."
   (insert (format-spec zk-link-and-title-format
                        `((?i . ,id)(?t . ,title))))
   (when zk-enable-link-buttons
-    (zk--make-button-before-point)))
+    (zk-make-button-before-point)))
 
 ;;; Completion at Point
 
