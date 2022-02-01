@@ -31,10 +31,20 @@
   :group 'files
   :prefix "zk-index")
 
-(defcustom zk-index--default-format 'zk--completion-at-point-candidates
+(defcustom zk-index--format-function 'zk-index--format-candidates
   "Default formatting function for ZK-Index candidates."
   :group 'zk-index
   :type 'function)
+
+(defcustom zk-index-invisible-ids t
+  "If non-nil, IDs will not be visible in the index."
+  :group 'zk-index
+  :type 'boolean)
+
+(defcustom zk-index-format "[[%i]] %t"
+  "Default format for candidates in the index."
+    :group 'zk-index
+    :type 'boolean)
 
 (defcustom zk-index-auto-scroll t
   "Enable automatically showing note at point in ZK-Index."
@@ -167,6 +177,44 @@ If called from Lisp, ARG should be 'toggle."
   (define-key zk-file-map (kbd "I") #'zk-index)
   (define-key zk-file-map (kbd "D") #'zk-index-send-to-desktop))
 
+
+;;; Formatting
+
+(defun zk-index--format-candidates (&optional files format)
+  "Return a list of FILES as formatted candidates, following FORMAT.
+
+FORMAT must be a 'format-spec' template, wherein '%i' is replaced
+by the ID and '%t' by the title. It can be a string, such as \"%t
+[[%i]]\", or a variable whose value is a string. If nil,
+'zk-completion-at-point-format' will be used by default.
+
+FILES must be a list of filepaths. If nil, all files in
+'zk-directory' will be returned as formatted candidates."
+  (let* ((zk-index-format (if zk-index-invisible-ids "%t %i"
+                            zk-index-format))
+         (format (if format format
+                   zk-index-format))
+         (list (if files files
+                 (zk--directory-files)))
+         (output))
+    (dolist (file list)
+      (progn
+        (string-match (concat "\\(?1:"
+                              zk-id-regexp
+                              "\\).\\(?2:.*?\\)\\."
+                              zk-file-extension
+                              ".*")
+                      file)
+        (let ((id (if zk-index-invisible-ids
+                      (propertize (match-string 1 file) 'invisible t)
+                    (match-string 1 file)))
+              (title (match-string 2 file)))
+          (when id
+            (push (format-spec format
+                               `((?i . ,id)(?t . ,title)))
+                  output)))))
+    output))
+
 ;;; Main Stack
 
 ;;;###autoload
@@ -230,7 +278,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index--format (files &optional format-fn)
   "Format FILES with optional custom FORMAT-FN."
   (let* ((format-fn (if format-fn format-fn
-                      zk-index--default-format))
+                      zk-index--format-function))
          (candidates (funcall format-fn files)))
     (zk-index--insert candidates)))
 
@@ -598,7 +646,7 @@ at point."
   (unless zk-index-desktop-directory
     (error "Please set 'zk-index-desktop-directory'"))
   (let ((buffer) (items))
-    (cond (files (setq items (car (funcall zk-index--default-format files))))
+    (cond (files (setq items (car (funcall zk-index--format-function files))))
           ((string= (buffer-name) "*ZK-Index*")
            (progn
              (read-only-mode -1)
