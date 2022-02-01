@@ -378,7 +378,8 @@ supplied. Can take a PROMPT argument."
    (zk--directory-files t)))
 
 (defun zk--parse-id (target ids)
-  "Return TARGET, either 'file-path or 'title, from files with IDS."
+  "Return TARGET, either 'file-path or 'title, from files with IDS.
+Takes a single ID, as a string, or a list of IDs."
   (let* ((zk-alist (zk--alist))
          (return
           (cond ((eq target 'file-path)
@@ -681,27 +682,21 @@ for additional configurations."
   (when zk-enable-link-buttons
     (zk--make-button-before-point)))
 
-(defun zk-completion-at-point ()
-  "Completion-at-point function for zk-links.
-When added to 'completion-at-point-functions', typing two
-brackets \"[[\" initiates completion."
-  (let ((case-fold-search t)
-        (pt (point)))
-    (save-excursion
-      (when (re-search-backward "\\[\\[" nil t)
-        (list (match-beginning 0)
-              pt
-              (zk--completion-at-point-candidates)
-              :exclusive 'no)))))
+;;; Completion at Point
 
-;; TODO add post completion hook, to optionally make button before point?
+(defun zk--format-candidates (&optional files format)
+  "Return a list of FILES as formatted candidates, following FORMAT.
 
-(defun zk--completion-at-point-candidates (&optional files)
-  "Return a list of formatted candidates for 'zk-completion-at-point'.
-If FILES is nil, return formatted candidates for all files in
-'zk-directory'; if non-nil, it should be a list of filepaths to
-be formatted as completion candidates."
-  (let* ((list (if files files
+FORMAT must be a 'format-spec' template, wherein '%i' is replaced
+by the ID and '%t' by the title. It can be a string, such as \"%t
+[[%i]]\", or a variable whose value is a string. If nil,
+'zk-completion-at-point-format' will be used by default.
+
+FILES must be a list of filepaths. If nil, all files in
+'zk-directory' will be returned as formatted candidates."
+  (let* ((format (if format format
+                   zk-completion-at-point-format))
+         (list (if files files
                  (zk--directory-files)))
          (output))
     (dolist (file list)
@@ -715,10 +710,25 @@ be formatted as completion candidates."
         (let ((id (match-string 1 file))
               (title (match-string 2 file)))
           (when id
-            (push (format-spec zk-completion-at-point-format
+            (push (format-spec format
                                `((?i . ,id)(?t . ,title)))
                   output)))))
     output))
+
+(defun zk-completion-at-point ()
+  "Completion-at-point function for zk-links.
+When added to 'completion-at-point-functions', typing two
+brackets \"[[\" initiates completion."
+  (let ((case-fold-search t)
+        (pt (point)))
+    (save-excursion
+      (when (re-search-backward "\\[\\[" nil t)
+        (list (match-beginning 0)
+              pt
+              (zk--format-candidates)
+              :exclusive 'no)))))
+
+;; TODO add post completion hook, to optionally make button before point?
 
 ;;; Copy Link and Title
 
