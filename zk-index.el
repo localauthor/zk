@@ -674,7 +674,12 @@ facilitate button-making. "
     (error "Please set 'zk-index-desktop-directory'"))
   (let ((buffer) (items)
         (zk-index-invisible-ids nil))
-    (cond (files (setq items (car (funcall zk-index--format-function files))))
+    (cond ((eq 1 (length files)) (setq items (car (funcall zk-index--format-function files))))
+          ((and files
+                (> 1 (length files)) (setq items
+                                     (mapconcat
+                                      'identity
+                                      (funcall zk-index--format-function files) "\n"))))
           ((string= (buffer-name) "*ZK-Index*")
            (progn
              (read-only-mode -1)
