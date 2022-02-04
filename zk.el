@@ -264,9 +264,11 @@ The ID is created using `zk-id-time-string-format'."
       (setq id (number-to-string id)))
     id))
 
-(defun zk--id-list ()
-  "Return a list of zk IDs for notes in 'zk-directory'."
-  (let* ((list (zk--directory-files t))
+(defun zk--id-list (&optional str)
+  "Return a list of zk IDs for notes in 'zk-directory'.
+Optional search for regexp STR in note title."
+  (let* ((list (if str (zk--directory-files t str)
+                 (zk--directory-files t)))
          (all-ids))
     (dolist (file list)
       (push (zk--parse-file 'id file)  all-ids))
@@ -302,13 +304,13 @@ a regexp to replace the default, 'zk-id-regexp'."
     files))
 
 (defun zk--grep-file-list (str)
-  "Return a list of files containing STR."
+  "Return a list of files containing regexp STR."
   (let* ((files (shell-command-to-string (concat
                                           "grep -lir --include \\*."
                                           zk-file-extension
                                           " -e "
                                           (shell-quote-argument
-                                           (regexp-quote str))
+                                           str)
                                           " "
                                           zk-directory
                                           " 2>/dev/null"))))
@@ -376,7 +378,8 @@ supplied. Can take a PROMPT argument."
    (zk--directory-files t)))
 
 (defun zk--parse-id (target ids)
-  "Return TARGET, either 'file-path or 'title, from files with IDS."
+  "Return TARGET, either 'file-path or 'title, from files with IDS.
+Takes a single ID, as a string, or a list of IDs."
   (let* ((zk-alist (zk--alist))
          (return
           (cond ((eq target 'file-path)
@@ -454,8 +457,9 @@ Adds 'zk-make-link-buttons' to 'find-file-hook.'"
             (when (member id ids)
               (make-button beg end 'type 'zk-link))))))))
 
-(defun zk--make-button-before-point ()
+(defun zk-make-button-before-point ()
   "Find 'zk-link-regexp' before point and make it a zk-link button."
+  (interactive)
   (save-excursion
     (re-search-backward zk-link-regexp (line-beginning-position))
     (make-button (match-beginning 1) (match-end 1)
@@ -577,7 +581,7 @@ title."
 
 ;;;###autoload
 (defun zk-find-file-by-full-text-search (str)
-  "Find files containing STR."
+  "Find files containing regexp STR."
   (interactive
    (list (read-string "Search string: ")))
   (let ((files (zk--grep-file-list str)))
@@ -595,8 +599,8 @@ Optionally call a custom function by setting the variable
   (if zk-current-notes-function
       (funcall zk-current-notes-function)
     (switch-to-buffer
-     (completing-read
-      "Current Notes: "
+     (zk--select-file
+      "Current Notes:"
       (remq nil
             (mapcar
              (lambda (x)
@@ -670,36 +674,30 @@ for additional configurations."
   "Insert link to note with ID, with button optional."
   (insert (format zk-link-format id))
   (when zk-enable-link-buttons
-    (zk--make-button-before-point)))
+    (zk-make-button-before-point)))
 
 (defun zk--insert-link-and-title (id title)
   "Insert zk ID and TITLE according to 'zk-link-and-title-format'."
   (insert (format-spec zk-link-and-title-format
                        `((?i . ,id)(?t . ,title))))
   (when zk-enable-link-buttons
-    (zk--make-button-before-point)))
+    (zk-make-button-before-point)))
 
-(defun zk-completion-at-point ()
-  "Completion-at-point function for zk-links.
-When added to 'completion-at-point-functions', typing two
-brackets \"[[\" initiates completion."
-  (let ((case-fold-search t)
-        (pt (point)))
-    (save-excursion
-      (when (re-search-backward "\\[\\[" nil t)
-        (list (match-beginning 0)
-              pt
-              (zk--completion-at-point-candidates)
-              :exclusive 'no)))))
+;;; Completion at Point
 
-;; TODO add post completion hook, to optionally make button before point?
+(defun zk--format-candidates (&optional files format)
+  "Return a list of FILES as formatted candidates, following FORMAT.
 
-(defun zk--completion-at-point-candidates (&optional files)
-  "Return a list of formatted candidates for 'zk-completion-at-point'.
-If FILES is nil, return formatted candidates for all files in
-'zk-directory'; if non-nil, it should be a list of filepaths to
-be formatted as completion candidates."
-  (let* ((list (if files files
+FORMAT must be a 'format-spec' template, wherein '%i' is replaced
+by the ID and '%t' by the title. It can be a string, such as \"%t
+[[%i]]\", or a variable whose value is a string. If nil,
+'zk-completion-at-point-format' will be used by default.
+
+FILES must be a list of filepaths. If nil, all files in
+'zk-directory' will be returned as formatted candidates."
+  (let* ((format (if format format
+                   zk-completion-at-point-format))
+         (list (if files files
                  (zk--directory-files)))
          (output))
     (dolist (file list)
@@ -713,10 +711,25 @@ be formatted as completion candidates."
         (let ((id (match-string 1 file))
               (title (match-string 2 file)))
           (when id
-            (push (format-spec zk-completion-at-point-format
+            (push (format-spec format
                                `((?i . ,id)(?t . ,title)))
                   output)))))
     output))
+
+(defun zk-completion-at-point ()
+  "Completion-at-point function for zk-links.
+When added to 'completion-at-point-functions', typing two
+brackets \"[[\" initiates completion."
+  (let ((case-fold-search t)
+        (pt (point)))
+    (save-excursion
+      (when (re-search-backward "\\[\\[" nil t)
+        (list (match-beginning 0)
+              pt
+              (zk--format-candidates)
+              :exclusive 'no)))))
+
+;; TODO add post completion hook, to optionally make button before point?
 
 ;;; Copy Link and Title
 
@@ -733,7 +746,7 @@ be formatted as completion candidates."
 
 (defun zk--backlinks-list (id)
   "Return list of notes that link to note with ID."
-  (zk--grep-file-list (format zk-link-format id)))
+  (zk--grep-file-list (regexp-quote (format zk-link-format id))))
 
 ;;;###autoload
 (defun zk-backlinks ()
