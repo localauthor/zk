@@ -11,6 +11,11 @@
 
 ;;; Commentary:
 
+;;
+;; NOTE: This feature is still under active development, and subject to major
+;; changes. Be warned. ;)
+;;
+
 ;; Two interfaces for zk:
 
 ;; ZK-Index: A sortable, searchable, narrowable, semi-persistent selection of notes titles.
@@ -107,7 +112,7 @@ If called from Lisp, ARG should be 'toggle."
     (define-key map (kbd "M") #'zk-index-sort-modified)
     (define-key map (kbd "C") #'zk-index-sort-created)
     (define-key map (kbd "q") #'delete-window)
-    map)
+    (make-composed-keymap map tabulated-list-mode-map))
   "Keymap for ZK-Index buffer.")
 
 (add-to-list 'minor-mode-map-alist (cons 'zk-index-mode zk-index-map))
@@ -579,10 +584,25 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
 ;; index's more flexible, savable cousin; a place to collect and order note titles
 
 ;;;###autoload
+(defun zk-desktop ()
+  (interactive)
+  (let ((buffer (if (and zk-index-desktop-current
+                         (buffer-live-p (get-buffer zk-index-desktop-current)))
+                    zk-index-desktop-current
+                  (zk-index-desktop-select)))
+        (choice (read-char "Choice: \[s\]witch or \[p\]op-up?")))
+    (pcase choice
+      ('?s (switch-to-buffer buffer))
+      ('?p (pop-to-buffer buffer
+                          '(display-buffer-at-bottom)))
+      (_ (zk-desktop)))))
+
+;;;###autoload
 (defun zk-index-desktop-select ()
   "Select a ZK-Desktop to work with."
   (interactive)
-  (let* ((desktop
+  (let* ((last-command last-command)
+         (desktop
           (completing-read "Select or Create ZK-Desktop: "
                            (directory-files
                             zk-index-desktop-directory
@@ -606,7 +626,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
       (set-visited-file-name file t t)
       (setq zk-index-desktop-mode t)
       (save-buffer))
-    (if (y-or-n-p (format "Visit %s?" zk-index-desktop-current))
+    (if (and (not (eq last-command 'zk-desktop))
+             (y-or-n-p (format "Visit %s?" zk-index-desktop-current)))
         (progn
           (switch-to-buffer zk-index-desktop-current)
           (setq zk-index-desktop-mode t))
