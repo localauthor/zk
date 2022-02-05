@@ -790,6 +790,67 @@ Select TAG, with completion, from list of all tags in zk notes."
   (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
   (insert tag))
 
+;;; Find Dead Links and Unlinked Notes
+
+(defun zk--grep-link-id-list ()
+  "Return list of all ids that appear as links in zk directory."
+  (let* ((files (shell-command-to-string (concat
+                                          "grep -ohir -e "
+                                          (shell-quote-argument
+                                           zk-link-regexp)
+                                          " "
+                                          zk-directory " 2>/dev/null")))
+         (list (split-string files "\n" t))
+         (ids (mapcar
+               (lambda (x)
+                 (string-match zk-id-regexp x)
+                 (match-string 0 x))
+               list)))
+    (delete-dups ids)))
+
+(defun zk--dead-link-id-list ()
+  "Return list of all links with no corresponding note."
+  (let* ((all-link-ids (zk--grep-link-id-list))
+         (all-ids (zk--id-list)))
+    (delete-dups (remq nil (mapcar
+                            (lambda (x)
+                              (string-match zk-id-regexp x)
+                              (when (not (member (match-string-no-properties 0 x) all-ids))
+                                x))
+                            all-link-ids)))))
+
+;;;###autoload
+(defun zk-grep-dead-links ()
+  "Search for dead links using 'zk-search-function'."
+  (interactive)
+  (let* ((dead-link-ids (zk--dead-link-id-list)))
+    (if dead-link-ids
+        (funcall zk-grep-function (mapconcat
+                                     'identity
+                                     dead-link-ids
+                                     "\\|"))
+      (user-error "No dead links found"))))
+
+(defun zk--unlinked-notes-list ()
+  "Return list of IDs for notes that no notes link to."
+  (let* ((all-link-ids (zk--grep-link-id-list))
+         (all-ids (zk--id-list)))
+    (remq nil (mapcar
+               (lambda (x)
+                 (when (not (member x all-link-ids))
+                   x))
+               all-ids))))
+
+;;;###autoload
+(defun zk-unlinked-notes ()
+  "Find unlinked notes."
+  (interactive)
+  (let* ((ids (zk--unlinked-notes-list))
+         (notes (zk--parse-id 'file-path ids)))
+    (if notes
+        (find-file (zk--select-file "Unlinked notes: " notes))
+      (user-error "No unlinked notes found"))))
+
 (provide 'zk)
 
 ;;; zk.el ends here
