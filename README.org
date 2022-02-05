@@ -157,7 +157,7 @@ function =org-open-at-point= as follows:
 (defun zk-org-try-to-follow-link (fn &optional arg)
   "When 'org-open-at-point' FN fails, try 'zk-follow-link-at-point'.
 Optional ARG."
-  (let (org-link-search-must-match-exact-headline t)
+  (let ((org-link-search-must-match-exact-headline t))
     (condition-case nil
 	(apply fn arg)
       (error (zk-follow-link-at-point)))))
