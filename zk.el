@@ -267,12 +267,9 @@ The ID is created using `zk-id-time-string-format'."
 (defun zk--id-list (&optional str)
   "Return a list of zk IDs for notes in 'zk-directory'.
 Optional search for regexp STR in note title."
-  (let* ((list (if str (zk--directory-files t str)
-                 (zk--directory-files t)))
-         (all-ids))
-    (dolist (file list)
-      (push (zk--parse-file 'id file)  all-ids))
-    all-ids))
+  (let ((files (if str (zk--directory-files t str)
+                 (zk--directory-files t))))
+    (zk--parse-file 'id files)))
 
 (defun zk--id-unavailable-p (str)
   "Return t if provided string STR is already in use as an id."
@@ -318,11 +315,7 @@ a regexp to replace the default, 'zk-id-regexp'."
 
 (defun zk--grep-id-list (str)
   "Return a list of IDs for files containing STR."
-  (let ((files (zk--grep-file-list str)))
-    (mapcar
-     (lambda (x)
-       (zk--parse-file 'id x))
-     files)))
+  (zk--parse-file 'id (zk--grep-file-list str)))
 
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
@@ -406,21 +399,32 @@ Takes a single ID, as a string, or a list of IDs."
         (car return)
       return)))
 
-(defun zk--parse-file (target file)
-  "Return TARGET, either 'id or 'title, from FILE.
+(defun zk--parse-file (target files)
+  "Return TARGET, either 'id or 'title, from FILES.
+Takes a single file-path, as a string, or a list of file-paths.
 A note's title is understood to be the portion of its filename
 following the zk ID, in the format 'zk-id-regexp', and preceding the
 file extension."
-  (let ((return (pcase target
-                  ('id '1)
-                  ('title '2))))
-    (string-match (concat "\\(?1:"
-                          zk-id-regexp
-                          "\\).\\(?2:.*?\\)\\."
-                          zk-file-extension
-                          ".*")
-                  file)
-    (match-string return file)))
+  (let* ((target (pcase target
+                   ('id '1)
+                   ('title '2)))
+         (files (if (listp files)
+                    files
+                  (list files)))
+         (return
+          (mapcar
+           (lambda (file)
+             (string-match (concat "\\(?1:"
+                                   zk-id-regexp
+                                   "\\).\\(?2:.*?\\)\\."
+                                   zk-file-extension
+                                   ".*")
+                           file)
+             (match-string target file))
+           files)))
+    (if (eq 1 (length return))
+        (car return)
+      return)))
 
 ;;; Buttons
 
