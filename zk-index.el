@@ -658,11 +658,20 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
       (save-excursion
         (read-only-mode -1)
         (goto-char (point-min))
-        (while (re-search-forward zk-link-regexp nil t)
+        (while (re-search-forward zk-id-regexp nil t)
           (let ((beg (line-beginning-position))
                 (end (line-end-position))
                 (id (match-string-no-properties 1)))
             (when (member id ids)
+              (goto-char (line-beginning-position))
+              (when zk-index-invisible-ids
+                (if (re-search-forward zk-link-regexp (line-end-position) t)
+                    (replace-match
+                     (propertize (match-string 0) 'invisible t) nil t)
+                  (progn
+                    (re-search-forward id)
+                    (replace-match
+                     (propertize id 'invisible t)))))
               (make-text-button beg end 'type 'zk-index
                                 'action (lambda (_)
                                           (find-file-other-window
@@ -673,24 +682,23 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
                                               "%s"
                                               (zk--parse-id
                                                'title
-                                               id))))))))
-      (read-only-mode))))
+                                               id))))
+              (goto-char (match-end 0)))))
+        (read-only-mode)))))
 
 ;;;###autoload
 (defun zk-index-send-to-desktop (&optional files)
   "Send notes from ZK-Index to ZK-Desktop.
 In ZK-Index, works on note at point or notes in active region.
 Also works on FILES or group of files in minibuffer, and on zk-id
-at point. Note: Sets 'zk-index-invisible-ids' to nil, to
-facilitate button-making. "
+at point."
   (interactive)
   (unless zk-index-desktop-directory
     (error "Please set 'zk-index-desktop-directory'"))
-  (let ((buffer) (items)
-        (zk-index-invisible-ids nil))
+  (let ((buffer) (items))
     (cond ((eq 1 (length files)) (setq items (car (funcall zk-index--format-function files))))
           ((and files
-                (> 1 (length files)) (setq items
+                (< 1 (length files)) (setq items
                                      (mapconcat
                                       'identity
                                       (funcall zk-index--format-function files) "\n"))))
@@ -726,15 +734,15 @@ facilitate button-making. "
       (setq zk-index-desktop-mode t)
       (setq require-final-newline 'visit-save)
       (goto-char (point-max))
-      (newline)
-      (insert items)
-      (newline 2)
+      ;; (newline 2)
+      (insert (concat "\n" items "\n"))
+      ;; (newline 2)
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (goto-char (point-max))
       (beginning-of-line)
-      (read-only-mode)
-      (zk-index-desktop-make-buttons))
+      (zk-index-desktop-make-buttons)
+      (read-only-mode))
     (if (string= (buffer-name) "*ZK-Index*")
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
