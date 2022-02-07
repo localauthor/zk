@@ -531,14 +531,24 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (view-mode)
   (other-window -1))
 
+(defun zk-index--button-at-point-p ()
+  (let ((button (button-at (point))))
+    (when (and button
+               (eq (button-type button) 'zk-index))
+      t)))
+
 (defun zk-index-next-line ()
   "Move to next line.
 If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (if zk-index-auto-scroll
+  (if (save-excursion
+        (forward-line)
+        (and zk-index-auto-scroll
+             (zk-index--button-at-point-p)))
       (progn
         (other-window 1)
-        (when (and view-mode
+        (when (and (zk-file-p)
+                   view-mode
                    (not (buffer-modified-p)))
           (kill-buffer))
         (other-window -1)
@@ -551,10 +561,14 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   "Move to previous line.
 If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (if zk-index-auto-scroll
+  (if (save-excursion
+          (forward-line -1)
+          (and zk-index-auto-scroll
+               (zk-index--button-at-point-p)))
       (progn
         (other-window 1)
-        (when (and view-mode
+        (when (and (zk-file-p)
+                   view-mode
                    (not (buffer-modified-p)))
           (kill-buffer))
         (other-window -1)
