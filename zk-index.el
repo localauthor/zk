@@ -186,7 +186,8 @@ If called from Lisp, ARG should be 'toggle."
 (with-eval-after-load 'embark
   (add-to-list 'embark-multitarget-actions 'zk-index)
   (add-to-list 'embark-multitarget-actions 'zk-index-send-to-desktop)
-  (define-key zk-file-map (kbd "d") #'zk-index-send-to-desktop))
+  (define-key zk-file-map (kbd "d") #'zk-index-send-to-desktop)
+  (define-key zk-id-map (kbd "d") #'zk-index-send-to-desktop))
 
 
 ;;; Formatting
@@ -696,12 +697,19 @@ at point."
   (unless zk-index-desktop-directory
     (error "Please set 'zk-index-desktop-directory'"))
   (let ((buffer) (items))
-    (cond ((eq 1 (length files)) (setq items (car (funcall zk-index--format-function files))))
+    (cond ((eq 1 (length files))
+           (unless (ignore-errors (setq items (car (funcall zk-index--format-function files))))
+             (setq items
+                 (car
+                  (funcall
+                   zk-index--format-function
+                   (list (zk--parse-id 'file-path files)))))))
           ((and files
-                (< 1 (length files)) (setq items
-                                     (mapconcat
-                                      'identity
-                                      (funcall zk-index--format-function files) "\n"))))
+                (< 1 (length files)))
+           (setq items
+                 (mapconcat
+                  'identity
+                  (funcall zk-index--format-function files) "\n")))
           ((string= (buffer-name) "*ZK-Index*")
            (progn
              (read-only-mode -1)
