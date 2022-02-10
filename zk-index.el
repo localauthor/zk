@@ -73,7 +73,9 @@ The names of all ZK-Desktops should begin with this string."
   :type 'string)
 
 (defcustom zk-index-view-buf "*ZK-View*"
-  "Name of the buffer for viewing notes in zk-index")
+  "Name of the buffer for viewing notes in zk-index."
+  :group 'zk-index
+  :type 'string)
 
 ;;; ZK-Index Minor Mode Settings
 
@@ -541,7 +543,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (view-mode)
   ;; Focus *ZK-Index* again
   (set-window-buffer (other-window -1) "*ZK-Index*")
-  (switch-to-buffer "*ZK-Index*"))
+  (zk-index-switch-to-index))
 
 (defun zk-index--button-at-point-p ()
   (let ((button (button-at (point))))
