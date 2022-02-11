@@ -268,9 +268,11 @@ The ID is created using `zk-id-time-string-format'."
 (defun zk--id-list (&optional str)
   "Return a list of zk IDs for notes in 'zk-directory'.
 Optional search for regexp STR in note title."
-  (let ((files (if str (zk--directory-files t str)
-                 (zk--directory-files t))))
-    (zk--parse-file 'id files)))
+  (let* ((files (if str (zk--directory-files t str)
+                 (zk--directory-files t)))
+	(id-list (zk--parse-file 'id files)))
+    (if (listp id-list) id-list
+      (list id-list))))
 
 (defun zk--id-unavailable-p (str)
   "Return t if provided string STR is already in use as an id."
@@ -831,9 +833,9 @@ Select TAG, with completion, from list of all tags in zk notes."
   (let* ((dead-link-ids (zk--dead-link-id-list)))
     (if dead-link-ids
         (funcall zk-grep-function (mapconcat
-                                     'identity
-                                     dead-link-ids
-                                     "\\|"))
+                                   'identity
+                                   dead-link-ids
+                                   "\\|"))
       (user-error "No dead links found"))))
 
 (defun zk--unlinked-notes-list ()
