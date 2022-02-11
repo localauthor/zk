@@ -108,7 +108,7 @@ If called from Lisp, ARG should be 'toggle."
     (define-key map (kbd "d") #'zk-index-send-to-desktop)
     (define-key map (kbd "D") #'zk-index-switch-to-desktop)
     (define-key map (kbd "S") #'zk-index-desktop-select)
-    (define-key map (kbd "g") #'zk-index-refresh)
+    (define-key map (kbd "i") #'zk-index-refresh)
     (define-key map (kbd "M") #'zk-index-sort-modified)
     (define-key map (kbd "C") #'zk-index-sort-created)
     (define-key map (kbd "q") #'delete-window)
