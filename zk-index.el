@@ -155,6 +155,7 @@ If called from Lisp, ARG should be 'toggle."
     (define-key map (kbd "C-d") #'zk-index-desktop-delete-line)
     (define-key map [remap yank]  #'zk-index-desktop-yank)
     (define-key map [remap kill-line] #'zk-index-desktop-kill-line)
+    (define-key map [remap kill-region] #'zk-index-desktop-kill-region)
     (define-key map [remap undo] #'zk-index-desktop-undo)
     (define-key map (kbd "v") #'zk-index-view-note)
     (define-key map (kbd "S") #'zk-index-desktop-select)
@@ -829,6 +830,15 @@ With prefix-argument, raise ZK-Desktop in other frame."
       (kill-region (line-beginning-position)
                      (line-end-position))
       (zk-index-desktop-edit-mode))))
+
+(defun zk-index-desktop-kill-region ()
+  "Kill-region in 'zk-indexk-desktop-mode'."
+  (interactive)
+  (progn
+    (zk-index-desktop-edit-mode)
+    (kill-region (region-beginning) (region-end))
+    (beginning-of-line)
+    (zk-index-desktop-edit-mode)))
 
 (defun zk-index-desktop-yank ()
   "Yank in 'zk-index-desktop-mode'."
