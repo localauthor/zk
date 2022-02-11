@@ -253,8 +253,9 @@ FILES must be a list of filepaths. If nil, all files in
           (goto-char (point-min)))))
     (when files
       (zk-index-refresh files format-fn sort-fn))
-    (pop-to-buffer buffer
-                   '(display-buffer-at-bottom))))
+    (unless (get-buffer-window buffer 'visible)
+      (pop-to-buffer buffer
+                     '(display-buffer-at-bottom)))))
 
 (defun zk-index-refresh (&optional files format-fn sort-fn)
   "Refresh the index.
@@ -523,15 +524,17 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index-open-note ()
   "Open note."
   (interactive)
-  (push-button nil t)
-  (other-window -1))
+  (let ((buffer (current-buffer)))
+    (push-button nil t)
+    (select-window (get-buffer-window buffer))))
 
 (defun zk-index-view-note ()
   "View note in view mode."
   (interactive)
-  (push-button nil t)
-  (view-mode)
-  (other-window -1))
+  (let ((buffer (current-buffer)))
+    (push-button nil t)
+    (view-mode)
+    (select-window (get-buffer-window buffer))))
 
 (defun zk-index--button-at-point-p ()
   (let ((button (button-at (point))))
@@ -543,26 +546,30 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   "Move to next line.
 If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (if (save-excursion
-        (forward-line)
-        (and zk-index-auto-scroll
-             (zk-index--button-at-point-p)))
-      (progn
-        (other-window 1)
-        (when (and (zk-file-p)
-                   view-mode
-                   (not (buffer-modified-p)))
-          (kill-buffer))
-        (other-window -1)
-        (forward-line)
-        (unless (looking-at-p "[[:space:]]*$")
-          (zk-index-view-note)))
-    (forward-line)))
+  (let ((buffer (current-buffer)))
+    (if (save-excursion
+          (forward-line)
+          (and zk-index-auto-scroll
+               (zk-index--button-at-point-p)))
+        (progn
+          (other-window 1)
+          (when (and (zk-file-p)
+                     view-mode
+                     (not (buffer-modified-p)))
+            (kill-buffer))
+          (if (get-buffer-window buffer)
+              (other-window -1)
+            (select-window (get-buffer-window buffer)))
+          (forward-line)
+          (unless (looking-at-p "[[:space:]]*$")
+            (zk-index-view-note)))
+      (forward-line))))
 
 (defun zk-index-previous-line ()
   "Move to previous line.
 If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
+  (let ((buffer (current-buffer)))
   (if (save-excursion
           (forward-line -1)
           (and zk-index-auto-scroll
@@ -573,11 +580,13 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
                    view-mode
                    (not (buffer-modified-p)))
           (kill-buffer))
-        (other-window -1)
+        (if (get-buffer-window buffer)
+            (other-window -1)
+          (select-window (get-buffer-window buffer)))
         (forward-line -1)
         (unless (looking-at-p "[[:space:]]*$")
           (zk-index-view-note)))
-    (forward-line -1)))
+    (forward-line -1))))
 
 (defun zk-index-move-line-down ()
   "Move line at point down in 'read-only-mode'."
