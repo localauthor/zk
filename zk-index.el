@@ -7,7 +7,20 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.4
 ;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "26.1")(zk "0.2"))
+
+;; This program is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the Free
+;; Software Foundation, either version 3 of the License, or (at your option)
+;; any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+;; or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+;; for more details.
+
+;; You should have received a copy of the GNU General Public License along
+;; with this program. If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -23,6 +36,9 @@
 ;; ZK-Desktop: An place (or places) for collecting, grouping, arranging, and saving selections
 ;; of note titles.
 
+;; To enable integration with Embark, include '(zk-index-setup-embark)' in
+;; your init config.
+
 ;;; Code:
 
 (require 'zk)
@@ -36,7 +52,7 @@
   :group 'files
   :prefix "zk-index")
 
-(defcustom zk-index--format-function 'zk-index--format-candidates
+(defcustom zk-index-format-function 'zk-index--format-candidates
   "Default formatting function for ZK-Index candidates."
   :group 'zk-index
   :type 'function)
@@ -183,12 +199,15 @@ If called from Lisp, ARG should be 'toggle."
 
 (defvar embark-multitarget-actions)
 
-;; FIX
-(with-eval-after-load 'embark
-  (add-to-list 'embark-multitarget-actions 'zk-index)
-  (add-to-list 'embark-multitarget-actions 'zk-index-send-to-desktop)
-  (define-key zk-file-map (kbd "d") #'zk-index-send-to-desktop)
-  (define-key zk-id-map (kbd "d") #'zk-index-send-to-desktop))
+(defun zk-index-setup-embark ()
+  "Setup Embark integration for zk.
+Adds zk-id as an Embark target, and adds 'zk-id-map' and
+'zk-file-map' to embark-keymap-alist."
+  (with-eval-after-load 'embark
+    (add-to-list 'embark-multitarget-actions 'zk-index)
+    (add-to-list 'embark-multitarget-actions 'zk-index-send-to-desktop)
+    (define-key zk-file-map (kbd "d") #'zk-index-send-to-desktop)
+    (define-key zk-id-map (kbd "d") #'zk-index-send-to-desktop)))
 
 
 ;;; Formatting
@@ -224,7 +243,7 @@ FILES must be a list of filepaths. If nil, all files in
               (title (match-string 2 file)))
           (when id
             (push (concat zk-index-prefix (format-spec format
-                                                               `((?i . ,id)(?t . ,title))))
+                                                       `((?i . ,id)(?t . ,title))))
                   output)))))
     output))
 
@@ -264,7 +283,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (let ((files (if files files
                  (zk--directory-files t)))
         (sort-fn (if sort-fn sort-fn
-                   (setq zk-index-last-sort-function nil))) ;; reset last-sort-function to nil
+                   (setq zk-index-last-sort-function nil)))
         (line))
     (with-current-buffer "*ZK-Index*"
       (setq line (line-number-at-pos))
@@ -292,7 +311,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index--format (files &optional format-fn)
   "Format FILES with optional custom FORMAT-FN."
   (let* ((format-fn (if format-fn format-fn
-                      zk-index--format-function))
+                      zk-index-format-function))
          (candidates (funcall format-fn files)))
     (zk-index--insert candidates)))
 
@@ -414,7 +433,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (concat " [ZK-Search: \"" zk-index-last-search-terms "\" |"
             " ZK-Focus: \"" zk-index-last-focus-terms "\"]"))
    ;;neither
-   ((eq zk-index-last-query nil)
+   ((not zk-index-last-query)
     ;; outcome
     (setq zk-index-last-query 'focus)
     (setq zk-index-last-focus-terms string)
@@ -442,7 +461,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (concat " [ZK-Focus: \"" zk-index-last-focus-terms "\" |"
             " ZK-Search: \"" zk-index-last-search-terms "\"]"))
    ;;neither
-   ((eq zk-index-last-query nil)
+   ((not zk-index-last-query)
     ;; outcome
     (setq zk-index-last-query 'search)
     (setq zk-index-last-search-terms string)
@@ -476,7 +495,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                     #'zk-index--sort-created))
 
 (defun zk-index--current-file-list ()
-  "Returns list files in current index."
+  "Return list files in current index."
   (interactive)
   (let* ((ids (zk-index--current-id-list))
          (files (zk--parse-id 'file-path ids)))
@@ -537,6 +556,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (select-window (get-buffer-window buffer))))
 
 (defun zk-index--button-at-point-p ()
+  "Return t when `zk-index' button is at point."
   (let ((button (button-at (point))))
     (when (and button
                (eq (button-type button) 'zk-index))
@@ -609,7 +629,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
 ;; index's more flexible, savable cousin; a place to collect and order note titles
 
 ;;;###autoload
-(defun zk-desktop ()
+(defun zk-index-desktop ()
+  "Open ZK-Desktop."
   (interactive)
   (let ((buffer (if (and zk-index-desktop-current
                          (buffer-live-p (get-buffer zk-index-desktop-current)))
@@ -620,7 +641,7 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
       ('?s (switch-to-buffer buffer))
       ('?p (pop-to-buffer buffer
                           '(display-buffer-at-bottom)))
-      (_ (zk-desktop)))))
+      (_ (zk-index-desktop)))))
 
 ;;;###autoload
 (defun zk-index-desktop-select ()
@@ -651,8 +672,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
       (set-visited-file-name file t t)
       (setq zk-index-desktop-mode t)
       (save-buffer))
-    (if (and (not (eq last-command 'zk-desktop))
-             (y-or-n-p (format "Visit %s?" zk-index-desktop-current)))
+    (if (and (not (eq last-command 'zk-index-desktop))
+             (y-or-n-p (format "Visit %s? " zk-index-desktop-current)))
         (progn
           (switch-to-buffer zk-index-desktop-current)
           (setq zk-index-desktop-mode t))
@@ -674,7 +695,7 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
                 (end (line-end-position))
                 (id (match-string-no-properties 1)))
             (when (member id ids)
-              (goto-char (line-beginning-position))
+              (beginning-of-line)
               (when zk-index-invisible-ids
                 (if (re-search-forward zk-link-regexp (line-end-position) t)
                     (replace-match
@@ -708,18 +729,18 @@ at point."
     (error "Please set 'zk-index-desktop-directory'"))
   (let ((buffer) (items))
     (cond ((eq 1 (length files))
-           (unless (ignore-errors (setq items (car (funcall zk-index--format-function files))))
+           (unless (ignore-errors (setq items (car (funcall zk-index-format-function files))))
              (setq items
                  (car
                   (funcall
-                   zk-index--format-function
+                   zk-index-format-function
                    (list (zk--parse-id 'file-path files)))))))
           ((and files
                 (< 1 (length files)))
            (setq items
                  (mapconcat
-                  'identity
-                  (funcall zk-index--format-function files) "\n")))
+                  #'identity
+                  (funcall zk-index-format-function files) "\n")))
           ((string= (buffer-name) "*ZK-Index*")
            (progn
              (read-only-mode -1)
@@ -739,7 +760,7 @@ at point."
            (setq items
                  (car
                   (funcall
-                   zk-index--format-function
+                   zk-index-format-function
                    (list (zk--parse-id 'file-path (zk--current-id))))))))
     (if (and zk-index-desktop-current
              (buffer-live-p (get-buffer zk-index-desktop-current)))
@@ -753,7 +774,7 @@ at point."
       (setq require-final-newline 'visit-save)
       (goto-char (point-max))
       ;; (newline 2)
-      (insert (concat "\n" items "\n"))
+      (insert "\n" items "\n")
       ;; (newline 2)
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
