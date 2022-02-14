@@ -7,7 +7,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.4
 ;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "26.1") (zk "0.2"))
 
 ;;; Commentary:
 
@@ -253,9 +253,9 @@ FILES must be a list of filepaths. If nil, all files in
           (goto-char (point-min)))))
     (when files
       (zk-index-refresh files format-fn sort-fn))
-    (unless (get-buffer-window buffer 'visible)
+    ;; (unless (get-buffer-window buffer 'visible)
       (pop-to-buffer buffer
-                     '(display-buffer-at-bottom)))))
+                     '(display-buffer-at-bottom))))
 
 (defun zk-index-refresh (&optional files format-fn sort-fn)
   "Refresh the index.
