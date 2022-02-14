@@ -25,17 +25,13 @@
 
 ;;; Commentary:
 
-;;
-;; NOTE: This feature is still under active development, and subject to major
-;; changes. Be warned. ;)
-;;
-
 ;; Two interfaces for zk:
 
-;; ZK-Index: A sortable, searchable, narrowable, semi-persistent selection of notes titles.
+;; ZK-Index: A sortable, searchable, narrowable, semi-persistent selection of
+;; notes, in the form of clickable links.
 
-;; ZK-Desktop: An place (or places) for collecting, grouping, arranging, and saving selections
-;; of note titles.
+;; ZK-Desktop: A place (or places) for collecting, grouping, arranging, and
+;; saving curated selections of notes (also in the form of clickable links).
 
 ;; To enable integration with Embark, include '(zk-index-setup-embark)' in
 ;; your init config.
@@ -181,8 +177,10 @@ If called from Lisp, ARG should be 'toggle."
     map)
   "Keymap for ZK-Desktop buffers.")
 
-(add-to-list 'minor-mode-map-alist (cons 'zk-index-desktop-mode zk-index-desktop-map))
-(add-to-list 'minor-mode-alist `(zk-index-desktop-mode ,zk-index-desktop-mode-line))
+(add-to-list 'minor-mode-map-alist
+             (cons 'zk-index-desktop-mode zk-index-desktop-map))
+(add-to-list 'minor-mode-alist
+             `(zk-index-desktop-mode ,zk-index-desktop-mode-line))
 
 
 ;;; Declarations
@@ -243,8 +241,9 @@ FILES must be a list of filepaths. If nil, all files in
                     (match-string 1 file)))
               (title (match-string 2 file)))
           (when id
-            (push (concat zk-index-prefix (format-spec format
-                                                       `((?i . ,id)(?t . ,title))))
+            (push (concat zk-index-prefix
+                          (format-spec format
+                                       `((?i . ,id)(?t . ,title))))
                   output)))))
     output))
 
@@ -273,7 +272,6 @@ FILES must be a list of filepaths. If nil, all files in
           (goto-char (point-min)))))
     (when files
       (zk-index-refresh files format-fn sort-fn))
-    ;; (unless (get-buffer-window buffer 'visible)
       (pop-to-buffer buffer
                      '(display-buffer-at-bottom))))
 
@@ -359,7 +357,10 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index-search ()
   "Narrow index based on regexp search of note contents."
   (interactive)
-  (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
+  (zk-index-refresh
+   (zk-index-query-files)
+   zk-index-last-format-function
+   zk-index-last-sort-function))
 
 ;;;; Index Focus
 ;; narrow index based on search of note titles (case sensitive)
@@ -368,7 +369,10 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index-focus ()
   "Narrow index based on regexp search of note titles."
   (interactive)
-  (zk-index-refresh (zk-index-query-files) zk-index-last-format-function zk-index-last-sort-function))
+  (zk-index-refresh
+   (zk-index-query-files)
+   zk-index-last-format-function
+   zk-index-last-sort-function))
 
 ;;;; Low-level Query Functions
 
@@ -627,7 +631,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (read-only-mode))
 
 ;;; ZK-Desktop
-;; index's more flexible, savable cousin; a place to collect and order note titles
+;; index's more flexible, savable cousin; a place to collect and order notes
+;; in the form of links
 
 ;;;###autoload
 (defun zk-index-desktop ()
@@ -730,7 +735,9 @@ at point."
     (error "Please set 'zk-index-desktop-directory'"))
   (let ((buffer) (items))
     (cond ((eq 1 (length files))
-           (unless (ignore-errors (setq items (car (funcall zk-index-format-function files))))
+           (unless
+               (ignore-errors
+                 (setq items (car (funcall zk-index-format-function files))))
              (setq items
                  (car
                   (funcall
@@ -774,9 +781,7 @@ at point."
       (setq zk-index-desktop-mode t)
       (setq require-final-newline 'visit-save)
       (goto-char (point-max))
-      ;; (newline 2)
       (insert "\n" items "\n")
-      ;; (newline 2)
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (goto-char (point-max))
@@ -805,11 +810,13 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (let ((buffer zk-index-desktop-current))
     (if current-prefix-arg
         (if (get-buffer-window buffer 'visible)
-          (display-buffer-pop-up-frame buffer
-                                       '((pop-up-frame-parameters . ((top . 80)
-                                                                     (left . 850)
-                                                                     (width . 80)
-                                                                     (height . 35)))))
+            (display-buffer-pop-up-frame
+             buffer
+             ;; not general
+             '((pop-up-frame-parameters . ((top . 80)
+                                           (left . 850)
+                                           (width . 80)
+                                           (height . 35)))))
           (switch-to-buffer-other-frame buffer))
       (switch-to-buffer buffer))))
 
@@ -867,7 +874,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (interactive)
   (progn
     (zk-index-desktop-edit-mode)
-    (kill-region (region-beginning) (region-end))
+    (kill-region (region-beginning)(region-end))
     (beginning-of-line)
     (zk-index-desktop-edit-mode)))
 
@@ -884,20 +891,23 @@ With prefix-argument, raise ZK-Desktop in other frame."
       (zk-index-desktop-edit-mode))))
 
 (defun zk-index-desktop-edit-mode ()
-  "Toggle 'read-only-mode' in ZK-Desktop."
+  "Toggle 'read-only-mode' in ZK-Desktop.
+If toggled on via key binding, the same key binding toggles off."
   (interactive)
-  (if zk-index-desktop-mode
+  (let ((key (vector last-input-event))
+        (modeline (default-value 'mode-line-misc-info)))
+    (if zk-index-desktop-mode
+        (progn
+          (read-only-mode -1)
+          (local-set-key key #'zk-index-desktop-edit-mode)
+          ;; other way to disable keymap?
+          (setq zk-index-desktop-mode nil)
+          (setq-local mode-line-misc-info "ZK-Desktop Edit Mode"))
       (progn
-        (read-only-mode -1)
-        (local-set-key (kbd "C-+") #'zk-index-desktop-edit-mode)
-        ;; other way to disable keymap?
-        (setq zk-index-desktop-mode nil)
-        (setq-local mode-line-misc-info "ZK-Desktop Edit Mode"))
-    (progn
-      (read-only-mode)
-      (local-unset-key (kbd "C-+"))
-      (setq zk-index-desktop-mode t))
-    (setq-local mode-line-misc-info "")))
+        (read-only-mode)
+        (local-unset-key key)
+        (setq zk-index-desktop-mode t))
+      (setq-local mode-line-misc-info modeline))))
 
 (provide 'zk-index)
 
