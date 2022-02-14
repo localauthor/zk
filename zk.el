@@ -833,7 +833,7 @@ Select TAG, with completion, from list of all tags in zk notes."
   (let* ((dead-link-ids (zk--dead-link-id-list)))
     (if dead-link-ids
         (funcall zk-grep-function (mapconcat
-                                   'identity
+                                   #'identity
                                    dead-link-ids
                                    "\\|"))
       (user-error "No dead links found"))))
