@@ -79,20 +79,17 @@
 
 (defcustom zk-directory nil
   "Main zk directory."
-  :type 'string
-  :group 'zk)
+  :type 'string)
 
 (defcustom zk-file-extension nil
   "The extension for zk files."
-  :type 'string
-  :group 'zk)
+  :type 'string)
 
 (defcustom zk-enable-link-buttons t
   "When non-nil, valid zk-id links will be clickable buttons.
 Allows 'zk-make-link-buttons' to be added to 'find-file-hook', so
 buttons will be automatically created when a note is opened."
-  :type 'boolean
-  :group 'zk)
+  :type 'boolean)
 
 (defcustom zk-id-time-string-format "%Y%m%d%H%M"
   "Format for new zk IDs.
@@ -100,20 +97,17 @@ For supported options, please consult `format-time-string'.
 Note: the regexp to find zk IDs is set separately.
 If you change this value, set `zk-id-regexp' so that
 the zk IDs can be found."
-  :type 'string
-  :group 'zk)
+  :type 'string)
 
 (defcustom zk-id-regexp "\\([0-9]\\{12\\}\\)"
   "The regular expression used to search for zk IDs.
 Set it so that it matches strings generated with
 `zk-id-format'."
-  :type 'regexp
-  :group 'zk)
+  :type 'regexp)
 
 (defcustom zk-tag-regexp "#[a-zA-Z0-9]\\+"
   "The regular expression used to search for tags."
-  :type 'regexp
-  :group 'zk)
+  :type 'regexp)
 
 (defcustom zk-new-note-header-function #'zk-new-note-header
   "Function called by 'zk-new-note' to insert header in a new note.
@@ -121,8 +115,7 @@ A user-defined function should use 'insert' to insert a string or
 strings. The arguments NEW-ID, TITLE, and ORIG-ID can be used to
 those corresponding values from 'zk-new-note' available for
 insertion. See 'zk-new-note-header' for an example."
-  :type 'function
-  :group 'zk)
+  :type 'function)
 
 (defcustom zk-new-note-link-insert 'ask
   "Should 'zk-new-note' insert link to new note at point?
@@ -138,27 +131,23 @@ regardless of how 'zk-new-note-link-insert' is set."
   :type '(choice (const :tag "Always" t)
                  (const :tag "Ask" 'ask)
                  (const :tag "Only in zk notes" 'zk)
-                 (const :tag "Never" nil))
-  :group 'zk)
+                 (const :tag "Never" nil)))
 
 (defcustom zk-grep-function #'zk-grep
   "Function used by 'zk-search'.
 Must take a single STRING argument."
-  :type 'function
-  :group 'zk)
+  :type 'function)
 
 (defcustom zk-tag-grep-function #'zk-grep
   "Function used by 'zk-tag-search'.
 Must take a single STRING argument."
-  :type 'function
-  :group 'zk)
+  :type 'function)
 
 (defcustom zk-link-format "[[%s]]"
   "Format for inserted links.
 Used in conjunction with 'format', the string '%s' will be
 replaced by a note's ID."
-  :type 'string
-  :group 'zk)
+  :type 'string)
 
 (defcustom zk-link-and-title t
   "Should 'zk-insert-link' insert both link and title?
@@ -172,36 +161,31 @@ The format in which link and title are inserted can be configured
 by setting the variable 'zk-link-and-title-format'."
   :type '(choice (const :tag "Always" t)
                  (const :tag "Ask" 'ask)
-                 (const :tag "Never" nil))
-  :group 'zk)
+                 (const :tag "Never" nil)))
 
 (defcustom zk-link-and-title-format "%t [[%i]]"
   "Format for link and title when inserted to together.
 
 The string '%t' will be replaced by the note's title and '%i'
 will be replaced by its ID."
-  :type 'string
-  :group 'zk)
+  :type 'string)
 
 (defcustom zk-default-backlink nil
   "When non-nil, should be a single zk ID.
 See 'zk-new-note' for details."
-  :type 'string
-  :group 'zk)
+  :type 'string)
 
 (defcustom zk-current-notes-function nil
   "User-defined function for listing currently open notes.
 See 'zk-current-notes' for details."
-  :type 'function
-  :group 'zk)
+  :type 'function)
 
 (defcustom zk-completion-at-point-format "[[%i]] %t"
   "Format for completion table used by 'zk-completion-at-point'.
 
 The string '%t' will be replaced by the note's title and '%i'
 will be replaced by its ID."
-  :type 'string
-  :group 'zk)
+  :type 'string)
 
 (defvar zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
 (defvar zk-history nil)

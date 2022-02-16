@@ -51,38 +51,31 @@
 
 (defcustom zk-index-format-function 'zk-index--format-candidates
   "Default formatting function for ZK-Index candidates."
-  :group 'zk-index
   :type 'function)
 
 (defcustom zk-index-invisible-ids t
   "If non-nil, IDs will not be visible in the index."
-  :group 'zk-index
   :type 'boolean)
 
 (defcustom zk-index-format "%t [[%i]]"
   "Default format for candidates in the index."
-    :group 'zk-index
     :type 'string)
 
 (defcustom zk-index-prefix "-> "
   "String to prepend to note names in index and desktop."
-    :group 'zk-index
     :type 'string)
 
 (defcustom zk-index-auto-scroll t
   "Enable automatically showing note at point in ZK-Index."
-  :group 'zk-index
   :type 'boolean)
 
 (defcustom zk-index-desktop-directory nil
   "Directory for saved ZK-Desktops."
-  :group 'zk-index
   :type 'directory)
 
 (defcustom zk-index-desktop-basename "*ZK-Desktop:"
   "Basename for ZK-Desktops.
 The names of all ZK-Desktops should begin with this string."
-  :group 'zk-index
   :type 'string)
 
 
