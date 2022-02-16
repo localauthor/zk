@@ -619,10 +619,13 @@ Optionally call a custom function by setting the variable
 ;;; Follow Links
 
 ;;;###autoload
-(defun zk-follow-link-at-point (&optional _)
+(defun zk-follow-link-at-point (&optional id)
   "Open note that corresponds with the zk ID at point."
   (interactive)
-  (find-file (zk--parse-id 'file-path (zk--id-at-point))))
+  (let ((id (if (zk--id-at-point)
+                (zk--id-at-point)
+              id)))
+    (find-file (zk--parse-id 'file-path id))))
 
 (defun zk--links-in-note-list (id)
   "Return list of links in note with ID."
@@ -744,7 +747,8 @@ brackets \"[[\" initiates completion."
 (defun zk-copy-link-and-title (&optional id)
   "Copy link and title for ID at point."
   (interactive (list (zk--parse-file 'id (zk--select-file "Copy link: "))))
-  (let* ((id (if id id (zk--id-at-point)))
+  (let* ((id (if id (car id)
+               (zk--id-at-point)))
          (title (zk--parse-id 'title id)))
     (kill-new (format-spec zk-completion-at-point-format
                            `((?i . ,id)(?t . ,title))))))

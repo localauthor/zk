@@ -197,6 +197,7 @@ If called from Lisp, ARG should be 'toggle."
 ;;; Embark Integration
 
 (defvar embark-multitarget-actions)
+(defvar embark-target-finders)
 
 (defun zk-index-setup-embark ()
   "Setup Embark integration for zk.
@@ -205,9 +206,20 @@ Adds zk-id as an Embark target, and adds 'zk-id-map' and
   (with-eval-after-load 'embark
     (add-to-list 'embark-multitarget-actions 'zk-index)
     (add-to-list 'embark-multitarget-actions 'zk-index-send-to-desktop)
+    (add-to-list 'embark-multitarget-actions 'zk-copy-link-and-title)
+    (add-to-list 'embark-multitarget-actions 'zk-follow-link-at-point)
+    (add-to-list 'embark-target-finders 'zk-index-embark-target)
     (define-key zk-file-map (kbd "d") #'zk-index-send-to-desktop)
     (define-key zk-id-map (kbd "d") #'zk-index-send-to-desktop)))
 
+(defun zk-index-embark-target ()
+  "Target zk-id of button at point in ZK-Index and ZK-Desktop."
+  (when (zk-index--button-at-point-p)
+    (save-excursion
+      (beginning-of-line)
+      (re-search-forward zk-id-regexp (line-end-position)))
+    (let ((zk-id (match-string-no-properties 1)))
+      `(zk-id ,zk-id))))
 
 ;;; Formatting
 
