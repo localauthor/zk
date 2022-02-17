@@ -114,6 +114,7 @@ If called from Lisp, ARG should be 'toggle."
     (define-key map (kbd "d") #'zk-index-send-to-desktop)
     (define-key map (kbd "D") #'zk-index-switch-to-desktop)
     (define-key map (kbd "S") #'zk-index-desktop-select)
+    (define-key map (kbd "c") #'zk-index-current-notes)
     (define-key map (kbd "i") #'zk-index-refresh)
     (define-key map (kbd "M") #'zk-index-sort-modified)
     (define-key map (kbd "C") #'zk-index-sort-created)
@@ -564,6 +565,14 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (push-button nil t)
     (view-mode)
     (select-window (get-buffer-window buffer))))
+
+(defun zk-index-current-notes ()
+  "Open zk-index listing currently open notes."
+  (interactive)
+  (zk-index
+   (zk--current-notes-list)
+   zk-index-last-format-function
+   zk-index-last-sort-function))
 
 (defun zk-index--button-at-point-p ()
   "Return t when `zk-index' button is at point."
