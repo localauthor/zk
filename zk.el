@@ -287,6 +287,16 @@ a regexp to replace the default, 'zk-id-regexp'."
                            list))))
     files))
 
+(defun zk--current-notes-list ()
+  "Return list of files for currently open notes."
+  (remq nil
+        (mapcar
+         (lambda (x)
+           (when (and (buffer-file-name x)
+                      (zk-file-p (buffer-file-name x)))
+             (buffer-file-name x)))
+         (buffer-list))))
+
 (defun zk--grep-file-list (str)
   "Return a list of files containing regexp STR."
   (let* ((files (shell-command-to-string (concat
@@ -589,16 +599,10 @@ Optionally call a custom function by setting the variable
   (interactive)
   (if zk-current-notes-function
       (funcall zk-current-notes-function)
-    (switch-to-buffer
+    (find-file
      (zk--select-file
       "Current Notes:"
-      (remq nil
-            (mapcar
-             (lambda (x)
-               (when (and (buffer-file-name x)
-                          (zk-file-p (buffer-file-name x)))
-                 (buffer-name x)))
-             (buffer-list)))))))
+      (zk--current-notes-list)))))
 
 ;;; Follow Links
 
