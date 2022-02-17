@@ -738,7 +738,7 @@ brackets \"[[\" initiates completion."
   (let* ((id (if id (car id)
                (zk--id-at-point)))
          (title (zk--parse-id 'title id)))
-    (kill-new (format-spec zk-completion-at-point-format
+    (kill-new (format-spec zk-link-and-title-format
                            `((?i . ,id)(?t . ,title))))))
 
 ;;; List Backlinks
