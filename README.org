@@ -2,6 +2,8 @@
 #+author: Grant Rosson
 #+language: en
 
+[[https://melpa.org/#/zk][file:https://melpa.org/packages/zk-badge.svg]]
+
 - [[#introduction][Introduction]]
 - [[#setup][Setup]]
 - [[#features][Features]]
