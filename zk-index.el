@@ -298,9 +298,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (goto-char (point-min))
       (unless (zk-index-narrowed-p)
         (progn
-          (setq zk-index-query-mode-line nil
-                zk-index-last-focus-terms nil
-                zk-index-last-search-terms nil)
+          (zk-index--clear-query-mode-line)
           (forward-line line)))
       (read-only-mode))))
 
@@ -477,6 +475,11 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (setq zk-index-last-query 'search)
     (setq zk-index-last-search-terms string)
     (concat " [ZK-Search: \"" string "\"]"))))
+
+(defun zk-index--clear-query-mode-line ()
+  (setq zk-index-query-mode-line nil
+        zk-index-last-focus-terms nil
+        zk-index-last-search-terms nil))
 
 (defun zk-index--current-id-list ()
   "Return list of IDs for current index, as filepaths."
