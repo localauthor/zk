@@ -88,8 +88,10 @@
 (defcustom zk-file-name-separator " "
   "Character(s), as a string, to separate elements of filename.
 
-Useful for keeping spaces out of file-names; set to \"-\" or
-\"_\", for example."
+Useful for keeping spaces out of file-names. When set to \"-\",
+for example, the file-name will be in the form
+\"202012341234-Title-of-note.ext\". In notes, the title will be
+rendered with spaces."
   :type 'string)
 
 (defcustom zk-enable-link-buttons t
