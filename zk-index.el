@@ -78,6 +78,18 @@
 The names of all ZK-Desktops should begin with this string."
   :type 'string)
 
+(defcustom zk-index-desktop-add-pos 'append
+  "Behavior for placement of notes in ZK-Desktop via 'zk-index-send-to-desktop'.
+
+Options:
+1. 'append - Place notes at end of current ZK-Desktop
+2. 'prepend - Place notes at beginning of current ZK-Desktop
+3. 'at-point - Place notes at current point of current ZK-Desktop
+
+To quickly change this setting, call 'zk-index-desktop-add-toggle'."
+  :type '(choice (const :tag "Append" 'append)
+                 (const :tag "Prepend" 'prepend)
+                 (const :tag "At point" 'at-point)))
 
 ;;; ZK-Index Minor Mode Settings
 
@@ -800,17 +812,34 @@ at point."
       (read-only-mode -1)
       (setq zk-index-desktop-mode t)
       (setq require-final-newline 'visit-save)
-      (goto-char (point-max))
+      (pcase zk-index-desktop-add-pos
+        ('append (goto-char (point-max)))
+        ('prepend (progn
+                    (goto-char (point-min))))
+        ('at-point (goto-char (point))))
       (insert "\n" items "\n")
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
-      (goto-char (point-max))
-      (beginning-of-line)
+      (pcase zk-index-desktop-add-pos
+        ('append (progn
+                   (goto-char (point-max))
+                   (beginning-of-line)))
+        ('prepend (goto-char (point-min)))
+        ('at-point (goto-char (point))))
       (zk-index-desktop-make-buttons)
       (read-only-mode))
     (if (string= (buffer-name) "*ZK-Index*")
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
+
+(defun zk-index-desktop-add-toggle ()
+  "Set 'zk-index-desktop-add-pos' interactively."
+  (interactive)
+   (let ((choice (read-char "Choice: \[a\]ppend; \[p\]repend; at-\[P\]oint")))
+     (pcase choice
+      ('?a (setq zk-index-desktop-add-pos 'append))
+      ('?p (setq zk-index-desktop-add-pos 'prepend))
+      ('?P (setq zk-index-desktop-add-pos 'at-point)))))
 
 ;;;###autoload
 (defun zk-index-switch-to-index ()
