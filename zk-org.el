@@ -28,12 +28,20 @@
 ;; This set of functions aims to implement support for org-style links within zk
 
 ;;; Code:
+
 (require 'zk)
 
 (with-eval-after-load 'org
   (org-link-set-parameters "zk"
 			   :follow #'zk-org--follow-link
 			   :store #'zk-org--store-link))
+
+;; Set up org-style link format by setting defcustoms
+(setq zk-link-format "[[zk:%s]]" )
+(setq zk-link-and-title-format "%t [[zk:%i]]")
+(setq zk-completion-at-point-format "[[zk:%i]] %t")
+(setq zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
+(setq zk-completion-at-point-format  "[[zk:%i]] %t")
 
 (defun zk-org--follow-link (id)
   "Follow an zk ID."
