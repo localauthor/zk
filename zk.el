@@ -259,13 +259,17 @@ The ID is created using `zk-id-time-string-format'."
     id))
 
 (defun zk--id-list (&optional str)
-  "Return a list of zk IDs for notes in 'zk-directory'.
-Optional search for regexp STR in note title."
-  (let* ((files (if str (zk--directory-files t str)
-                 (zk--directory-files t)))
-	(id-list (zk--parse-file 'id files)))
-    (if (listp id-list) id-list
-      (list id-list))))
+    "Return a list of zk IDs for notes in 'zk-directory'.
+Optional search for regexp STR in note title, case-insenstive."
+  (let ((zk-alist (zk--alist))
+        (case-fold-search t)
+        (ids))
+    (dolist (item zk-alist)
+      (if str
+          (when (string-match str (cadr item))
+            (push (car item) ids))
+        (push (car item) ids)))
+    ids))
 
 (defun zk--id-unavailable-p (str)
   "Return t if provided string STR is already in use as an id."
