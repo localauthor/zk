@@ -57,7 +57,7 @@
       ;;(print (concat "zk:" zk-curid))
       (org-store-link-props
         :type "zk"
-        :link (concat "zk:" zk-curid)
+        :link (concat "zk:" zk-cur-id)
         :description zk-cur-id))))
 
 (provide 'zk-org)
