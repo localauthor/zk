@@ -106,7 +106,7 @@ name of this function."
                (append unread-command-events (list ?z 32))))
     (consult-buffer)))
 
-(defun zk-consult--select-file (&optional prompt list)
+(defun zk-consult-select-file (&optional prompt list)
   "Wrapper around `consult--read' to select a zk-file.
 Offers candidates from 'zk--directory-files', or from LIST when
 supplied. Can take a PROMPT argument."
