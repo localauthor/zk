@@ -45,6 +45,19 @@
 (require 'zk)
 (require 'consult)
 
+;;; Customizations
+
+(defcustom zk-consult-preview-functions
+  '(zk-find-file
+    zk-find-file-by-full-text-search
+    zk-current-notes
+    zk-links-in-note
+    zk-insert-link
+    zk-copy-link-and-title
+    zk-backlinks
+    zk-unlinked-notes)
+  "List of functions for which previews should be rendered.")
+
 ;;; Consult-Grep Functions
 
 (defun zk-consult-grep (&optional initial)
@@ -109,7 +122,12 @@ supplied. Can take a PROMPT argument."
       :group 'zk--group-function
       :category 'zk-file
       :state (consult--file-preview)
+      :preview-key (zk-consult--preview-functions)
       :history 'zk-history)))
+
+(defun zk-consult--preview-functions ()
+  (when (member this-command zk-consult-preview-functions)
+    consult-preview-key))
 
 (provide 'zk-consult)
 
