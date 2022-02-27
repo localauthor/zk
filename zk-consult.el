@@ -98,14 +98,15 @@ name of this function."
 Offers candidates from 'zk--directory-files', or from LIST when
 supplied. Can take a PROMPT argument."
   (let* ((files (if list list
-                  (zk--directory-files t))))
-     (if prompt prompt
-       "Select File: ")
+                  (zk--directory-files t)))
+         (prompt (if prompt prompt
+                 "Select File: ")))
      (consult--read
       files
       :prompt prompt
       :sort t
-      :require-match nil
+      :require-match t
+      :group 'zk--group-function
       :category 'zk-file
       :state (consult--file-preview)
       :history 'zk-history)))
