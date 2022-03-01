@@ -63,7 +63,7 @@
 (defun zk-consult-grep (&optional initial)
   "Search 'zk-directory' with 'consult-grep'.
 With option for INITIAL input when called non-interactively."
-  (interactive "sSearch: ")
+  (interactive)
   (if initial
       (consult-grep zk-directory (format "%s" initial))
     (consult-grep zk-directory)))

@@ -525,7 +525,6 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 
 (defun zk-index--current-file-list ()
   "Return list files in current index."
-  (interactive)
   (let* ((ids (zk-index--current-id-list))
          (files (zk--parse-id 'file-path ids)))
     (when files
