@@ -602,7 +602,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   "Move to next line.
 If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((buffer (current-buffer)))
+  (let ((buffer (current-buffer))
+        (split-width-threshold nil))
     (if (save-excursion
           (forward-line)
           (and zk-index-auto-scroll
@@ -625,7 +626,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   "Move to previous line.
 If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((buffer (current-buffer)))
+  (let ((buffer (current-buffer))
+        (split-width-threshold nil))
   (if (save-excursion
           (forward-line -1)
           (and zk-index-auto-scroll
