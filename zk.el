@@ -562,6 +562,7 @@ title as new title. If no, prompt for new title and replace
 header title in buffer. If yes, file name changed to header
 title."
   (interactive)
+  (read-only-mode -1)
   (let* ((id (zk--current-id))
          (file-title (zk--parse-id 'title id))
          (header-title (progn
