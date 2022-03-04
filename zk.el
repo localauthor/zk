@@ -882,6 +882,48 @@ Select TAG, with completion, from list of all tags in zk notes."
         (find-file (funcall zk-select-file-function "Unlinked notes: " notes))
       (user-error "No unlinked notes found"))))
 
+
+;;; zk-network - Backlinks and Forward Links Together
+
+(defun zk-network ()
+  "Find `zk-backlinks' and `zk-links-in-note' for current or selected note.
+Backlinks and Links-in-Note are grouped separately."
+  (interactive)
+  (let* ((id (ignore-errors (zk--current-id)))
+         (backlinks (ignore-errors (zk--backlinks-list id)))
+         (links-in-note (ignore-errors (zk--links-in-note-list id)))
+         (resources))
+    (dolist (file backlinks)
+      (push (propertize file 'type 'backlink) resources))
+    (dolist (file links-in-note)
+      ;; abbreviate-file-name allows a file to be in both groups
+      (push (propertize (abbreviate-file-name file) 'type 'link) resources))
+    (find-file
+     (completing-read
+      "Links: "
+      (lambda (string predicate action)
+        (if (eq action 'metadata)
+            `(metadata
+              (group-function . zk--network-group-function)
+              (display-sort-function . zk--network-sort-function)
+              (category . zk-file))
+          (complete-with-action action resources string predicate)))))))
+
+(defun zk--network-group-function (file transform)
+  "Group FILE by type or TRANSFORM."
+  (if transform
+      (file-name-nondirectory file)
+    (cond
+     ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
+     ((eq 'link (get-text-property 0 'type file)) "Links-in-Note"))))
+
+(defun zk--network-sort-function (list)
+  "Sort LIST of links so Backlinks group is first."
+  (sort list
+        (lambda (a _b)
+          (when (eq 'backlink (get-text-property 0 'type a))
+              t))))
+
 (provide 'zk)
 
 ;;; zk.el ends here
