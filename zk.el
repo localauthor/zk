@@ -331,7 +331,9 @@ a regexp to replace the default, 'zk-id-regexp'."
 
 (defun zk--grep-id-list (str)
   "Return a list of IDs for files containing STR."
-  (zk--parse-file 'id (zk--grep-file-list str)))
+  (let ((ids (zk--parse-file 'id (zk--grep-file-list str))))
+    (if (stringp ids) (list ids)
+      ids)))
 
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
