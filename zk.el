@@ -520,13 +520,15 @@ Adds 'zk-make-link-buttons' to 'find-file-hook.'"
                    (buffer-substring
                     (point)
                     (point-max)))))
-         (file-name (replace-regexp-in-string " " zk-file-name-separator
-                     (concat (format "%s/%s%s%s.%s"
-                               zk-directory
-                               new-id
-                               zk-file-name-separator
-                               title
-                               zk-file-extension)))))
+         (file-name (replace-regexp-in-string " "
+                                              zk-file-name-separator
+                                              (concat
+                                               (format "%s/%s%s%s.%s"
+                                                       zk-directory
+                                                       new-id
+                                                       zk-file-name-separator
+                                                       title
+                                                       zk-file-extension)))))
     (unless orig-id
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
@@ -538,7 +540,8 @@ Adds 'zk-make-link-buttons' to 'find-file-hook.'"
               (and (eq zk-new-note-link-insert 'ask)
                    (y-or-n-p "Insert link at point? ")))
       (zk-insert-link new-id title))
-    (save-buffer)
+    (when buffer-file-name
+      (save-buffer))
     (find-file file-name)
     (funcall zk-new-note-header-function title new-id orig-id)
     (when body (insert body))
