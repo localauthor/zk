@@ -651,33 +651,25 @@ Optionally call a custom function by setting the variable
               id)))
     (find-file (zk--parse-id 'file-path id))))
 
-(defun zk--links-in-note-list (id)
+(defun zk--links-in-note-list ()
   "Return list of links in note with ID."
-  (let (files)
+  (let ((id-list)
+        (zk-ids (zk--id-list)))
     (save-buffer)
-    (with-temp-buffer
-      (insert-file-contents (zk--parse-id 'file-path id))
-      ;; skip id in header
+    (save-excursion
       (goto-char (point-min))
-      (forward-line 2)
-      (save-match-data
-        (while (re-search-forward zk-id-regexp nil t)
-          (let ((note
-                 (condition-case nil
-                     (zk--parse-id 'file-path (match-string-no-properties 0))
-                   (error "No file"))))
-            (when (file-exists-p note)
-              (push note files)))))
-      files)))
+      (while (re-search-forward zk-id-regexp nil t)
+        (if (member (match-string-no-properties 0) zk-ids)
+            (push (match-string-no-properties 0) id-list)))
+      (zk--parse-id 'file-path id-list))))
 
 ;;;###autoload
 (defun zk-links-in-note ()
   "Select from list of notes linked to in the current note."
   (interactive)
-  (let* ((id (zk--current-id))
-         (files (zk--links-in-note-list id)))
+  (let* ((files (zk--links-in-note-list)))
     (if files
-        (find-file (funcall zk-select-file-function "Links: " (delete-dups files)))
+        (find-file (funcall zk-select-file-function "Links: " files))
       (user-error "No links found"))))
 
 ;;; Insert Link
@@ -896,7 +888,7 @@ Backlinks and Links-in-Note are grouped separately."
   (interactive)
   (let* ((id (ignore-errors (zk--current-id)))
          (backlinks (ignore-errors (zk--backlinks-list id)))
-         (links-in-note (ignore-errors (zk--links-in-note-list id)))
+         (links-in-note (ignore-errors (zk--links-in-note-list)))
          (resources))
     (dolist (file backlinks)
       (push (propertize file 'type 'backlink) resources))
