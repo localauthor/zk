@@ -492,6 +492,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (concat " [ZK-Search: \"" string "\"]"))))
 
 (defun zk-index--clear-query-mode-line ()
+  "Clear query modeline."
   (setq zk-index-query-mode-line nil
         zk-index-last-focus-terms nil
         zk-index-last-search-terms nil))

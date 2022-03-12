@@ -17,6 +17,10 @@
   - [[#embark-integration][Embark Integration]]
   - [[#list-current-notes][List Current Notes]]
 - [[#zk-index-and-zk-desktop][ZK-Index and ZK-Desktop]]
+  - [[#setup-1][Setup]]
+  - [[zk-index][ZK-Index]]
+  - [[zk-desktop][ZK-Desktop]]
+  - [[#embark-integration-for-zk-index-and-zk-desktop][Embark integration for ZK-Index and ZK-Desktop]]
 - [[#comparable-zettelkasten-like-implementations][Comparable Zettelkasten(-like) Implementations]]
 
 * Introduction
@@ -391,6 +395,21 @@ interfaces for working with notes in your zk-directory.
 
 For a video demonstration, see: https://youtu.be/7qNT87dphiA
 
+** Setup
+
+This package is available on [[https://melpa.org/#/zk-index][MELPA]]. 
+
+Sample setup with =use-package=:
+
+#+begin_src emacs-lisp
+(use-package zk-index
+  :after zk
+  :config
+  (zk-index-setup-embark)
+  :custom
+  (zk-index-desktop-directory zk-directory))
+#+end_src
+
 ** ZK-Index
 
 The function =zk-index= pops up a buffer listing of all note titles, each of
@@ -422,28 +441,28 @@ The ZK-Index buffer is in a minor mode with a dedicated keymap:
 
 *** Navigation
 
-The keys `n` and `p` move the point to the next/previous index item,
+The keys =n= and =p= move the point to the next/previous index item,
 previewing the note at point in the above window. (This previewing behavior
-can be disabled by setting `zk-index-auto-scroll` to nil.) In contrast, using
-`C-n` and `C-p` will move the point up and down the list without previewing
+can be disabled by setting =zk-index-auto-scroll= to nil.) In contrast, using
+=C-n= and =C-p= will move the point up and down the list without previewing
 notes.
 
-Pressing `RET` on a note title will open it the corresponding note in the
-above wndow *and* move the point to the note. Pressing `v` (short for for
+Pressing =RET= on a note title will open it the corresponding note in the
+above wndow *and* move the point to the note. Pressing =v= (short for for
 'view') will open the note but leave the point in the index.
 
 *** Narrowing and Filtering
 
-The key `f` (for 'focus') filters notes by matching a string in the note's TITLE. For
-example, pressing `f` and entering the string "nature" will produce an index
+The key =f= (for 'focus') filters notes by matching a string in the note's TITLE. For
+example, pressing =f= and entering the string "nature" will produce an index
 of all notes with the word "nature" in their titles.
 
-The focus feature is cumulative, so pressing `f` again and entering another
+The focus feature is cumulative, so pressing =f= again and entering another
 string, say, "climate," will narrow down the index down further, to notes
 with the words "nature" and "climate" in the title.
 
 The key 's' (for 'search') for filters notes by matching a string in their
-full text. So, pressing `s` and entering the string "nature" will produce an
+full text. So, pressing =s= and entering the string "nature" will produce an
 index of all notes that contain the word "nature" anywhere in the note
 itself.
 
@@ -458,44 +477,50 @@ all notes to the list.
 *** Sorting
 
 By default the index is sorted by time of last modification, with most
-recently modified notes being sorted to the top of the index. The key `M`
+recently modified notes being sorted to the top of the index. The key =M=
 (for 'modified') enacts this sorting method. 
 
-The key `C` (for 'created') sorts the index by time of creation, with the
+The key =C= (for 'created') sorts the index by time of creation, with the
 most recently created notes sorted to the top.
 
 ** ZK-Desktop
 
-The feature `zk-desktop` allows users to select and organize groups of notes
-relevant to specific projects.
+The feature =zk-desktop= allows users to select and organize groups of notes
+relevant to specific projects. The only necessary setup is setting a
+directory for saved desktops. A convenient and unobtrusive option is to
+simply use the =zk-directory= itself:
 
-Think of `zk-desktop` as allowing you to achieve something like pulling
+#+begin_src emacs-lisp
+(setq zk-index-desktop-directory zk-directory)
+#+end_src
+
+Think of =zk-desktop= as allowing you to achieve something like pulling
 project-specific note cards from a physical file cabinet and laying them out
 on a desktop in front of you, to be grouped and rearranged any way you like.
 In this case, however, the "desktop" is a simple plaintext file saved in the
-`zk-directory` and the "note cards" are just note titles, each a clickable
-button, just like in `zk-index`.
+=zk-directory= and the "note cards" are just note titles, each a clickable
+button, just like in =zk-index=.
 
-In contrast to `zk-index`, all notes on a given desktop are selected and
+In contrast to =zk-index=, all notes on a given desktop are selected and
 placed there individually by the user, note-by-note, rather than en masse and
 programmatically. Additionally, the notes placed on the desktop can be
 rearranged, grouped, and commented on in-line (by using the function
-`zk-index-desktop-edit-mode`, described below).
+=zk-index-desktop-edit-mode=, described below).
 
 It is possible to have several desktops at once, each an individual file, and
 each corresponding to a different project. Use the function
-`zk-index-desktop-select` to switch from working with one desktop to working
+=zk-index-desktop-select= to switch from working with one desktop to working
 with another.
 
 *** Adding notes to a desktop
 
 Each method of adding notes to the currently active desktop is accomplished
-via the same function: `zk-index-send-to-desktop`.
+via the same function: =zk-index-send-to-desktop=.
 
-When this function is called in the `zk-index` buffer itself, the note at
+When this function is called in the =zk-index= buffer itself, the note at
 point is sent to the desktop. If several notes are selected in the index, all
 notes in the active region are sent to the current deskop. This selection
-feature is usefully combined with the focus/search feature of `zk-index`, to
+feature is usefully combined with the focus/search feature of =zk-index=, to
 allow for sending a lot of relevant notes to a desktop at once.
 
 *** Working with notes on a desktop
@@ -503,21 +528,21 @@ allow for sending a lot of relevant notes to a desktop at once.
 The notes listed on in the zk-desktop buffer can be rearranged, a single note
 can appear more than once, and the user can type on the desktop just like in
 a normal buffer --- for example, to create headings or simply to type notes.
-To do so, enter `zk-index-desktop-edit-mode`, bound to `C-+`. The same
+To do so, enter =zk-index-desktop-edit-mode=, bound to =C-+=. The same
 keybinding toggles edit mode on and off.
 
  A "desktop" is just a simple file containing
 
 ** Embark Integration for ZK-Index and ZK-Desktop
 
-To enable integration with Embark, include `(zk-index-setup-embark)` in your
+To enable integration with Embark, include =(zk-index-setup-embark)= in your
 init config.
 
 This setup allows all index and desktop items to be recognized as zk-id
-Embark targets, making available all Embark actions in the `zk-id-map`.
+Embark targets, making available all Embark actions in the =zk-id-map=.
 
-This also adds `zk-index-send-to-deskop` to `zk-id-map` and `zk-file-map`, to
-facilitate sending files to desktop from the minibuffer or via `embark-act`
+This also adds =zk-index-send-to-deskop= to =zk-id-map= and =zk-file-map=, to
+facilitate sending files to desktop from the minibuffer or via =embark-act=
 in the zk-index buffer.
 
 
