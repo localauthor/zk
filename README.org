@@ -342,8 +342,8 @@ To use, make sure =Consult= is loaded, then load =zk-consult.el=, and set
 the following variables accordingly:
 
 #+begin_src emacs-lisp
-(setq zk-search-function 'zk-consult-grep)
-(setq zk-tag-search-function 'zk-consult-grep-tag-search)
+(setq zk-grep-function 'zk-consult-grep)
+(setq zk-tag-grep-function 'zk-consult-grep-tag-search)
 #+end_src
 
 ** Embark Integration
