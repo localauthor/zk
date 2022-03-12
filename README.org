@@ -16,7 +16,7 @@
     - [[#alternative-search-functions-using-consult-grep][Alternative Search Functions, using Consult-Grep]]
   - [[#embark-integration][Embark Integration]]
   - [[#list-current-notes][List Current Notes]]
-
+- [[#zk-index-and-zk-desktop][ZK-Index and ZK-Desktop]]
 - [[#comparable-zettelkasten-like-implementations][Comparable Zettelkasten(-like) Implementations]]
 
 * Introduction
