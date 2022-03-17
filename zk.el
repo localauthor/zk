@@ -658,10 +658,10 @@ Optionally call a custom function by setting the variable
     (save-buffer)
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward zk-id-regexp nil t)
-        (if (member (match-string-no-properties 0) zk-ids)
-            (push (match-string-no-properties 0) id-list)))
-      (zk--parse-id 'file-path id-list))))
+      (while (re-search-forward zk-link-regexp nil t)
+        (if (member (match-string-no-properties 1) zk-ids)
+            (push (match-string-no-properties 1) id-list)))
+      (zk--parse-id 'file-path (delete-dups id-list)))))
 
 ;;;###autoload
 (defun zk-links-in-note ()
