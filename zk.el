@@ -660,8 +660,13 @@ Optionally call a custom function by setting the variable
       (goto-char (point-min))
       (while (re-search-forward zk-link-regexp nil t)
         (if (member (match-string-no-properties 1) zk-ids)
-            (push (match-string-no-properties 1) id-list)))
-      (zk--parse-id 'file-path (delete-dups id-list)))))
+            (push (match-string-no-properties 1) id-list))))
+    (cond ((null id-list)
+           (error "No zk-links in note"))
+          ((eq 1 (length id-list))
+           (list (zk--parse-id 'file-path id-list)))
+          (t
+           (zk--parse-id 'file-path (delete-dups id-list))))))
 
 ;;;###autoload
 (defun zk-links-in-note ()
