@@ -246,7 +246,9 @@ zk-file-map to embark-keymap-alist."
 (defun zk-file-p (&optional file)
   "Return t if 'current-buffer' is a zk-file.
 With optional argument FILE."
-  (let ((dir (if file file
+  (let* ((file (if (stringp file) file
+                 (car file)))
+         (dir (if file file
                default-directory))
         (file-name (if file file
                      buffer-file-name)))
