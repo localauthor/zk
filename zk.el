@@ -292,7 +292,7 @@ Optional search for regexp STR in note title, case-insenstive."
   (match-string 0 buffer-file-name))
 
 (defun zk--directory-files (&optional full regexp)
-  "Return list of notes' filenames in 'zk-directory' .
+  "Return list of zk-files in 'zk-directory' .
 Excludes lockfiles, autosave files, and backup files. When FULL is
 non-nil, return full file-paths. If REGEXP is non-nil, it must be
 a regexp to replace the default, 'zk-id-regexp'."
@@ -301,9 +301,16 @@ a regexp to replace the default, 'zk-id-regexp'."
          (list (directory-files zk-directory full regexp))
          (files (remq nil (mapcar
                            (lambda (x)
-                             (unless (string-match-p
-                                      "^[.]\\|[#|~]$"
-                                      (file-name-nondirectory x))
+                             (when
+                                 (and (string-match (concat "\\(?1:"
+                                                            zk-id-regexp
+                                                            "\\).\\(?2:.*?\\)\\."
+                                                            zk-file-extension
+                                                            ".*")
+                                                    x)
+                                      (not (string-match-p
+                                            "^[.]\\|[#|~]$"
+                                            (file-name-nondirectory x))))
                                x))
                            list))))
     files))
