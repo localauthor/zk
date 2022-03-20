@@ -775,11 +775,14 @@ brackets \"[[\" initiates completion."
 ;;; Copy Link and Title
 
 ;;;###autoload
-(defun zk-copy-link-and-title (&optional id)
-  "Copy link and title for ID at point."
-  (interactive (list (zk--parse-file 'id (funcall zk-select-file-function "Copy link: "))))
-  (let* ((id (if id (car id)
-               (zk--id-at-point)))
+(defun zk-copy-link-and-title (&optional arg)
+  "Copy link and title for id or file ARG at point."
+  (interactive (list (funcall zk-select-file-function "Copy link: ")))
+  (let* ((id (cond ((member arg (zk--id-list))
+                    arg)
+                   ((zk-file-p arg)
+                    (zk--parse-file 'id arg))
+                   (t (zk--id-at-point))))
          (title (zk--parse-id 'title id)))
     (kill-new (format-spec zk-link-and-title-format
                            `((?i . ,id)(?t . ,title))))))
