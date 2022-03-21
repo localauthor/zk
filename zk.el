@@ -249,10 +249,10 @@ With optional argument FILE."
   (let* ((file (if (stringp file) file
                  (car file)))
          (dir (if file file
-               default-directory))
-        (file-name (if file file
-                     buffer-file-name)))
-    (when (and file-name
+                default-directory))
+         (file-name (if file file
+                      buffer-file-name)))
+    (when (and (file-exists-p file-name)
                (file-in-directory-p dir zk-directory)
                (string-match-p zk-id-regexp file-name))
       t)))
