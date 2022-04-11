@@ -373,10 +373,12 @@ supplied. Can take a PROMPT argument."
          (complete-with-action action files string predicate)))
      nil t nil 'zk-history)))
 
-(defun zk--group-function (cand transform)
-  "TRANSFORM completion CAND to remove 'zk-directory' path."
+(defun zk--group-function (file transform)
+  "TRANSFORM completion candidate FILE to note title."
   (if transform
-      (file-name-base cand)
+        (progn
+          (string-match zk-file-name-regexp file)
+          (match-string 2 file))
     "zk"))
 
 (defun zk--id-at-point ()
@@ -912,9 +914,11 @@ Backlinks and Links-in-Note are grouped separately."
           (complete-with-action action resources string predicate)))))))
 
 (defun zk--network-group-function (file transform)
-  "Group FILE by type or TRANSFORM."
+  "Group FILE by type and TRANSFORM."
   (if transform
-      (file-name-base file)
+      (progn
+        (string-match zk-file-name-regexp file)
+        (match-string 2 file))
     (cond
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
      ((eq 'link (get-text-property 0 'type file)) "Links-in-Note"))))
