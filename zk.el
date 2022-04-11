@@ -376,7 +376,7 @@ supplied. Can take a PROMPT argument."
 (defun zk--group-function (cand transform)
   "TRANSFORM completion CAND to remove 'zk-directory' path."
   (if transform
-      (file-name-nondirectory cand)
+      (file-name-base cand)
     "zk"))
 
 (defun zk--id-at-point ()
@@ -929,7 +929,7 @@ Backlinks and Links-in-Note are grouped separately."
 (defun zk--network-group-function (file transform)
   "Group FILE by type or TRANSFORM."
   (if transform
-      (file-name-nondirectory file)
+      (file-name-base file)
     (cond
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
      ((eq 'link (get-text-property 0 'type file)) "Links-in-Note"))))
