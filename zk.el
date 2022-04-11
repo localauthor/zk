@@ -202,6 +202,11 @@ will be replaced by its ID."
   :type 'string)
 
 (defvar zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
+(defvar zk-file-name-regexp (concat "\\(?1:"
+                                    zk-id-regexp
+                                    "\\).\\(?2:.*?\\)\\."
+                                    zk-file-extension
+                                    ".*"))
 (defvar zk-history nil)
 
 ;;; Embark Integration
@@ -303,12 +308,7 @@ a regexp to replace the default, 'zk-id-regexp'."
          (files (remq nil (mapcar
                            (lambda (x)
                              (when
-                                 (and (string-match (concat "\\(?1:"
-                                                            zk-id-regexp
-                                                            "\\).\\(?2:.*?\\)\\."
-                                                            zk-file-extension
-                                                            ".*")
-                                                    x)
+                                 (and (string-match zk-file-name-regexp x)
                                       (not (string-match-p
                                             "^[.]\\|[#|~]$"
                                             (file-name-nondirectory x))))
@@ -389,12 +389,7 @@ supplied. Can take a PROMPT argument."
   (mapcar
    (lambda (file)
      (progn
-       (string-match (concat "\\(?1:"
-                             zk-id-regexp
-                             "\\).\\(?2:.*?\\)\\."
-                             zk-file-extension
-                             ".*")
-                     file)
+       (string-match zk-file-name-regexp file)
        `(,(match-string-no-properties 1 file)
          ,(replace-regexp-in-string zk-file-name-separator " "
                                     (match-string-no-properties 2 file))
@@ -445,12 +440,7 @@ file extension."
          (return
           (mapcar
            (lambda (file)
-             (string-match (concat "\\(?1:"
-                                   zk-id-regexp
-                                   "\\).\\(?2:.*?\\)\\."
-                                   zk-file-extension
-                                   ".*")
-                           file)
+             (string-match zk-file-name-regexp file)
              (replace-regexp-in-string zk-file-name-separator " "
               (match-string target file)))
            files)))
@@ -745,12 +735,7 @@ FILES must be a list of filepaths. If nil, all files in
          (output))
     (dolist (file list)
       (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
+        (string-match zk-file-name-regexp file)
         (let ((id (match-string 1 file))
               (title (replace-regexp-in-string zk-file-name-separator " "
                                                (match-string 2 file))))
