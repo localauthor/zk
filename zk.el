@@ -659,7 +659,9 @@ Optionally call a custom function by setting the variable
   (let ((id (if (zk--id-at-point)
                 (zk--id-at-point)
               id)))
-    (find-file (zk--parse-id 'file-path id))))
+    (if id
+        (find-file (zk--parse-id 'file-path id))
+      (error "No zk-link at point"))))
 
 (defun zk--links-in-note-list ()
   "Return list of links in note with ID."
