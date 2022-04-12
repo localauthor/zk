@@ -202,11 +202,7 @@ will be replaced by its ID."
   :type 'string)
 
 (defvar zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
-(defvar zk-file-name-regexp (concat "\\(?1:"
-                                    zk-id-regexp
-                                    "\\).\\(?2:.*?\\)\\."
-                                    zk-file-extension
-                                    ".*"))
+
 (defvar zk-history nil)
 
 ;;; Embark Integration
@@ -308,7 +304,12 @@ a regexp to replace the default, 'zk-id-regexp'."
          (files (remq nil (mapcar
                            (lambda (x)
                              (when
-                                 (and (string-match zk-file-name-regexp x)
+                                 (and (string-match (concat "\\(?1:"
+                                                            zk-id-regexp
+                                                            "\\).\\(?2:.*?\\)\\."
+                                                            zk-file-extension
+                                                            ".*")
+                                                    x)
                                       (not (string-match-p
                                             "^[.]\\|[#|~]$"
                                             (file-name-nondirectory x))))
@@ -376,9 +377,14 @@ supplied. Can take a PROMPT argument."
 (defun zk--group-function (file transform)
   "TRANSFORM completion candidate FILE to note title."
   (if transform
-        (progn
-          (string-match zk-file-name-regexp file)
-          (match-string 2 file))
+      (progn
+        (string-match (concat "\\(?1:"
+                              zk-id-regexp
+                              "\\).\\(?2:.*?\\)\\."
+                              zk-file-extension
+                              ".*")
+                      file)
+        (match-string 2 file))
     "zk"))
 
 (defun zk--id-at-point ()
@@ -391,7 +397,12 @@ supplied. Can take a PROMPT argument."
   (mapcar
    (lambda (file)
      (progn
-       (string-match zk-file-name-regexp file)
+       (string-match (concat "\\(?1:"
+                             zk-id-regexp
+                             "\\).\\(?2:.*?\\)\\."
+                             zk-file-extension
+                             ".*")
+                     file)
        `(,(match-string-no-properties 1 file)
          ,(replace-regexp-in-string zk-file-name-separator " "
                                     (match-string-no-properties 2 file))
@@ -442,9 +453,14 @@ file extension."
          (return
           (mapcar
            (lambda (file)
-             (string-match zk-file-name-regexp file)
+             (string-match (concat "\\(?1:"
+                                   zk-id-regexp
+                                   "\\).\\(?2:.*?\\)\\."
+                                   zk-file-extension
+                                   ".*")
+                           file)
              (replace-regexp-in-string zk-file-name-separator " "
-              (match-string target file)))
+                                       (match-string target file)))
            files)))
     (if (eq 1 (length return))
         (car return)
@@ -737,7 +753,12 @@ FILES must be a list of filepaths. If nil, all files in
          (output))
     (dolist (file list)
       (progn
-        (string-match zk-file-name-regexp file)
+        (string-match (concat "\\(?1:"
+                              zk-id-regexp
+                              "\\).\\(?2:.*?\\)\\."
+                              zk-file-extension
+                              ".*")
+                      file)
         (let ((id (match-string 1 file))
               (title (replace-regexp-in-string zk-file-name-separator " "
                                                (match-string 2 file))))
@@ -925,7 +946,12 @@ Backlinks and Links-in-Note are grouped separately."
   "Group FILE by type and TRANSFORM."
   (if transform
       (progn
-        (string-match zk-file-name-regexp file)
+        (string-match (concat "\\(?1:"
+                              zk-id-regexp
+                              "\\).\\(?2:.*?\\)\\."
+                              zk-file-extension
+                              ".*")
+                      file)
         (match-string 2 file))
     (cond
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
