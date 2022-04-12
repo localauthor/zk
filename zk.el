@@ -770,12 +770,20 @@ brackets \"[[\" initiates completion."
   (interactive (list (funcall zk-select-file-function "Copy link: ")))
   (let* ((id (cond ((member arg (zk--id-list))
                     arg)
+                   ((member (car arg) (zk--id-list))
+                    (car arg))
                    ((zk-file-p arg)
                     (zk--parse-file 'id arg))
                    (t (zk--id-at-point))))
          (title (zk--parse-id 'title id)))
-    (kill-new (format-spec zk-link-and-title-format
-                           `((?i . ,id)(?t . ,title))))))
+    (if id
+        (progn
+          (kill-new (format-spec zk-link-and-title-format
+                                 `((?i . ,id)(?t . ,title))))
+          (message "Link and title copied: %s" title))
+      (error "No valid zk-id"))))
+
+
 
 ;;; List Backlinks
 
