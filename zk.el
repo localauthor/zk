@@ -591,8 +591,7 @@ title."
          (header-title (progn
                          (save-excursion
                            (goto-char (point-min))
-                           (re-search-forward id)
-                           (re-search-forward " ")
+                           (re-search-forward (concat id "."))
                            (buffer-substring-no-properties
                             (point)
                             (line-end-position)))))
