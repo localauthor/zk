@@ -349,7 +349,9 @@ a regexp to replace the default, 'zk-id-regexp'."
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
   (let* ((files (shell-command-to-string (concat
-                                          "grep -ohir -e "
+                                          "grep -ohir --include \\*."
+                                          zk-file-extension
+                                          " -e "
                                           (shell-quote-argument
                                            zk-tag-regexp)
                                           " "
