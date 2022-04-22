@@ -8,7 +8,7 @@
 ;; Version: 0.4
 ;; Homepage: https://github.com/localauthor/zk
 
-;; Package-Requires: ((emacs "26.1")(zk "0.2"))
+;; Package-Requires: ((emacs "26.1")(zk "0.3"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -720,17 +720,27 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
   (when (and (string-match-p zk-index-desktop-basename (buffer-name))
              (file-in-directory-p default-directory zk-index-desktop-directory))
-    (let ((ids (zk--id-list)))
+    (let ((ids (zk--id-list))
+          (zk-alist (zk--alist)))
       (save-excursion
         (read-only-mode -1)
         (goto-char (point-min))
         (while (re-search-forward zk-id-regexp nil t)
-          (let ((beg (line-beginning-position))
-                (end (line-end-position))
-                (id (match-string-no-properties 1)))
+          (let* ((beg (line-beginning-position))
+                 (end (line-end-position))
+                 (id (match-string-no-properties 1))
+                 (title (string-trim-left
+                         (buffer-substring-no-properties beg (match-beginning 0))
+                         zk-index-prefix))
+                 (new-title (concat (zk--parse-id 'title id zk-alist) " ")))
             (when (member id ids)
               (beginning-of-line)
+              (unless (string= title new-title)
+                (progn
+                  (replace-string title new-title nil beg end)
+                  (setq end (line-end-position))))
               (when zk-index-invisible-ids
+                ;; find zk-links and plain zk-ids
                 (if (re-search-forward zk-link-regexp (line-end-position) t)
                     (replace-match
                      (propertize (match-string 0) 'invisible t) nil t)
