@@ -268,10 +268,12 @@ The ID is created using `zk-id-time-string-format'."
       (setq id (number-to-string id)))
     id))
 
-(defun zk--id-list (&optional str)
-    "Return a list of zk IDs for notes in 'zk-directory'.
-Optional search for regexp STR in note title, case-insenstive."
-  (let ((zk-alist (zk--alist))
+(defun zk--id-list (&optional str zk-alist)
+  "Return a list of zk IDs for notes in 'zk-directory'.
+Optional search for regexp STR in note title, case-insenstive.
+Takes an optional ZK-ALIST, for efficiency if 'zk--id-list' is
+called in an internal loop."
+  (let ((zk-alist (if zk-alist zk-alist (zk--alist)))
         (case-fold-search t)
         (ids))
     (dolist (item zk-alist)
@@ -411,14 +413,18 @@ supplied. Can take a PROMPT argument."
          ,file)))
    (zk--directory-files t)))
 
-(defun zk--parse-id (target ids)
+(defun zk--parse-id (target ids &optional zk-alist)
   "Return TARGET, either 'file-path or 'title, from files with IDS.
-Takes a single ID, as a string, or a list of IDs."
-  (let* ((zk-alist (zk--alist))
+Takes a single ID, as a string, or a list of IDs. Takes an
+optional ZK-ALIST, for efficiency if 'zk--parse-id' is called
+in an internal loop."
+  (let* ((zk-alist (if zk-alist zk-alist
+                     (zk--alist)))
+         (zk-id-list (zk--id-list nil zk-alist))
          (return
           (cond ((eq target 'file-path)
                  (cond ((stringp ids)
-                        (if (member ids (zk--id-list))
+                        (if (member ids zk-id-list)
                             (cddr (assoc ids zk-alist))
                           (user-error "No file associated with %s" ids)))
                        ((listp ids)
@@ -428,7 +434,7 @@ Takes a single ID, as a string, or a list of IDs."
                          ids))))
                 ((eq target 'title)
                  (cond ((stringp ids)
-                        (if (member ids (zk--id-list))
+                        (if (member ids zk-id-list)
                             (cadr (assoc ids zk-alist))
                           (user-error "No file associated with %s" ids)))
                        ((listp ids)
