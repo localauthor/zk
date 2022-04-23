@@ -737,7 +737,8 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
               (beginning-of-line)
               (unless (string= title new-title)
                 (progn
-                  (replace-string title new-title nil beg end)
+                  (search-forward title end)
+                  (replace-match new-title)
                   (setq end (line-end-position))))
               (when zk-index-invisible-ids
                 ;; find zk-links and plain zk-ids
