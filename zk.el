@@ -929,25 +929,30 @@ Select TAG, with completion, from list of all tags in zk notes."
   "Find `zk-backlinks' and `zk-links-in-note' for current or selected note.
 Backlinks and Links-in-Note are grouped separately."
   (interactive)
+  (unless (zk-file-p)
+    (user-error "Not a zk file"))
   (let* ((id (ignore-errors (zk--current-id)))
          (backlinks (ignore-errors (zk--backlinks-list id)))
          (links-in-note (ignore-errors (zk--links-in-note-list)))
          (resources))
-    (dolist (file backlinks)
-      (push (propertize file 'type 'backlink) resources))
-    (dolist (file links-in-note)
-      ;; abbreviate-file-name allows a file to be in both groups
-      (push (propertize (abbreviate-file-name file) 'type 'link) resources))
-    (find-file
-     (completing-read
-      "Links: "
-      (lambda (string predicate action)
-        (if (eq action 'metadata)
-            `(metadata
-              (group-function . zk--network-group-function)
-              (display-sort-function . zk--network-sort-function)
-              (category . zk-file))
-          (complete-with-action action resources string predicate)))))))
+    (if (or backlinks links-in-note)
+        (progn
+          (dolist (file backlinks)
+            (push (propertize file 'type 'backlink) resources))
+          (dolist (file links-in-note)
+            ;; abbreviate-file-name allows a file to be in both groups
+            (push (propertize (abbreviate-file-name file) 'type 'link) resources))
+          (find-file
+           (completing-read
+            "Links: "
+            (lambda (string predicate action)
+              (if (eq action 'metadata)
+                  `(metadata
+                    (group-function . zk--network-group-function)
+                    (display-sort-function . zk--network-sort-function)
+                    (category . zk-file))
+                (complete-with-action action resources string predicate))))))
+      (user-error "No links found"))))
 
 (defun zk--network-group-function (file transform)
   "Group FILE by type and TRANSFORM."
