@@ -225,7 +225,7 @@ Adds zk-id as an Embark target, and adds 'zk-id-map' and
       (beginning-of-line)
       (re-search-forward zk-id-regexp (line-end-position)))
     (let ((zk-id (match-string-no-properties 1)))
-      `(zk-id ,zk-id))))
+      `(zk-id ,zk-id . ,(cons (line-beginning-position) (line-end-position))))))
 
 ;;; Formatting
 
