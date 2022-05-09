@@ -311,6 +311,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (erase-buffer)
       (zk-index--sort files format-fn sort-fn)
       (goto-char (point-min))
+      (setq zk-index-mode t)
+      (toggle-truncate-lines 1)
       (unless (zk-index-narrowed-p)
         (progn
           (zk-index--clear-query-mode-line)
@@ -852,8 +854,12 @@ at point."
 (defun zk-index-switch-to-index ()
   "Switch to ZK-Index buffer."
   (interactive)
-  (when (get-buffer "*ZK-Index*")
-    (switch-to-buffer "*ZK-Index*")))
+  (let ((buffer "*ZK-Index*"))
+    (unless (get-buffer buffer)
+      (progn
+        (generate-new-buffer buffer)
+        (zk-index-refresh)))
+    (switch-to-buffer buffer)))
 
 ;;;###autoload
 (defun zk-index-switch-to-desktop ()
