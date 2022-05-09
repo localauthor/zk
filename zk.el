@@ -565,7 +565,8 @@ Adds 'zk-make-link-buttons' to 'find-file-hook.'"
                    (zk-file-p))
               (and (eq zk-new-note-link-insert 'ask)
                    (y-or-n-p "Insert link at point? ")))
-      (zk-insert-link new-id title))
+      (unless buffer-read-only
+        (zk-insert-link new-id title)))
     (when buffer-file-name
       (save-buffer))
     (find-file file-name)
