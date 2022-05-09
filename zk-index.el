@@ -276,7 +276,8 @@ FILES must be a list of filepaths. If nil, all files in
   (interactive)
   (setq zk-index-last-format-function format-fn)
   (setq zk-index-last-sort-function sort-fn)
-  (let ((buffer "*ZK-Index*")
+  (let ((inhibit-message t)
+        (buffer "*ZK-Index*")
         (list (if files files
                 (zk--directory-files t))))
     (unless (get-buffer buffer)
@@ -300,7 +301,8 @@ FILES must be a list of filepaths. If nil, all files in
   "Refresh the index.
 Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
-  (let ((files (if files files
+  (let ((inhibit-message t)
+        (files (if files files
                  (zk--directory-files t)))
         (sort-fn (if sort-fn sort-fn
                    (setq zk-index-last-sort-function nil)))
