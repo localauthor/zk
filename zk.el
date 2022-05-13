@@ -233,8 +233,8 @@ will be replaced by its ID."
 ;;;###autoload
 (defun zk-setup-embark ()
   "Setup Embark integration for zk.
-Adds zk-id as an Embark target, and adds zk-id-map and
-zk-file-map to embark-keymap-alist."
+Adds zk-id as an Embark target, and adds 'zk-id-map' and
+'zk-file-map' to 'embark-keymap-alist'."
   (with-eval-after-load 'embark
     (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
     (add-to-list 'embark-keymap-alist '(zk-id . zk-id-map))
@@ -781,15 +781,20 @@ FILES must be a list of filepaths. If nil, all files in
 When added to 'completion-at-point-functions', typing two
 brackets \"[[\" initiates completion."
   (let ((case-fold-search t)
-        (pt (point)))
+        (origin (point)))
     (save-excursion
-      (when (re-search-backward "\\[\\[" nil t)
-        (list (match-beginning 0)
-              pt
+      (when (and (re-search-backward "\\[\\["
+                                     (line-beginning-position)
+                                     t)
+                 (save-excursion
+                   (not (search-forward "]]" origin t))))
+        (list (match-end 0)
+              origin
               (zk--format-candidates)
-              :exclusive 'no
               :exit-function
-              (lambda (_str _status)
+              (lambda (str _status)
+                (delete-char (- -2 (length str)))
+                (insert str)
                 (when zk-enable-link-buttons
                   (zk-make-button-before-point))))))))
 

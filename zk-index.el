@@ -208,7 +208,7 @@ If called from Lisp, ARG should be 'toggle."
 (defun zk-index-setup-embark ()
   "Setup Embark integration for zk.
 Adds zk-id as an Embark target, and adds 'zk-id-map' and
-'zk-file-map' to embark-keymap-alist."
+'zk-file-map' to 'embark-keymap-alist'."
   (with-eval-after-load 'embark
     (add-to-list 'embark-multitarget-actions 'zk-index)
     (add-to-list 'embark-multitarget-actions 'zk-index-send-to-desktop)
@@ -589,7 +589,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (select-window (get-buffer-window buffer))))
 
 (defun zk-index-current-notes ()
-  "Open zk-index listing currently open notes."
+  "Open ZK-Index listing currently open notes."
   (interactive)
   (zk-index
    (zk--current-notes-list)
