@@ -787,9 +787,11 @@ brackets \"[[\" initiates completion."
         (list (match-beginning 0)
               pt
               (zk--format-candidates)
-              :exclusive 'no)))))
-
-;; TODO add post completion hook, to optionally make button before point?
+              :exclusive 'no
+              :exit-function
+              (lambda (_str _status)
+                (when zk-enable-link-buttons
+                  (zk-make-button-before-point))))))))
 
 ;;; Copy Link and Title
 
