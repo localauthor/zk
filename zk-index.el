@@ -49,6 +49,10 @@
   :group 'files
   :prefix "zk-index")
 
+(defcustom zk-index-buffer-name "*ZK-Index*"
+  "Name for ZK-Index buffer."
+  :type 'string)
+
 (defcustom zk-index-format-function 'zk-index--format-candidates
   "Default formatting function for ZK-Index candidates."
   :type 'function)
@@ -277,7 +281,7 @@ FILES must be a list of filepaths. If nil, all files in
   (setq zk-index-last-format-function format-fn)
   (setq zk-index-last-sort-function sort-fn)
   (let ((inhibit-message t)
-        (buffer "*ZK-Index*")
+        (buffer zk-index-buffer-name)
         (list (if files files
                 (zk--directory-files t))))
     (unless (get-buffer buffer)
@@ -307,7 +311,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
         (sort-fn (if sort-fn sort-fn
                    (setq zk-index-last-sort-function nil)))
         (line))
-    (with-current-buffer "*ZK-Index*"
+    (with-current-buffer zk-index-buffer-name
       (setq line (line-number-at-pos))
       (read-only-mode -1)
       (erase-buffer)
@@ -367,7 +371,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 
 (defun zk-index-narrowed-p ()
   "Return t when index is narrowed."
-  (with-current-buffer "*ZK-Index*"
+  (with-current-buffer zk-index-buffer-name
     (if (< (count-lines (point-min) (point-max))
            (length (zk--id-list)))
         t nil)))
@@ -504,7 +508,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index--current-id-list ()
   "Return list of IDs for current index, as filepaths."
   (let (ids)
-    (with-current-buffer "*ZK-Index*"
+    (with-current-buffer zk-index-buffer-name
       (save-excursion
         (goto-char (point-min))
         (save-match-data
@@ -792,7 +796,7 @@ at point."
                  (mapconcat
                   #'identity
                   (funcall zk-index-format-function files) "\n")))
-          ((string= (buffer-name) "*ZK-Index*")
+          ((string= (buffer-name) zk-index-buffer-name)
            (progn
              (read-only-mode -1)
              (setq items (if (use-region-p)
@@ -839,7 +843,7 @@ at point."
         ('at-point (goto-char (point))))
       (zk-index-desktop-make-buttons)
       (read-only-mode))
-    (if (string= (buffer-name) "*ZK-Index*")
+    (if (string= (buffer-name) zk-index-buffer-name)
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
 
@@ -856,7 +860,7 @@ at point."
 (defun zk-index-switch-to-index ()
   "Switch to ZK-Index buffer."
   (interactive)
-  (let ((buffer "*ZK-Index*"))
+  (let ((buffer zk-index-buffer-name))
     (unless (get-buffer buffer)
       (progn
         (generate-new-buffer buffer)
