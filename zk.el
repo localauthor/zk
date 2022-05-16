@@ -790,7 +790,9 @@ brackets \"[[\" initiates completion."
                    (not (search-forward "]]" origin t))))
         (list (match-end 0)
               origin
-              (zk--format-candidates)
+              (completion-table-dynamic
+               (lambda (_)
+                 (zk--format-candidates)))
               :exit-function
               (lambda (str _status)
                 (delete-char (- -2 (length str)))
