@@ -520,8 +520,9 @@ Adds 'zk-make-link-buttons' to 'find-file-hook.'"
 ;;; Note Functions
 
 ;;;###autoload
-(defun zk-new-note ()
-  "Create a new note, insert link at point of creation."
+(defun zk-new-note (&optional title)
+  "Create a new note, insert link at point of creation.
+Optional TITLE argument."
   (interactive)
   (let* ((pref-arg current-prefix-arg)
          (new-id (zk--generate-id))
@@ -530,14 +531,15 @@ Adds 'zk-make-link-buttons' to 'find-file-hook.'"
                  (buffer-substring
                   (region-beginning)
                   (region-end))))
-         (title (if (use-region-p)
-                    (with-temp-buffer
-                      (insert text)
-                      (goto-char (point-min))
-                      (buffer-substring
-                       (point)
-                       (line-end-position)))
-                  (read-string "Note title: ")))
+         (title (cond (title title)
+                      ((use-region-p)
+                       (with-temp-buffer
+                         (insert text)
+                         (goto-char (point-min))
+                         (buffer-substring
+                          (point)
+                          (line-end-position))))
+                      (t (read-string "Note title: "))))
          (body (when (use-region-p)
                  (with-temp-buffer
                    (insert text)
