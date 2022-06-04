@@ -533,6 +533,13 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                     zk-index-last-format-function
                     #'zk-index--sort-created))
 
+(defun zk-index-sort-size ()
+  "Sort index by size."
+  (interactive)
+  (zk-index-refresh (zk-index--current-file-list)
+                    zk-index-last-format-function
+                    #'zk-index--sort-size))
+
 (defun zk-index--current-file-list ()
   "Return list files in current index."
   (let* ((ids (zk-index--current-id-list))
@@ -602,11 +609,22 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
    zk-index-last-sort-function))
 
 (defun zk-index--button-at-point-p ()
-  "Return t when `zk-index' button is at point."
+  "Return zk-id when `zk-index' button is at point."
   (let ((button (button-at (point))))
     (when (and button
                (eq (button-type button) 'zk-index))
-      t)))
+      (save-excursion
+        (re-search-forward zk-id-regexp)
+        (match-string-no-properties 1)))))
+
+(defun zk-index-insert-link (&optional id)
+  "Insert zk-link in other-window for button ID at point."
+  (interactive)
+  (let ((id (or id
+                (zk-index--button-at-point-p))))
+    (with-selected-window (other-window-for-scrolling)
+      (save-excursion
+        (zk-insert-link id)))))
 
 (defun zk-index-next-line ()
   "Move to next line.
