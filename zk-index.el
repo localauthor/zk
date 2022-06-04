@@ -129,9 +129,9 @@ If called from Lisp, ARG should be 'toggle."
     (define-key map (kbd "s") #'zk-index-search)
     (define-key map (kbd "d") #'zk-index-send-to-desktop)
     (define-key map (kbd "D") #'zk-index-switch-to-desktop)
-    (define-key map (kbd "S") #'zk-index-desktop-select)
     (define-key map (kbd "c") #'zk-index-current-notes)
     (define-key map (kbd "i") #'zk-index-refresh)
+    (define-key map (kbd "S") #'zk-index-sort-size)
     (define-key map (kbd "M") #'zk-index-sort-modified)
     (define-key map (kbd "C") #'zk-index-sort-created)
     (define-key map (kbd "q") #'delete-window)
@@ -220,7 +220,8 @@ Adds zk-id as an Embark target, and adds 'zk-id-map' and
     (add-to-list 'embark-multitarget-actions 'zk-follow-link-at-point)
     (add-to-list 'embark-target-finders 'zk-index-embark-target)
     (define-key zk-file-map (kbd "d") #'zk-index-send-to-desktop)
-    (define-key zk-id-map (kbd "d") #'zk-index-send-to-desktop)))
+    (define-key zk-id-map (kbd "d") #'zk-index-send-to-desktop)
+    (define-key zk-id-map (kbd "i") #'zk-index-insert-link)))
 
 (defun zk-index-embark-target ()
   "Target zk-id of button at point in ZK-Index and ZK-Desktop."
