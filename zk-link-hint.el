@@ -119,7 +119,9 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
          (dedicated . t)))
       (with-current-buffer buffer
         (setq-local link-hint-preview--last-frame frame)
-        (link-hint-preview-mode)))))
+        (link-hint-preview-mode))))
+
+  (defalias 'zk-preview 'link-hint-preview-zk-link))
 
 (provide 'zk-link-hint)
 

@@ -249,10 +249,10 @@ Adds zk-id as an Embark target, and adds 'zk-id-map' and
 With optional argument FILE."
   (let* ((file (if (stringp file) file
                  (car file)))
-         (dir (if file file
-                default-directory))
-         (file-name (if file file
-                      buffer-file-name)))
+         (dir (or file
+                  default-directory))
+         (file-name (or file
+                        buffer-file-name)))
     (when (and file-name
                (file-exists-p file-name)
                (file-in-directory-p dir zk-directory)
@@ -273,7 +273,7 @@ The ID is created using `zk-id-time-string-format'."
 Optional search for regexp STR in note title, case-insenstive.
 Takes an optional ZK-ALIST, for efficiency if 'zk--id-list' is
 called in an internal loop."
-  (let ((zk-alist (if zk-alist zk-alist (zk--alist)))
+  (let ((zk-alist (or zk-alist (zk--alist)))
         (case-fold-search t)
         (ids))
     (dolist (item zk-alist)
@@ -300,8 +300,7 @@ called in an internal loop."
 Excludes lockfiles, autosave files, and backup files. When FULL is
 non-nil, return full file-paths. If REGEXP is non-nil, it must be
 a regexp to replace the default, 'zk-id-regexp'."
-  (let* ((regexp (if regexp regexp
-                   zk-id-regexp))
+  (let* ((regexp (or regexp zk-id-regexp))
          (list (directory-files zk-directory full regexp))
          (files (remq nil (mapcar
                            (lambda (x)
@@ -365,11 +364,11 @@ a regexp to replace the default, 'zk-id-regexp'."
   "Wrapper around `completing-read' to select zk-file.
 Offers candidates from 'zk--directory-files', or from LIST when
 supplied. Can take a PROMPT argument."
-  (let* ((files (if list list
-                  (zk--directory-files t))))
+  (let* ((files (or list
+                    (zk--directory-files t))))
     (completing-read
-     (if prompt prompt
-       "Select File: ")
+     (or prompt
+         "Select File: ")
      (lambda (string predicate action)
        (if (eq action 'metadata)
            `(metadata
@@ -418,8 +417,8 @@ supplied. Can take a PROMPT argument."
 Takes a single ID, as a string, or a list of IDs. Takes an
 optional ZK-ALIST, for efficiency if 'zk--parse-id' is called
 in an internal loop."
-  (let* ((zk-alist (if zk-alist zk-alist
-                     (zk--alist)))
+  (let* ((zk-alist (or zk-alist
+                       (zk--alist)))
          (zk-id-list (zk--id-list nil zk-alist))
          (return
           (cond ((eq target 'file-path)
@@ -674,9 +673,8 @@ Optionally call a custom function by setting the variable
 (defun zk-follow-link-at-point (&optional id)
   "Open note that corresponds with the zk ID at point."
   (interactive)
-  (let ((id (if (zk--id-at-point)
-                (zk--id-at-point)
-              id)))
+  (let ((id (or (zk--id-at-point)
+                id)))
     (if id
         (find-file (zk--parse-id 'file-path id))
       (error "No zk-link at point"))))
@@ -717,8 +715,8 @@ link and title are inserted. See variable 'zk-link-and-title'
 for additional configurations."
   (interactive (list (zk--parse-file 'id (funcall zk-select-file-function "Insert link: "))))
   (let* ((pref-arg current-prefix-arg)
-         (title (if title title
-                  (zk--parse-id 'title id))))
+         (title (or title
+                    (zk--parse-id 'title id))))
     (cond
      ((or (and (not pref-arg) (eq 't zk-link-and-title))
           (and pref-arg (not zk-link-and-title)))
@@ -756,10 +754,10 @@ by the ID and '%t' by the title. It can be a string, such as \"%t
 
 FILES must be a list of filepaths. If nil, all files in
 'zk-directory' will be returned as formatted candidates."
-  (let* ((format (if format format
-                   zk-completion-at-point-format))
-         (list (if files files
-                 (zk--directory-files)))
+  (let* ((format (or format
+                     zk-completion-at-point-format))
+         (list (or files
+                   (zk--directory-files)))
          (output))
     (dolist (file list)
       (progn

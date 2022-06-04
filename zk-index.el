@@ -618,7 +618,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
         (match-string-no-properties 1)))))
 
 (defun zk-index-insert-link (&optional id)
-  "Insert zk-link in other-window for button ID at point."
+  "Insert zk-link in `other-window' for button ID at point."
   (interactive)
   (let ((id (or id
                 (zk-index--button-at-point-p))))
