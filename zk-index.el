@@ -246,10 +246,10 @@ FILES must be a list of filepaths. If nil, all files in
 'zk-directory' will be returned as formatted candidates."
   (let* ((zk-index-format (if zk-index-invisible-ids "%t %i"
                             zk-index-format))
-         (format (if format format
-                   zk-index-format))
-         (list (if files files
-                 (zk--directory-files)))
+         (format (or format
+                     zk-index-format))
+         (list (or files
+                   (zk--directory-files)))
          (output))
     (dolist (file list)
       (progn
@@ -283,8 +283,8 @@ FILES must be a list of filepaths. If nil, all files in
   (setq zk-index-last-sort-function sort-fn)
   (let ((inhibit-message t)
         (buffer zk-index-buffer-name)
-        (list (if files files
-                (zk--directory-files t))))
+        (list (or files
+                  (zk--directory-files t))))
     (unless (get-buffer buffer)
       (progn
         (when zk-default-backlink
@@ -307,10 +307,10 @@ FILES must be a list of filepaths. If nil, all files in
 Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
   (let ((inhibit-message t)
-        (files (if files files
-                 (zk--directory-files t)))
-        (sort-fn (if sort-fn sort-fn
-                   (setq zk-index-last-sort-function nil)))
+        (files (or files
+                   (zk--directory-files t)))
+        (sort-fn (or sort-fn
+                     (setq zk-index-last-sort-function nil)))
         (line))
     (with-current-buffer zk-index-buffer-name
       (setq line (line-number-at-pos))
@@ -328,8 +328,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
   "Sort FILES, with option FORMAT-FN and SORT-FN."
-  (let* ((sort-fn (if sort-fn sort-fn
-                    'zk-index--sort-modified))
+  (let* ((sort-fn (or sort-fn
+                      'zk-index--sort-modified))
          (files (if (eq 1 (length files))
                     files
                   (nreverse (funcall sort-fn files)))))
@@ -337,8 +337,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 
 (defun zk-index--format (files &optional format-fn)
   "Format FILES with optional custom FORMAT-FN."
-  (let* ((format-fn (if format-fn format-fn
-                      zk-index-format-function))
+  (let* ((format-fn (or format-fn
+                        zk-index-format-function))
          (candidates (funcall format-fn files)))
     (zk-index--insert candidates)))
 
@@ -441,8 +441,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (setq zk-index-query-mode-line mode-line))
     (when (stringp files)
       (setq files (list files)))
-    (if files files
-      (error "No matches for \"%s\"" string))))
+    (or files
+        (error "No matches for \"%s\"" string))))
 
 (defun zk-index-focus-mode-line (string)
   "Add STRING to modeline for 'zk-index-focus'."
