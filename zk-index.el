@@ -623,8 +623,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (let ((id (or id
                 (zk-index--button-at-point-p))))
     (with-selected-window (other-window-for-scrolling)
-      (save-excursion
-        (zk-insert-link id)))))
+      (zk-insert-link id)
+      (newline))))
 
 (defun zk-index-next-line ()
   "Move to next line.
