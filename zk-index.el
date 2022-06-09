@@ -100,6 +100,9 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
 (defvar-local zk-index-mode nil
   "Toggle 'zk-index-mode'.")
 
+(defvar zk-index-mode-hook nil
+  "Hook called by 'zk-index-mode'.")
+
 (defvar zk-index-mode-line '(:eval (zk-index-mode-line-text)))
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-last-query nil)
@@ -113,7 +116,8 @@ If called from Lisp, ARG should be 'toggle."
   (setq zk-index-mode
         (if (eq ARG 'toggle)
             (not zk-index-mode)
-          (> ARG 0))))
+          (> ARG 0)))
+  (run-hooks 'zk-index-mode-hook))
 
 (defun zk-index-mode-line-text ()
   "Set modeline for 'zk-index-mode'."
