@@ -258,7 +258,7 @@ FILES must be a list of filepaths. If nil, all files in
         (generate-new-buffer buffer)
         (with-current-buffer buffer
           (zk-index--sort list format-fn sort-fn)
-          (setq zk-index-mode t)
+          (zk-index-mode)
           (read-only-mode 1)
           (toggle-truncate-lines)
           (goto-char (point-min)))))
