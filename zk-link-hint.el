@@ -118,10 +118,37 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
        `((pop-up-frame-parameters . ,(link-hint-preview--params 'delete-before frame))
          (dedicated . t)))
       (with-current-buffer buffer
-        (setq-local link-hint-preview--last-frame frame)
+        (setq-local link-hint-preview--origin-frame frame)
         (link-hint-preview-mode))))
 
   (defalias 'zk-preview 'link-hint-preview-zk-link))
+
+  (link-hint-define-type 'button
+    :preview #'link-hint--preview-button)
+
+;; add exception for zk-index buttons
+(defun link-hint--preview-button ()
+  (interactive)
+  (let ((buffer (current-buffer))
+        (frame (selected-frame))
+        (new-buffer))
+    (if (zk-index--button-at-point-p)
+        (progn
+          (save-excursion
+            (re-search-forward zk-id-regexp (line-end-position)))
+          (zk-follow-link-at-point (match-string-no-properties 0)))
+      (push-button))
+    (setq new-buffer
+          (current-buffer))
+    (switch-to-buffer buffer)
+    (display-buffer-pop-up-frame
+     new-buffer
+     `((pop-up-frame-parameters . ,(link-hint-preview--params 'delete-before frame))
+       (dedicated . t)))
+    (with-current-buffer new-buffer
+      (setq-local link-hint-preview--origin-frame frame)
+      (link-hint-preview-mode))))
+
 
 (provide 'zk-link-hint)
 
