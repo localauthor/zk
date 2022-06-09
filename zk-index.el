@@ -97,27 +97,11 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
 
 ;;; ZK-Index Minor Mode Settings
 
-(defvar-local zk-index-mode nil
-  "Toggle 'zk-index-mode'.")
-
-(defvar zk-index-mode-hook nil
-  "Hook called by 'zk-index-mode'.")
-
 (defvar zk-index-mode-line '(:eval (zk-index-mode-line-text)))
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-last-query nil)
 (defvar zk-index-last-focus-terms nil)
 (defvar zk-index-last-search-terms nil)
-
-(defun zk-index-mode (&optional ARG)
-  "Toggle 'zk-index-mode'.
-If called from Lisp, ARG should be 'toggle."
-  (interactive (list 'toggle))
-  (setq zk-index-mode
-        (if (eq ARG 'toggle)
-            (not zk-index-mode)
-          (> ARG 0)))
-  (run-hooks 'zk-index-mode-hook))
 
 (defun zk-index-mode-line-text ()
   "Set modeline for 'zk-index-mode'."
@@ -142,31 +126,14 @@ If called from Lisp, ARG should be 'toggle."
     (make-composed-keymap map tabulated-list-mode-map))
   "Keymap for ZK-Index buffer.")
 
-(add-to-list 'minor-mode-map-alist (cons 'zk-index-mode zk-index-map))
-(add-to-list 'minor-mode-alist `(zk-index-mode ,zk-index-mode-line))
+(define-minor-mode zk-index-mode
+  "Minor mode for 'zk-index'."
+  :init-value nil
+  :lighter zk-index-mode-line
+  :keymap zk-index-map)
 
 
 ;;; ZK-Desktop Minor Mode Settings
-
-(defvar-local zk-index-desktop-mode nil
-  "Toggle 'zk-index-desktop-mode'.")
-
-(defvar zk-index-desktop-mode-line '(:eval (zk-index-desktop-mode-line-text)))
-
-(defun zk-index-desktop-mode (&optional ARG)
-  "Toggle 'zk-index-desktop-mode'.
-If called from Lisp, ARG should be 'toggle."
-  (interactive (list 'toggle))
-  (setq zk-index-desktop-mode
-        (if (eq ARG 'toggle)
-            (not zk-index-desktop-mode)
-          (> ARG 0))))
-
-(defvar zk-index-desktop-mode-line-text nil)
-
-(defun zk-index-desktop-mode-line-text ()
-  "Set modeline for 'zk-index-desktop-mode'."
-  zk-index-desktop-mode-line-text)
 
 (defvar zk-index-desktop-map
   (let ((map (make-sparse-keymap)))
@@ -191,11 +158,10 @@ If called from Lisp, ARG should be 'toggle."
     map)
   "Keymap for ZK-Desktop buffers.")
 
-(add-to-list 'minor-mode-map-alist
-             (cons 'zk-index-desktop-mode zk-index-desktop-map))
-(add-to-list 'minor-mode-alist
-             `(zk-index-desktop-mode ,zk-index-desktop-mode-line))
-
+(define-minor-mode zk-index-desktop-mode
+  "Minor mode for 'zk-index-desktop'."
+  :init-value nil
+  :keymap zk-index-desktop-map)
 
 ;;; Declarations
 
