@@ -562,8 +562,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
   (let ((buffer (current-buffer)))
     (push-button nil t)
-    (view-mode)
-    (select-window (get-buffer-window buffer))))
+    (zk-index-view-mode)))
+;;    (select-window (get-buffer-window buffer))))
 
 (defun zk-index-current-notes ()
   "Open ZK-Index listing currently open notes."
@@ -591,23 +591,27 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (zk-insert-link id)
       (newline))))
 
+(define-minor-mode zk-index-view-mode
+  "Minor mode for 'zk-index-auto-scroll'."
+  :init-value nil
+  :keymap '(((kbd "n") . zk-index-next-line)
+            ((kbd "p") . zk-index-previous-line))
+  (view-mode))
+
 (defun zk-index-next-line ()
   "Move to next line.
 If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((buffer (current-buffer))
-        (split-width-threshold nil))
+  (let ((split-width-threshold nil))
     (if zk-index-auto-scroll
         (progn
-          (other-window 1)
           (when (and (zk-file-p)
-                     view-mode
+                     zk-index-view-mode
                      (not (buffer-modified-p)))
-            (kill-buffer))
-          (if (get-buffer-window buffer)
-              (other-window -1)
-            (select-window (get-buffer-window buffer)))
+                  (kill-buffer)
+                  (other-window -1))
           (forward-button 1)
+          (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
             (zk-index-view-note)))
       (forward-button 1))))
@@ -616,19 +620,16 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   "Move to previous line.
 If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((buffer (current-buffer))
-        (split-width-threshold nil))
+  (let ((split-width-threshold nil))
     (if zk-index-auto-scroll
         (progn
-          (other-window 1)
           (when (and (zk-file-p)
-                     view-mode
+                     zk-index-view-mode
                      (not (buffer-modified-p)))
-            (kill-buffer))
-          (if (get-buffer-window buffer)
-              (other-window -1)
-            (select-window (get-buffer-window buffer)))
+                  (kill-buffer)
+                  (other-window -1))
           (forward-button -1)
+          (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
             (zk-index-view-note)))
       (forward-button -1))))
