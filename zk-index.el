@@ -97,15 +97,10 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
 
 ;;; ZK-Index Minor Mode Settings
 
-(defvar zk-index-mode-line '(:eval (zk-index-mode-line-text)))
-(defvar zk-index-query-mode-line nil)
+(defvar zk-index-mode-line nil)
 (defvar zk-index-last-query nil)
 (defvar zk-index-last-focus-terms nil)
 (defvar zk-index-last-search-terms nil)
-
-(defun zk-index-mode-line-text ()
-  "Set modeline for 'zk-index-mode'."
-  zk-index-query-mode-line)
 
 (defvar zk-index-map
   (let ((map (make-sparse-keymap)))
@@ -292,7 +287,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (toggle-truncate-lines 1)
       (unless (zk-index-narrowed-p)
         (progn
-          (zk-index--clear-query-mode-line)
+          (zk-index--clear-mode-line)
           (forward-line line)))
       (read-only-mode))))
 
@@ -408,7 +403,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
          (files (zk--parse-id 'file-path (remq nil ids))))
     (add-to-history 'zk-index-query-history string)
     (when files
-      (setq zk-index-query-mode-line mode-line))
+      (setq zk-index-mode-line mode-line))
     (when (stringp files)
       (setq files (list files)))
     (or files
@@ -470,9 +465,9 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (setq zk-index-last-search-terms string)
     (concat " [ZK-Search: \"" string "\"]"))))
 
-(defun zk-index--clear-query-mode-line ()
+(defun zk-index--clear-mode-line ()
   "Clear query modeline."
-  (setq zk-index-query-mode-line nil
+  (setq zk-index-mode-line nil
         zk-index-last-focus-terms nil
         zk-index-last-search-terms nil))
 
