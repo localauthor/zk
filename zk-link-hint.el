@@ -121,7 +121,7 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
         (setq-local link-hint-preview--origin-frame frame)
         (link-hint-preview-mode))))
 
-  (defalias 'zk-preview 'link-hint-preview-zk-link))
+  (defalias 'zk-preview 'link-hint-preview-zk-link)
 
   (link-hint-define-type 'button
     :preview #'link-hint--preview-button)
@@ -132,11 +132,12 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
   (let ((buffer (current-buffer))
         (frame (selected-frame))
         (new-buffer))
-    (if (zk-index--button-at-point-p)
+    (if-let (id (zk-index--button-at-point-p))
         (progn
-          (save-excursion
-            (re-search-forward zk-id-regexp (line-end-position)))
-          (zk-follow-link-at-point (match-string-no-properties 0)))
+          (if (get-file-buffer (zk--parse-id 'file-path id))
+              (setq link-hint-preview--kill-last nil)
+            (setq link-hint-preview--kill-last t))
+          (zk-follow-link-at-point id))
       (push-button))
     (setq new-buffer
           (current-buffer))
@@ -148,7 +149,7 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
     (with-current-buffer new-buffer
       (setq-local link-hint-preview--origin-frame frame)
       (link-hint-preview-mode))))
-
+)
 
 (provide 'zk-link-hint)
 
