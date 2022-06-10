@@ -595,8 +595,9 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   "Minor mode for 'zk-index-auto-scroll'."
   :init-value nil
   :keymap '(((kbd "n") . zk-index-next-line)
-            ((kbd "p") . zk-index-previous-line))
-  (view-mode))
+            ((kbd "p") . zk-index-previous-line)
+            ((kbd "q") . quit-window))
+  (read-only-mode))
 
 (defun zk-index-next-line ()
   "Move to next line.
