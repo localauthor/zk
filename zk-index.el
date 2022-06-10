@@ -95,14 +95,14 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
                  (const :tag "Prepend" 'prepend)
                  (const :tag "At point" 'at-point)))
 
-;;; ZK-Index Minor Mode Settings
+;;; ZK-Index Major Mode Settings
 
 (defvar zk-index-mode-line nil)
 (defvar zk-index-last-query nil)
 (defvar zk-index-last-focus-terms nil)
 (defvar zk-index-last-search-terms nil)
 
-(defvar zk-index-map
+(defvar zk-index-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "n") #'zk-index-next-line)
     (define-key map (kbd "p") #'zk-index-previous-line)
@@ -121,11 +121,14 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
     (make-composed-keymap map tabulated-list-mode-map))
   "Keymap for ZK-Index buffer.")
 
-(define-minor-mode zk-index-mode
-  "Minor mode for 'zk-index'."
-  :init-value nil
-  :lighter zk-index-mode-line
-  :keymap zk-index-map)
+(define-derived-mode zk-index-mode fundamental-mode "ZK-Index"
+  "Mode for 'zk-index'.
+\\{zk-index-mode-map}"
+  (force-truncate-lines)
+  (read-only-mode)
+  (hl-line-mode)
+  (show-paren-local-mode -1)
+  (setq cursor-type nil))
 
 
 ;;; ZK-Desktop Minor Mode Settings
@@ -259,8 +262,6 @@ FILES must be a list of filepaths. If nil, all files in
         (with-current-buffer buffer
           (zk-index--sort list format-fn sort-fn)
           (zk-index-mode)
-          (read-only-mode 1)
-          (toggle-truncate-lines)
           (goto-char (point-min)))))
     (when files
       (zk-index-refresh files format-fn sort-fn))
