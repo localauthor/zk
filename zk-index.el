@@ -288,7 +288,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (zk-index--sort files format-fn sort-fn)
       (goto-char (point-min))
       (zk-index-mode)
-      (toggle-truncate-lines 1)
+      (setq truncate-lines t)
       (unless (zk-index-narrowed-p)
         (progn
           (zk-index--clear-mode-line)
