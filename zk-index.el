@@ -125,12 +125,11 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
 (define-derived-mode zk-index-mode fundamental-mode "ZK-Index"
   "Mode for 'zk-index'.
 \\{zk-index-mode-map}"
-  (force-truncate-lines)
   (read-only-mode)
   (hl-line-mode)
   (make-local-variable 'show-paren-mode)
   (setq-local show-paren-mode nil)
-
+  (setq cursor-type nil))
 
 ;;; ZK-Desktop Minor Mode Settings
 
@@ -161,7 +160,7 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
   "Minor mode for 'zk-index-desktop'."
   :init-value nil
   :keymap zk-index-desktop-map
-  (force-truncate-lines))
+  (setq truncate-lines t))
 
 ;;; Declarations
 
@@ -265,6 +264,7 @@ FILES must be a list of filepaths. If nil, all files in
         (with-current-buffer buffer
           (zk-index--sort list format-fn sort-fn)
           (zk-index-mode)
+          (setq truncate-lines t)
           (goto-char (point-min)))))
     (when files
       (zk-index-refresh files format-fn sort-fn))
@@ -287,7 +287,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (erase-buffer)
       (zk-index--sort files format-fn sort-fn)
       (goto-char (point-min))
-      (setq zk-index-mode t)
+      (zk-index-mode)
       (toggle-truncate-lines 1)
       (unless (zk-index-narrowed-p)
         (progn
