@@ -117,6 +117,7 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
     (define-key map (kbd "S") #'zk-index-sort-size)
     (define-key map (kbd "M") #'zk-index-sort-modified)
     (define-key map (kbd "C") #'zk-index-sort-created)
+    (define-key map (kbd "RET") #'zk-index-open-note)
     (define-key map (kbd "q") #'delete-window)
     (make-composed-keymap map tabulated-list-mode-map))
   "Keymap for ZK-Index buffer.")
@@ -564,9 +565,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index-open-note ()
   "Open note."
   (interactive)
-  (let ((buffer (current-buffer)))
-    (push-button nil t)
-    (select-window (get-buffer-window buffer))))
+  (beginning-of-line)
+  (push-button nil t))
 
 (defvar-local zk-index-view--kill nil)
 
