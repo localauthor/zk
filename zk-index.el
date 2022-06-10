@@ -166,6 +166,7 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
 
 (defvar zk-index-last-sort-function nil)
 (defvar zk-index-last-format-function nil)
+(defvar zk-index-query-mode-line nil)
 (defvar zk-index-desktop-current nil)
 (defvar zk-index-query-history nil)
 
@@ -405,6 +406,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
          (files (zk--parse-id 'file-path (remq nil ids))))
     (add-to-history 'zk-index-query-history string)
     (when files
+      (setq zk-index-query-mode-line mode-line)
       (setq zk-index-mode-line mode-line))
     (when (stringp files)
       (setq files (list files)))
@@ -470,6 +472,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index--clear-mode-line ()
   "Clear query modeline."
   (setq zk-index-mode-line nil
+        zk-index-query-mode-line nil
         zk-index-last-focus-terms nil
         zk-index-last-search-terms nil))
 
@@ -491,21 +494,27 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
-                    #'zk-index--sort-modified))
+                    #'zk-index--sort-modified)
+  (setq zk-index-mode-line
+        (concat " *last-modified*" zk-index-query-mode-line)))
 
 (defun zk-index-sort-created ()
   "Sort index by date created."
   (interactive)
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
-                    #'zk-index--sort-created))
+                    #'zk-index--sort-created)
+  (setq zk-index-mode-line
+        (concat " *last-created*" zk-index-query-mode-line)))
 
 (defun zk-index-sort-size ()
   "Sort index by size."
   (interactive)
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
-                    #'zk-index--sort-size))
+                    #'zk-index--sort-size)
+  (setq zk-index-mode-line
+        (concat " *sort-by-size*" zk-index-query-mode-line)))
 
 (defun zk-index--current-file-list ()
   "Return list files in current index."
