@@ -39,7 +39,7 @@
 ;;; Code:
 
 (require 'zk)
-(require 'view)
+(require 'hl-line)
 
 ;;; Custom Variables
 
@@ -557,13 +557,17 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (push-button nil t)
     (select-window (get-buffer-window buffer))))
 
+(defvar-local zk-index-view--kill nil)
+
 (defun zk-index-view-note ()
-  "View note in view mode."
+  "View note in 'zk-index-view-mode'."
   (interactive)
-  (let ((buffer (current-buffer)))
+  (let* ((id (zk-index--button-at-point-p))
+        (kill (unless (get-file-buffer (zk--parse-id 'file-path id))
+                t)))
     (push-button nil t)
+    (setq-local zk-index-view--kill kill)
     (zk-index-view-mode)))
-;;    (select-window (get-buffer-window buffer))))
 
 (defun zk-index-current-notes ()
   "Open ZK-Index listing currently open notes."
@@ -583,7 +587,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
         (match-string-no-properties 1)))))
 
 (defun zk-index-insert-link (&optional id)
-  "Insert zk-link in `other-window' for button ID at point."
+  "Insert zk-link in 'other-window' for button ID at point."
   (interactive)
   (let ((id (or id
                 (zk-index--button-at-point-p))))
@@ -596,8 +600,18 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   :init-value nil
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
+            ([remap read-only-mode] . zk-index-view-toggle)
             ((kbd "q") . quit-window))
   (read-only-mode))
+
+(defun zk-index-view-toggle ()
+  "Toggle `zk-index-view-mode'."
+  (interactive)
+  (if zk-index-view-mode
+      (progn
+        (zk-index-view-mode -1)
+        (read-only-mode -1))
+    (zk-index-view-mode)))
 
 (defun zk-index-next-line ()
   "Move to next line.
@@ -606,11 +620,13 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (let ((split-width-threshold nil))
     (if zk-index-auto-scroll
         (progn
-          (when (and (zk-file-p)
-                     zk-index-view-mode
-                     (not (buffer-modified-p)))
-                  (kill-buffer)
-                  (other-window -1))
+          (cond ((not (zk-file-p)))
+                (zk-index-view--kill
+                 (kill-buffer)
+                 (other-window -1))
+                ((not zk-index-view--kill)
+                 (zk-index-view-toggle)
+                 (other-window -1)))
           (forward-button 1)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
@@ -624,11 +640,13 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (let ((split-width-threshold nil))
     (if zk-index-auto-scroll
         (progn
-          (when (and (zk-file-p)
-                     zk-index-view-mode
-                     (not (buffer-modified-p)))
-                  (kill-buffer)
-                  (other-window -1))
+          (cond ((not (zk-file-p)))
+                (zk-index-view--kill
+                 (kill-buffer)
+                 (other-window -1))
+                ((not zk-index-view--kill)
+                 (zk-index-view-toggle)
+                 (other-window -1)))
           (forward-button -1)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
