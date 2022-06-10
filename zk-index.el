@@ -128,8 +128,8 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
   (force-truncate-lines)
   (read-only-mode)
   (hl-line-mode)
-  (show-paren-local-mode -1)
-  (setq cursor-type nil))
+  (make-local-variable 'show-paren-mode)
+  (setq-local show-paren-mode nil)
 
 
 ;;; ZK-Desktop Minor Mode Settings
