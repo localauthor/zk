@@ -123,7 +123,7 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
   "Keymap for ZK-Index buffer.")
 
 (define-derived-mode zk-index-mode fundamental-mode "ZK-Index"
-  "Mode for 'zk-index'.
+  "Mode for `zk-index'.
 \\{zk-index-mode-map}"
   (read-only-mode)
   (hl-line-mode)
@@ -157,7 +157,7 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
   "Keymap for ZK-Desktop buffers.")
 
 (define-minor-mode zk-index-desktop-mode
-  "Minor mode for 'zk-index-desktop'."
+  "Minor mode for `zk-index-desktop'."
   :init-value nil
   :keymap zk-index-desktop-map
   (setq truncate-lines t))
@@ -181,8 +181,8 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
 
 (defun zk-index-setup-embark ()
   "Setup Embark integration for zk.
-Adds zk-id as an Embark target, and adds 'zk-id-map' and
-'zk-file-map' to 'embark-keymap-alist'."
+Adds zk-id as an Embark target, and adds `zk-id-map' and
+`zk-file-map' to `embark-keymap-alist'."
   (with-eval-after-load 'embark
     (add-to-list 'embark-multitarget-actions 'zk-index)
     (add-to-list 'embark-multitarget-actions 'zk-index-send-to-desktop)
@@ -207,13 +207,13 @@ Adds zk-id as an Embark target, and adds 'zk-id-map' and
 (defun zk-index--format-candidates (&optional files format)
   "Return a list of FILES as formatted candidates, following FORMAT.
 
-FORMAT must be a 'format-spec' template, wherein '%i' is replaced
-by the ID and '%t' by the title. It can be a string, such as \"%t
+FORMAT must be a `format-spec' template, wherein `%i' is replaced
+by the ID and `%t' by the title. It can be a string, such as \"%t
 [[%i]]\", or a variable whose value is a string. If nil,
-'zk-completion-at-point-format' will be used by default.
+`zk-completion-at-point-format' will be used by default.
 
 FILES must be a list of filepaths. If nil, all files in
-'zk-directory' will be returned as formatted candidates."
+`zk-directory' will be returned as formatted candidates."
   (let* ((zk-index-format (if zk-index-invisible-ids "%t %i"
                             zk-index-format))
          (format (or format
@@ -415,7 +415,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
         (error "No matches for \"%s\"" string))))
 
 (defun zk-index-focus-mode-line (string)
-  "Add STRING to modeline for 'zk-index-focus'."
+  "Add STRING to modeline for `zk-index-focus'."
   (cond
    ;;same
    ((eq zk-index-last-query 'focus)
@@ -443,7 +443,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (concat " [ZK-Focus: \"" string "\"]"))))
 
 (defun zk-index-search-mode-line (string)
-  "Add STRING to modeline for 'zk-index-search'."
+  "Add STRING to modeline for `zk-index-search'."
   (cond
    ;;same
    ((eq zk-index-last-query 'search)
@@ -571,7 +571,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defvar-local zk-index-view--kill nil)
 
 (defun zk-index-view-note ()
-  "View note in 'zk-index-view-mode'."
+  "View note in `zk-index-view-mode'."
   (interactive)
   (beginning-of-line)
   (let* ((id (zk-index--button-at-point-p))
@@ -599,7 +599,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
         (match-string-no-properties 1)))))
 
 (defun zk-index-insert-link (&optional id)
-  "Insert zk-link in 'other-window' for button ID at point."
+  "Insert zk-link in `other-window' for button ID at point."
   (interactive)
   (let ((id (or id
                 (zk-index--button-at-point-p))))
@@ -608,7 +608,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (newline))))
 
 (define-minor-mode zk-index-view-mode
-  "Minor mode for 'zk-index-auto-scroll'."
+  "Minor mode for `zk-index-auto-scroll'."
   :init-value nil
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
@@ -627,7 +627,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 
 (defun zk-index-next-line ()
   "Move to next line.
-If 'zk-index-auto-scroll' is non-nil, show note in other window."
+If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
   (let ((split-width-threshold nil))
     (if zk-index-auto-scroll
@@ -647,7 +647,7 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
 
 (defun zk-index-previous-line ()
   "Move to previous line.
-If 'zk-index-auto-scroll' is non-nil, show note in other window."
+If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
   (let ((split-width-threshold nil))
     (if zk-index-auto-scroll
@@ -666,7 +666,7 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
       (forward-button -1))))
 
 (defun zk-index-move-line-down ()
-  "Move line at point down in 'read-only-mode'."
+  "Move line at point down in `read-only-mode'."
   (interactive)
   (read-only-mode -1)
   (forward-line 1)
@@ -675,7 +675,7 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
   (read-only-mode))
 
 (defun zk-index-move-line-up ()
-  "Move line at point up in 'read-only-mode'."
+  "Move line at point up in `read-only-mode'."
   (interactive)
   (read-only-mode -1)
   (transpose-lines 1)
@@ -864,7 +864,7 @@ at point."
       (message "Sent to %s" buffer))))
 
 (defun zk-index-desktop-add-toggle ()
-  "Set 'zk-index-desktop-add-pos' interactively."
+  "Set `zk-index-desktop-add-pos' interactively."
   (interactive)
    (let ((choice (read-char "Choice: \[a\]ppend; \[p\]repend; at-\[P\]oint")))
      (pcase choice
@@ -907,21 +907,21 @@ With prefix-argument, raise ZK-Desktop in other frame."
 ;;; ZK-Desktop Keymap Commands
 
 (defun zk-index-desktop-newline ()
-  "Insert new line in 'zk-index-desktop-mode'."
+  "Insert new line in `zk-index-desktop-mode'."
   (interactive)
   (zk-index-desktop-edit-mode)
   (newline)
   (zk-index-desktop-edit-mode))
 
 (defun zk-index-desktop-undo ()
-  "Undo in 'zk-index-desktop-mode'."
+  "Undo in `zk-index-desktop-mode'."
   (interactive)
   (zk-index-desktop-edit-mode)
   (undo)
   (zk-index-desktop-edit-mode))
 
 (defun zk-index-desktop-delete-line ()
-  "Delete line in 'zk-index-desktop-mode'."
+  "Delete line in `zk-index-desktop-mode'."
   (interactive)
   (when (bolp)
     (if (save-excursion
@@ -938,7 +938,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
         (zk-index-desktop-edit-mode)))))
 
 (defun zk-index-desktop-kill-line ()
-  "Kill line in 'zk-index-desktop-mode'."
+  "Kill line in `zk-index-desktop-mode'."
   (interactive)
   (if (save-excursion
         (beginning-of-line)
@@ -954,7 +954,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
       (zk-index-desktop-edit-mode))))
 
 (defun zk-index-desktop-kill-region ()
-  "Kill-region in 'zk-indexk-desktop-mode'."
+  "Kill-region in `zk-indexk-desktop-mode'."
   (interactive)
   (progn
     (zk-index-desktop-edit-mode)
@@ -963,7 +963,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
     (zk-index-desktop-edit-mode)))
 
 (defun zk-index-desktop-yank ()
-  "Yank in 'zk-index-desktop-mode'."
+  "Yank in `zk-index-desktop-mode'."
   (interactive)
   (when (save-excursion
           (beginning-of-line)
@@ -975,7 +975,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
       (zk-index-desktop-edit-mode))))
 
 (defun zk-index-desktop-edit-mode ()
-  "Toggle 'read-only-mode' in ZK-Desktop.
+  "Toggle `read-only-mode' in ZK-Desktop.
 If toggled on via key binding, the same key binding toggles off."
   (interactive)
   (let ((key (vector last-input-event))

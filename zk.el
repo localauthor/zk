@@ -96,7 +96,7 @@ rendered with spaces."
 
 (defcustom zk-enable-link-buttons t
   "When non-nil, valid zk-id links will be clickable buttons.
-Allows 'zk-make-link-buttons' to be added to 'find-file-hook', so
+Allows `zk-make-link-buttons' to be added to `find-file-hook', so
 buttons will be automatically created when a note is opened."
   :type 'boolean)
 
@@ -119,24 +119,24 @@ Set it so that it matches strings generated with
   :type 'regexp)
 
 (defcustom zk-new-note-header-function #'zk-new-note-header
-  "Function called by 'zk-new-note' to insert header in a new note.
-A user-defined function should use 'insert' to insert a string or
+  "Function called by `zk-new-note' to insert header in a new note.
+A user-defined function should use `insert' to insert a string or
 strings. The arguments NEW-ID, TITLE, and ORIG-ID can be used to
-those corresponding values from 'zk-new-note' available for
-insertion. See 'zk-new-note-header' for an example."
+those corresponding values from `zk-new-note' available for
+insertion. See `zk-new-note-header' for an example."
   :type 'function)
 
 (defcustom zk-new-note-link-insert 'ask
-  "Should 'zk-new-note' insert link to new note at point?
+  "Should `zk-new-note' insert link to new note at point?
 
 Options:
 1. t - Always insert a link
-2. 'zk - Insert link only inside an existing note
-3. 'ask - Ask user, yes or no
+2. `zk - Insert link only inside an existing note
+3. `ask - Ask user, yes or no
 4. nil - Never insert a link
 
-Calling 'zk-new-note' with a prefix-argument inserts a link
-regardless of how 'zk-new-note-link-insert' is set."
+Calling `zk-new-note' with a prefix-argument inserts a link
+regardless of how `zk-new-note-link-insert' is set."
   :type '(choice (const :tag "Always" t)
                  (const :tag "Ask" 'ask)
                  (const :tag "Only in zk notes" 'zk)
@@ -148,31 +148,31 @@ Must take an optional prompt and a list of files"
   :type 'function)
 
 (defcustom zk-grep-function #'zk-grep
-  "Function used by 'zk-search'.
+  "Function used by `zk-search'.
 Must take a single STRING argument."
   :type 'function)
 
 (defcustom zk-tag-grep-function #'zk-grep
-  "Function used by 'zk-tag-search'.
+  "Function used by `zk-tag-search'.
 Must take a single STRING argument."
   :type 'function)
 
 (defcustom zk-link-format "[[%s]]"
   "Format for inserted links.
-Used in conjunction with 'format', the string '%s' will be
+Used in conjunction with `format', the string `%s' will be
 replaced by a note's ID."
   :type 'string)
 
 (defcustom zk-link-and-title t
-  "Should 'zk-insert-link' insert both link and title?
+  "Should `zk-insert-link' insert both link and title?
 
 Options:
-1. t - Always inserts link and title; with 'prefix-arg', only link
-2. 'ask - Ask user, yes or no; with 'prefix-arg', only link
-3. nil - Only insert link, not title; 'with prefix-arg', include title
+1. t - Always inserts link and title; with `prefix-arg', only link
+2. `ask - Ask user, yes or no; with `prefix-arg', only link
+3. nil - Only insert link, not title; with `prefix-arg', include title
 
 The format in which link and title are inserted can be configured
-by setting the variable 'zk-link-and-title-format'."
+by setting the variable `zk-link-and-title-format'."
   :type '(choice (const :tag "Always" t)
                  (const :tag "Ask" 'ask)
                  (const :tag "Never" nil)))
@@ -180,24 +180,24 @@ by setting the variable 'zk-link-and-title-format'."
 (defcustom zk-link-and-title-format "%t [[%i]]"
   "Format for link and title when inserted to together.
 
-The string '%t' will be replaced by the note's title and '%i'
+The string `%t' will be replaced by the note's title and `%i'
 will be replaced by its ID."
   :type 'string)
 
 (defcustom zk-default-backlink nil
   "When non-nil, should be a single zk ID.
-See 'zk-new-note' for details."
+See `zk-new-note' for details."
   :type 'string)
 
 (defcustom zk-current-notes-function nil
   "User-defined function for listing currently open notes.
-See 'zk-current-notes' for details."
+See `zk-current-notes' for details."
   :type 'function)
 
 (defcustom zk-completion-at-point-format "[[%i]] %t"
-  "Format for completion table used by 'zk-completion-at-point'.
+  "Format for completion table used by `zk-completion-at-point'.
 
-The string '%t' will be replaced by the note's title and '%i'
+The string `%t' will be replaced by the note's title and `%i'
 will be replaced by its ID."
   :type 'string)
 
@@ -233,8 +233,8 @@ will be replaced by its ID."
 ;;;###autoload
 (defun zk-setup-embark ()
   "Setup Embark integration for zk.
-Adds zk-id as an Embark target, and adds 'zk-id-map' and
-'zk-file-map' to 'embark-keymap-alist'."
+Adds zk-id as an Embark target, and adds `zk-id-map' and
+`zk-file-map' to `embark-keymap-alist'."
   (with-eval-after-load 'embark
     (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
     (add-to-list 'embark-keymap-alist '(zk-id . zk-id-map))
@@ -245,7 +245,7 @@ Adds zk-id as an Embark target, and adds 'zk-id-map' and
 ;;; Low-Level Functions
 
 (defun zk-file-p (&optional file)
-  "Return t if 'current-buffer' is a zk-file.
+  "Return t if `current-buffer' is a zk-file.
 With optional argument FILE."
   (let* ((file (if (stringp file) file
                  (car file)))
@@ -269,9 +269,9 @@ The ID is created using `zk-id-time-string-format'."
     id))
 
 (defun zk--id-list (&optional str zk-alist)
-  "Return a list of zk IDs for notes in 'zk-directory'.
+  "Return a list of zk IDs for notes in `zk-directory'.
 Optional search for regexp STR in note title, case-insenstive.
-Takes an optional ZK-ALIST, for efficiency if 'zk--id-list' is
+Takes an optional ZK-ALIST, for efficiency if `zk--id-list' is
 called in an internal loop."
   (let ((zk-alist (or zk-alist (zk--alist)))
         (case-fold-search t)
@@ -296,10 +296,10 @@ called in an internal loop."
   (match-string 0 buffer-file-name))
 
 (defun zk--directory-files (&optional full regexp)
-  "Return list of zk-files in 'zk-directory' .
+  "Return list of zk-files in `zk-directory' .
 Excludes lockfiles, autosave files, and backup files. When FULL is
 non-nil, return full file-paths. If REGEXP is non-nil, it must be
-a regexp to replace the default, 'zk-id-regexp'."
+a regexp to replace the default, `zk-id-regexp'."
   (let* ((regexp (or regexp zk-id-regexp))
          (list (directory-files zk-directory full regexp))
          (files (remq nil (mapcar
@@ -362,7 +362,7 @@ a regexp to replace the default, 'zk-id-regexp'."
 
 (defun zk--select-file (&optional prompt list)
   "Wrapper around `completing-read' to select zk-file.
-Offers candidates from 'zk--directory-files', or from LIST when
+Offers candidates from `zk--directory-files', or from LIST when
 supplied. Can take a PROMPT argument."
   (let* ((files (or list
                     (zk--directory-files t))))
@@ -413,9 +413,9 @@ supplied. Can take a PROMPT argument."
    (zk--directory-files t)))
 
 (defun zk--parse-id (target ids &optional zk-alist)
-  "Return TARGET, either 'file-path or 'title, from files with IDS.
+  "Return TARGET, either `file-path or `title, from files with IDS.
 Takes a single ID, as a string, or a list of IDs. Takes an
-optional ZK-ALIST, for efficiency if 'zk--parse-id' is called
+optional ZK-ALIST, for efficiency if `zk--parse-id' is called
 in an internal loop."
   (let* ((zk-alist (or zk-alist
                        (zk--alist)))
@@ -446,10 +446,10 @@ in an internal loop."
       return)))
 
 (defun zk--parse-file (target files)
-  "Return TARGET, either 'id or 'title, from FILES.
+  "Return TARGET, either `id or `title, from FILES.
 Takes a single file-path, as a string, or a list of file-paths.
 A note's title is understood to be the portion of its filename
-following the zk ID, in the format 'zk-id-regexp', and preceding the
+following the zk ID, in the format `zk-id-regexp', and preceding the
 file extension."
   (let* ((target (pcase target
                    ('id '1)
@@ -477,7 +477,7 @@ file extension."
 
 (defun zk-setup-auto-link-buttons ()
   "Enable automatic link creation when zk-file is opened.
-Adds 'zk-make-link-buttons' to 'find-file-hook.'"
+Adds `zk-make-link-buttons' to `find-file-hook.'"
   (setq zk-enable-link-buttons t)
   (add-hook 'find-file-hook #'zk-make-link-buttons))
 
@@ -509,7 +509,7 @@ Adds 'zk-make-link-buttons' to 'find-file-hook.'"
               (make-button beg end 'type 'zk-link))))))))
 
 (defun zk-make-button-before-point ()
-  "Find 'zk-link-regexp' before point and make it a zk-link button."
+  "Find `zk-link-regexp' before point and make it a zk-link button."
   (interactive)
   (save-excursion
     (re-search-backward zk-link-regexp (line-beginning-position))
@@ -634,7 +634,7 @@ title."
 
 ;;;###autoload
 (defun zk-find-file ()
-  "Find file in 'zk-directory'."
+  "Find file in `zk-directory'."
   (interactive)
   (find-file (funcall zk-select-file-function "Find file: ")))
 
@@ -658,7 +658,7 @@ title."
 (defun zk-current-notes ()
   "Select from list of currently open notes.
 Optionally call a custom function by setting the variable
-'zk-current-notes-function' to a function name."
+`zk-current-notes-function' to a function name."
   (interactive)
   (if zk-current-notes-function
       (funcall zk-current-notes-function)
@@ -711,7 +711,7 @@ Optionally call a custom function by setting the variable
 (defun zk-insert-link (id &optional title)
   "Insert link to note with ID and optional TITLE.
 By default, only a link is inserted. With prefix-argument, both
-link and title are inserted. See variable 'zk-link-and-title'
+link and title are inserted. See variable `zk-link-and-title'
 for additional configurations."
   (interactive (list (zk--parse-file 'id (funcall zk-select-file-function "Insert link: "))))
   (let* ((pref-arg current-prefix-arg)
@@ -736,7 +736,7 @@ for additional configurations."
     (zk-make-button-before-point)))
 
 (defun zk--insert-link-and-title (id title)
-  "Insert zk ID and TITLE according to 'zk-link-and-title-format'."
+  "Insert zk ID and TITLE according to `zk-link-and-title-format'."
   (insert (format-spec zk-link-and-title-format
                        `((?i . ,id)(?t . ,title))))
   (when zk-enable-link-buttons
@@ -747,13 +747,13 @@ for additional configurations."
 (defun zk--format-candidates (&optional files format)
   "Return a list of FILES as formatted candidates, following FORMAT.
 
-FORMAT must be a 'format-spec' template, wherein '%i' is replaced
-by the ID and '%t' by the title. It can be a string, such as \"%t
+FORMAT must be a `format-spec' template, wherein `%i' is replaced
+by the ID and `%t' by the title. It can be a string, such as \"%t
 [[%i]]\", or a variable whose value is a string. If nil,
-'zk-completion-at-point-format' will be used by default.
+`zk-completion-at-point-format' will be used by default.
 
 FILES must be a list of filepaths. If nil, all files in
-'zk-directory' will be returned as formatted candidates."
+`zk-directory' will be returned as formatted candidates."
   (let* ((format (or format
                      zk-completion-at-point-format))
          (list (or files
@@ -778,7 +778,7 @@ FILES must be a list of filepaths. If nil, all files in
 
 (defun zk-completion-at-point ()
   "Completion-at-point function for zk-links.
-When added to 'completion-at-point-functions', typing two
+When added to `completion-at-point-functions', typing two
 brackets \"[[\" initiates completion."
   (let ((case-fold-search t)
         (origin (point)))
@@ -843,13 +843,13 @@ brackets \"[[\" initiates completion."
 
 ;;;###autoload
 (defun zk-search (string)
-  "Search for STRING using function set in 'zk-grep-function'.
-Defaults to 'zk-grep.'"
+  "Search for STRING using function set in `zk-grep-function'.
+Defaults to `zk-grep.'"
   (interactive "sSearch: ")
   (funcall zk-grep-function string))
 
 (defun zk-grep (regexp)
-  "Wrapper around 'rgrep' to search for REGEXP in all notes.
+  "Wrapper around `rgrep' to search for REGEXP in all notes.
 Opens search results in a grep buffer."
   (grep-compute-defaults)
   (rgrep regexp (concat "*." zk-file-extension) zk-directory nil))
@@ -860,7 +860,7 @@ Opens search results in a grep buffer."
 (defun zk-tag-search (tag)
   "Open grep buffer containing results of search for TAG.
 Select TAG, with completion, from list of all tags in zk notes.
-Defaults to 'zk-grep'."
+Defaults to `zk-grep'."
   (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
   (funcall zk-tag-grep-function tag))
 
@@ -874,7 +874,7 @@ Select TAG, with completion, from list of all tags in zk notes."
 ;;; Find Dead Links and Unlinked Notes
 
 (defun zk--grep-link-id-list ()
-  "Return list of all ids that appear as links in zk directory."
+  "Return list of all ids that appear as links in `zk-directory' files."
   (let* ((files (shell-command-to-string (concat
                                           "grep -ohir -e "
                                           (shell-quote-argument
@@ -902,7 +902,7 @@ Select TAG, with completion, from list of all tags in zk notes."
 
 ;;;###autoload
 (defun zk-grep-dead-links ()
-  "Search for dead links using 'zk-search-function'."
+  "Search for dead links using `zk-search-function'."
   (interactive)
   (let* ((dead-link-ids (zk--dead-link-id-list)))
     (if dead-link-ids
