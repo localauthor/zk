@@ -573,6 +573,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 (defun zk-index-view-note ()
   "View note in 'zk-index-view-mode'."
   (interactive)
+  (beginning-of-line)
   (let* ((id (zk-index--button-at-point-p))
         (kill (unless (get-file-buffer (zk--parse-id 'file-path id))
                 t)))
