@@ -159,7 +159,8 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
 (define-minor-mode zk-index-desktop-mode
   "Minor mode for 'zk-index-desktop'."
   :init-value nil
-  :keymap zk-index-desktop-map)
+  :keymap zk-index-desktop-map
+  (force-truncate-lines))
 
 ;;; Declarations
 
@@ -717,13 +718,13 @@ If 'zk-index-auto-scroll' is non-nil, show note in other window."
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (set-visited-file-name file t t)
-      (setq zk-index-desktop-mode t)
+      (zk-index-desktop-mode)
       (save-buffer))
     (if (and (not (eq last-command 'zk-index-desktop))
              (y-or-n-p (format "Visit %s? " zk-index-desktop-current)))
         (progn
           (switch-to-buffer zk-index-desktop-current)
-          (setq zk-index-desktop-mode t))
+          (zk-index-desktop-mode))
       (message "Desktop set to: %s" zk-index-desktop-current)))
   zk-index-desktop-current)
 
@@ -830,7 +831,7 @@ at point."
       (generate-new-buffer buffer))
     (with-current-buffer buffer
       (read-only-mode -1)
-      (setq zk-index-desktop-mode t)
+      (zk-index-desktop-mode)
       (setq require-final-newline 'visit-save)
       (pcase zk-index-desktop-add-pos
         ('append (goto-char (point-max)))
@@ -974,12 +975,12 @@ If toggled on via key binding, the same key binding toggles off."
           (read-only-mode -1)
           (local-set-key key #'zk-index-desktop-edit-mode)
           ;; other way to disable keymap?
-          (setq zk-index-desktop-mode nil)
+          (zk-index-desktop-mode -1)
           (setq-local mode-line-misc-info "ZK-Desktop Edit Mode"))
       (progn
         (read-only-mode)
         (local-unset-key key)
-        (setq zk-index-desktop-mode t))
+        (zk-index-desktop-mode))
       (setq-local mode-line-misc-info modeline))))
 
 (provide 'zk-index)
