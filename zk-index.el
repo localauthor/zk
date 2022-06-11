@@ -331,7 +331,9 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                                         (zk--parse-id
                                          'title
                                          id)))))
-    (newline))
+    (unless (eq (length candidates)
+                (count-lines 1 (point)))
+      (newline)))
   (message "Notes: %s" (length candidates)))
 
 (eval-and-compile
