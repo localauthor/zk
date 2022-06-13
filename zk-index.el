@@ -160,6 +160,8 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
   "Minor mode for `zk-index-desktop'."
   :init-value nil
   :keymap zk-index-desktop-map
+  (cursor-face-highlight-mode)
+  (setq-local cursor-face-highlight-nonselected-window t)
   (setq truncate-lines t))
 
 ;;; Declarations
@@ -766,15 +768,6 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                   (search-forward title end)
                   (replace-match new-title)
                   (setq end (line-end-position))))
-              (when zk-index-invisible-ids
-                ;; find zk-links and plain zk-ids
-                (if (re-search-forward zk-link-regexp (line-end-position) t)
-                    (replace-match
-                     (propertize (match-string 0) 'invisible t) nil t)
-                  (progn
-                    (re-search-forward id)
-                    (replace-match
-                     (propertize id 'invisible t)))))
               (make-text-button beg end 'type 'zk-index
                                 'action (lambda (_)
                                           (find-file-other-window
@@ -786,8 +779,19 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                                               (zk--parse-id
                                                'title
                                                id))))
-              (goto-char (match-end 0)))))
-        (read-only-mode)))))
+              (when zk-index-invisible-ids
+                (beginning-of-line)
+                ;; find zk-links and plain zk-ids
+                (if (re-search-forward zk-link-regexp (line-end-position) t)
+                    (replace-match
+                     (propertize (match-string 0) 'invisible t) nil t)
+                  (progn
+                    (re-search-forward id)
+                    (replace-match
+                     (propertize id 'invisible t)))))
+              (add-text-properties beg end
+                                   '(cursor-face highlight))
+              (goto-char (match-end 0)))))))))
 
 ;;;###autoload
 (defun zk-index-send-to-desktop (&optional files)
