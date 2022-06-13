@@ -146,22 +146,8 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-<up>") #'zk-index-move-line-up)
     (define-key map (kbd "C-<down>") #'zk-index-move-line-down)
-    (define-key map (kbd "n") #'zk-index-next-line)
-    (define-key map (kbd "p") #'zk-index-previous-line)
-    (define-key map (kbd "v") #'zk-index-view-note)
-    (define-key map (kbd "I") #'zk-index-switch-to-index)
-    (define-key map (kbd "C-+") #'zk-index-desktop-edit-mode)
-    (define-key map [remap newline] #'zk-index-desktop-newline)
-    (define-key map (kbd "C-j") #'zk-index-desktop-newline)
-    (define-key map (kbd "C-d") #'zk-index-desktop-delete-line)
-    (define-key map [remap yank]  #'zk-index-desktop-yank)
-    (define-key map [remap kill-line] #'zk-index-desktop-kill-line)
-    (define-key map [remap kill-region] #'zk-index-desktop-kill-region)
-    (define-key map [remap undo] #'zk-index-desktop-undo)
-    (define-key map (kbd "v") #'zk-index-view-note)
-    (define-key map (kbd "S") #'zk-index-desktop-select)
-    (define-key map (kbd "o") #'other-window)
-    (define-key map (kbd "q") #'delete-window)
+    ;; (define-key map (kbd "I") #'zk-index-switch-to-index)
+    ;; (define-key map (kbd "S") #'zk-index-desktop-select)
     map)
   "Keymap for ZK-Desktop buffers.")
 
@@ -172,6 +158,16 @@ To quickly change this setting, call 'zk-index-desktop-add-toggle'."
   (cursor-face-highlight-mode)
   (setq-local cursor-face-highlight-nonselected-window t)
   (setq truncate-lines t))
+
+(defvar zk-index-desktop-button-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "v") #'zk-index-view-note)
+    (define-key map (kbd "n") #'zk-index-next-line)
+    (define-key map (kbd "p") #'zk-index-previous-line)
+    (define-key map [remap self-insert-command] 'ignore)
+    (define-key map [remap kill-line] #'zk-index-desktop-kill-line)
+    map)
+  "Keymap for ZK-Desktop buttons.")
 
 ;;; Declarations
 
@@ -764,13 +760,18 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
              (file-in-directory-p default-directory zk-index-desktop-directory))
     (let ((ids (zk--id-list))
           (zk-alist (zk--alist))
-          (inhibit-read-only t))
+          (inhibit-read-only t)
+          (inhibit-message t))
       (save-excursion
         (goto-char (point-min))
         (while (re-search-forward zk-id-regexp nil t)
           (let* ((beg (line-beginning-position))
                  (end (line-end-position))
-                 (id (match-string-no-properties 1))
+                 (id  (progn
+                        (save-match-data
+                          (replace-regexp "\\[\\[" "" nil beg end)
+                          (replace-regexp "]]" "" nil beg end))
+                        (match-string-no-properties 1)))
                  (title (buffer-substring-no-properties beg (match-beginning 0)))
                  (new-title (concat zk-index-desktop-prefix
                                     (zk--parse-id 'title id zk-alist) " ")))
@@ -782,6 +783,11 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                   (replace-match new-title)
                   (setq end (line-end-position))))
               (make-text-button beg end 'type 'zk-index
+                                'read-only t
+                                'front-sticky t
+                                'rear-sticky t
+                                'keymap zk-index-desktop-button-map
+                                'cursor-face 'highlight
                                 'action (lambda (_)
                                           (find-file-other-window
                                            (zk--parse-id 'file-path
@@ -801,10 +807,16 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                   (progn
                     (re-search-forward id)
                     (replace-match
-                     (propertize id 'invisible t)))))
-              (add-text-properties beg end
-                                   '(cursor-face highlight))
+                     (propertize id
+                                 'invisible t
+                                 'read-only t
+                                 'front-sticky t
+                                 'rear-sticky t)))))
+              (add-text-properties beg (+ beg 1)
+                                   '(front-sticky nil))
               (goto-char (match-end 0)))))))))
+
+
 
 ;;;###autoload
 (defun zk-index-send-to-desktop (&optional files)
@@ -958,7 +970,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
                    (line-end-position)))))
 
 (defun zk-index-desktop-kill-region ()
-  "Kill-region in `zk-indexk-desktop-mode'."
+  "Kill-region in `zk-index-desktop-mode'."
   (interactive)
   (let ((inhibit-read-only t))
     (kill-region (region-beginning)(region-end))
