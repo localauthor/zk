@@ -88,7 +88,8 @@ The names of all ZK-Desktops should begin with this string."
 
 (defcustom zk-index-desktop-major-mode nil
   "Name of major-mode for ZK-Desktop buffers.
-The value should be a symbol that is a major mode command."
+The value should be a symbol that is a major mode command.
+If nil, buffers will be in `fundamental-mode'.s"
   :type 'function)
 
 (defcustom zk-index-desktop-add-pos 'append
@@ -695,6 +696,8 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
       (_ nil))))
 
 (defun zk-index-desktop-major-mode ()
+  "Set major mode in ZK-Desktop.
+See variable `zk-index-desktop-major-mode'."
   (when-let ((mode zk-index-desktop-major-mode))
     (funcall mode)
     (zk-index-desktop-mode)))
@@ -747,8 +750,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
              (file-in-directory-p default-directory zk-index-desktop-directory))
     (let ((ids (zk--id-list))
           (zk-alist (zk--alist))
-          (inhibit-read-only t)
-          (inhibit-message t))
+          (inhibit-read-only t))
       (save-excursion
         (goto-char (point-min))
         (while (re-search-forward zk-id-regexp nil t)
@@ -756,8 +758,11 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                  (end (line-end-position))
                  (id  (progn
                         (save-match-data
-                          (replace-regexp "\\[\\[" "" nil beg end)
-                          (replace-regexp "]]" "" nil beg end))
+                          (beginning-of-line)
+                          (when (re-search-forward "\\[\\[" end t)
+                            (replace-match ""))
+                          (when (re-search-forward "]]" end t)
+                            (replace-match "")))
                         (match-string-no-properties 1)))
                  (title (buffer-substring-no-properties beg (match-beginning 0)))
                  (new-title (concat zk-index-desktop-prefix
