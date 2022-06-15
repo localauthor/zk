@@ -290,10 +290,10 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                    (zk--directory-files t)))
         (sort-fn (or sort-fn
                      (setq zk-index-last-sort-function nil)))
+        (inhibit-read-only t)
         (line))
     (with-current-buffer zk-index-buffer-name
       (setq line (line-number-at-pos))
-      (read-only-mode -1)
       (erase-buffer)
       (zk-index--sort files format-fn sort-fn)
       (goto-char (point-min))
@@ -302,8 +302,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (unless (zk-index-narrowed-p)
         (progn
           (zk-index--clear-mode-line)
-          (forward-line line)))
-      (read-only-mode))))
+          (forward-line line))))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
   "Sort FILES, with option FORMAT-FN and SORT-FN."
@@ -679,21 +678,20 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
       (forward-button -1))))
 
 (defun zk-index-move-line-down ()
-  "Move line at point down in `read-only-mode'."
+  "Move line at point down in ZK-Desktop buffer."
   (interactive)
-  (read-only-mode -1)
-  (forward-line 1)
-  (transpose-lines 1)
-  (forward-line -1)
-  (read-only-mode))
+  (let ((inhibit-read-only t))
+    (forward-line 1)
+    (transpose-lines 1)
+    (forward-line -1)))
 
 (defun zk-index-move-line-up ()
-  "Move line at point up in `read-only-mode'."
+  "Move line at point up in ZK-Desktop buffer."
   (interactive)
-  (read-only-mode -1)
-  (transpose-lines 1)
-  (forward-line -2)
-  (read-only-mode))
+  (let ((inhibit-read-only t))
+    (transpose-lines 1)
+    (forward-line -2)))
+
 
 ;;; ZK-Desktop
 ;; index's more flexible, savable cousin; a place to collect and order notes
@@ -765,9 +763,9 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
   (when (and (string-match-p zk-index-desktop-basename (buffer-name))
              (file-in-directory-p default-directory zk-index-desktop-directory))
     (let ((ids (zk--id-list))
-          (zk-alist (zk--alist)))
+          (zk-alist (zk--alist))
+          (inhibit-read-only t))
       (save-excursion
-        (read-only-mode -1)
         (goto-char (point-min))
         (while (re-search-forward zk-id-regexp nil t)
           (let* ((beg (line-beginning-position))
@@ -817,16 +815,17 @@ at point."
   (interactive)
   (unless zk-index-desktop-directory
     (error "Please set 'zk-index-desktop-directory'"))
-  (let ((buffer) (items))
+  (let ((inhibit-read-only t)
+        (buffer) (items))
     (cond ((eq 1 (length files))
            (unless
                (ignore-errors
                  (setq items (car (funcall zk-index-format-function files))))
              (setq items
-                 (car
-                  (funcall
-                   zk-index-format-function
-                   (list (zk--parse-id 'file-path files)))))))
+                   (car
+                    (funcall
+                     zk-index-format-function
+                     (list (zk--parse-id 'file-path files)))))))
           ((and files
                 (< 1 (length files)))
            (setq items
@@ -834,20 +833,17 @@ at point."
                   #'identity
                   (funcall zk-index-format-function files) "\n")))
           ((string= (buffer-name) zk-index-buffer-name)
-           (progn
-             (read-only-mode -1)
-             (setq items (if (use-region-p)
-                             (buffer-substring
-                              (save-excursion
-                                (goto-char (region-beginning))
-                                (line-beginning-position))
-                              (save-excursion
-                                (goto-char (region-end))
-                                (line-end-position)))
+           (setq items (if (use-region-p)
                            (buffer-substring
-                            (line-beginning-position)
-                            (line-end-position))))
-             (read-only-mode)))
+                            (save-excursion
+                              (goto-char (region-beginning))
+                              (line-beginning-position))
+                            (save-excursion
+                              (goto-char (region-end))
+                              (line-end-position)))
+                         (buffer-substring
+                          (line-beginning-position)
+                          (line-end-position)))))
           ((zk-file-p)
            (setq items
                  (car
@@ -861,7 +857,6 @@ at point."
     (unless (get-buffer buffer)
       (generate-new-buffer buffer))
     (with-current-buffer buffer
-      (read-only-mode -1)
       (zk-index-desktop-mode)
       (zk-index-desktop-major-mode)
       (setq require-final-newline 'visit-save)
@@ -879,8 +874,7 @@ at point."
                    (beginning-of-line)))
         ('prepend (goto-char (point-min)))
         ('at-point (goto-char (point))))
-      (zk-index-desktop-make-buttons)
-      (read-only-mode))
+      (zk-index-desktop-make-buttons))
     (if (string= (buffer-name) zk-index-buffer-name)
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
@@ -931,70 +925,55 @@ With prefix-argument, raise ZK-Desktop in other frame."
 (defun zk-index-desktop-newline ()
   "Insert new line in `zk-index-desktop-mode'."
   (interactive)
-  (zk-index-desktop-edit-mode)
-  (newline)
-  (zk-index-desktop-edit-mode))
+  (let ((inhibit-read-only t))
+    (newline)))
 
 (defun zk-index-desktop-undo ()
   "Undo in `zk-index-desktop-mode'."
   (interactive)
-  (zk-index-desktop-edit-mode)
-  (undo)
-  (zk-index-desktop-edit-mode))
+  (let ((inhibit-read-only t))
+    (undo)))
 
 (defun zk-index-desktop-delete-line ()
   "Delete line in `zk-index-desktop-mode'."
   (interactive)
-  (when (bolp)
-    (if (save-excursion
-          (beginning-of-line)
-          (looking-at-p "[[:space:]]*$"))
-        (progn
-          (zk-index-desktop-edit-mode)
-          (delete-char 1)
-          (zk-index-desktop-edit-mode))
-      (progn
-        (zk-index-desktop-edit-mode)
-        (delete-region (line-beginning-position)
-                       (line-end-position))
-        (zk-index-desktop-edit-mode)))))
+  (let ((inhibit-read-only t))
+    (when (bolp)
+      (if (save-excursion
+            (beginning-of-line)
+            (looking-at-p "[[:space:]]*$"))
+          (delete-char 1))
+      (delete-region (line-beginning-position)
+                     (line-end-position)))))
 
 (defun zk-index-desktop-kill-line ()
   "Kill line in `zk-index-desktop-mode'."
   (interactive)
-  (if (save-excursion
-        (beginning-of-line)
-        (looking-at-p "[[:space:]]*$"))
-      (progn
-        (zk-index-desktop-edit-mode)
+  (let ((inhibit-read-only t))
+    (if (save-excursion
+          (beginning-of-line)
+          (looking-at-p "[[:space:]]*$"))
         (kill-line)
-        (zk-index-desktop-edit-mode))
-    (progn
-      (zk-index-desktop-edit-mode)
       (kill-region (line-beginning-position)
-                     (line-end-position))
-      (zk-index-desktop-edit-mode))))
+                   (line-end-position)))))
 
 (defun zk-index-desktop-kill-region ()
   "Kill-region in `zk-indexk-desktop-mode'."
   (interactive)
-  (progn
-    (zk-index-desktop-edit-mode)
+  (let ((inhibit-read-only t))
     (kill-region (region-beginning)(region-end))
-    (beginning-of-line)
-    (zk-index-desktop-edit-mode)))
+    (beginning-of-line)))
 
 (defun zk-index-desktop-yank ()
   "Yank in `zk-index-desktop-mode'."
   (interactive)
-  (when (save-excursion
-          (beginning-of-line)
-          (looking-at-p "[[:space:]]*$"))
-    (progn
-      (zk-index-desktop-edit-mode)
-      (yank)
-      (beginning-of-line)
-      (zk-index-desktop-edit-mode))))
+  (let ((inhibit-read-only t))
+    (when (save-excursion
+            (beginning-of-line)
+            (looking-at-p "[[:space:]]*$"))
+      (progn
+        (yank)
+        (beginning-of-line)))))
 
 (defun zk-index-desktop-edit-mode ()
   "Toggle `read-only-mode' in ZK-Desktop.
