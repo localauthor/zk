@@ -124,10 +124,10 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
   (defalias 'zk-preview 'link-hint-preview-zk-link)
 
   (link-hint-define-type 'button
-    :preview #'link-hint--preview-button)
+    :preview #'link-hint-preview-button)
 
 ;; add exception for zk-index buttons
-(defun link-hint--preview-button ()
+(defun link-hint-preview-button ()
   (interactive)
   (let ((buffer (current-buffer))
         (frame (selected-frame))
