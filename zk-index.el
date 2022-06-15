@@ -673,21 +673,6 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
             (zk-index-view-note)))
       (forward-button -1))))
 
-(defun zk-index-move-line-down ()
-  "Move line at point down in ZK-Desktop buffer."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (forward-line 1)
-    (transpose-lines 1)
-    (forward-line -1)))
-
-(defun zk-index-move-line-up ()
-  "Move line at point up in ZK-Desktop buffer."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (transpose-lines 1)
-    (forward-line -2)))
-
 
 ;;; ZK-Desktop
 ;; index's more flexible, savable cousin; a place to collect and order notes
@@ -934,17 +919,20 @@ With prefix-argument, raise ZK-Desktop in other frame."
 
 ;;; ZK-Desktop Keymap Commands
 
-(defun zk-index-desktop-newline ()
-  "Insert new line in `zk-index-desktop-mode'."
+(defun zk-index-move-line-down ()
+  "Move line at point down in ZK-Desktop buffer."
   (interactive)
   (let ((inhibit-read-only t))
-    (newline)))
+    (forward-line 1)
+    (transpose-lines 1)
+    (forward-line -1)))
 
-(defun zk-index-desktop-undo ()
-  "Undo in `zk-index-desktop-mode'."
+(defun zk-index-move-line-up ()
+  "Move line at point up in ZK-Desktop buffer."
   (interactive)
   (let ((inhibit-read-only t))
-    (undo)))
+    (transpose-lines 1)
+    (forward-line -2)))
 
 (defun zk-index-desktop-delete-line ()
   "Delete line in `zk-index-desktop-mode'."
@@ -968,44 +956,6 @@ With prefix-argument, raise ZK-Desktop in other frame."
         (kill-line)
       (kill-region (line-beginning-position)
                    (line-end-position)))))
-
-(defun zk-index-desktop-kill-region ()
-  "Kill-region in `zk-index-desktop-mode'."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (kill-region (region-beginning)(region-end))
-    (beginning-of-line)))
-
-(defun zk-index-desktop-yank ()
-  "Yank in `zk-index-desktop-mode'."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (when (save-excursion
-            (beginning-of-line)
-            (looking-at-p "[[:space:]]*$"))
-      (progn
-        (yank)
-        (beginning-of-line)))))
-
-(defun zk-index-desktop-edit-mode ()
-  "Toggle `read-only-mode' in ZK-Desktop.
-If toggled on via key binding, the same key binding toggles off."
-  (interactive)
-  (let ((key (vector last-input-event))
-        (modeline (default-value 'mode-line-misc-info)))
-    (if zk-index-desktop-mode
-        (progn
-          (read-only-mode -1)
-          (local-set-key key #'zk-index-desktop-edit-mode)
-          ;; other way to disable keymap?
-          (zk-index-desktop-mode -1)
-          (setq-local mode-line-misc-info "ZK-Desktop Edit Mode"))
-      (progn
-        (read-only-mode)
-        (local-unset-key key)
-        (zk-index-desktop-mode)
-        (zk-index-desktop-major-mode))
-      (setq-local mode-line-misc-info modeline))))
 
 (provide 'zk-index)
 
