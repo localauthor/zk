@@ -66,7 +66,7 @@
     :type 'string)
 
 (defcustom zk-index-prefix "-> "
-  "String to prepend to note names in index and desktop."
+  "String to prepend to note names in ZK-Index."
     :type 'string)
 
 (defcustom zk-index-auto-scroll t
@@ -81,6 +81,15 @@
   "Basename for ZK-Desktops.
 The names of all ZK-Desktops should begin with this string."
   :type 'string)
+
+(defcustom zk-index-desktop-prefix ""
+  "String to prepend to note names in ZK-Desktop."
+    :type 'string)
+
+(defcustom zk-index-desktop-major-mode nil
+  "Name of major-mode for ZK-Desktop buffers.
+The value should be a symbol that is a major mode command."
+  :type 'function)
 
 (defcustom zk-index-desktop-add-pos 'append
   "Behavior for placement of notes in ZK-Desktop via 'zk-index-send-to-desktop'.
@@ -239,9 +248,8 @@ FILES must be a list of filepaths. If nil, all files in
                       " "
                       (match-string 2 file))))
           (when id
-            (push (concat zk-index-prefix
-                          (format-spec format
-                                       `((?i . ,id)(?t . ,title))))
+            (push (format-spec format
+                               `((?i . ,id)(?t . ,title)))
                   output)))))
     output))
 
@@ -318,7 +326,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (dolist (file candidates)
     (string-match zk-id-regexp file)
     (let ((id (match-string 0 file)))
-      (insert-text-button file
+      (insert-text-button (concat zk-index-prefix
+                                  file)
                           'type 'zk-index
                           'follow-link t
                           'face 'default
@@ -705,6 +714,11 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                           '(display-buffer-at-bottom)))
       (_ (zk-index-desktop)))))
 
+(defun zk-index-desktop-major-mode ()
+  (when-let ((mode zk-index-desktop-major-mode))
+    (funcall mode)
+    (zk-index-desktop-mode)))
+
 ;;;###autoload
 (defun zk-index-desktop-select ()
   "Select a ZK-Desktop to work with."
@@ -733,12 +747,14 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
         (toggle-truncate-lines))
       (set-visited-file-name file t t)
       (zk-index-desktop-mode)
+      (zk-index-desktop-major-mode)
       (save-buffer))
     (if (and (not (eq last-command 'zk-index-desktop))
              (y-or-n-p (format "Visit %s? " zk-index-desktop-current)))
         (progn
           (switch-to-buffer zk-index-desktop-current)
-          (zk-index-desktop-mode))
+          (zk-index-desktop-mode)
+          (zk-index-desktop-major-mode))
       (message "Desktop set to: %s" zk-index-desktop-current)))
   zk-index-desktop-current)
 
@@ -757,10 +773,9 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
           (let* ((beg (line-beginning-position))
                  (end (line-end-position))
                  (id (match-string-no-properties 1))
-                 (title (string-trim-left
-                         (buffer-substring-no-properties beg (match-beginning 0))
-                         zk-index-prefix))
-                 (new-title (concat (zk--parse-id 'title id zk-alist) " ")))
+                 (title (buffer-substring-no-properties beg (match-beginning 0)))
+                 (new-title (concat zk-index-desktop-prefix
+                                    (zk--parse-id 'title id zk-alist) " ")))
             (when (member id ids)
               (beginning-of-line)
               (unless (string= title new-title)
@@ -848,6 +863,7 @@ at point."
     (with-current-buffer buffer
       (read-only-mode -1)
       (zk-index-desktop-mode)
+      (zk-index-desktop-major-mode)
       (setq require-final-newline 'visit-save)
       (pcase zk-index-desktop-add-pos
         ('append (goto-char (point-max)))
@@ -996,7 +1012,8 @@ If toggled on via key binding, the same key binding toggles off."
       (progn
         (read-only-mode)
         (local-unset-key key)
-        (zk-index-desktop-mode))
+        (zk-index-desktop-mode)
+        (zk-index-desktop-major-mode))
       (setq-local mode-line-misc-info modeline))))
 
 (provide 'zk-index)
