@@ -861,19 +861,19 @@ at point."
       (zk-index-desktop-major-mode)
       (setq require-final-newline 'visit-save)
       (pcase zk-index-desktop-add-pos
-        ('append (goto-char (point-max)))
+        ('append (progn
+                   (goto-char (point-max))
+                   (beginning-of-line)
+                   (when (looking-at-p ".")
+                     (end-of-line)
+                     (newline))))
         ('prepend (progn
                     (goto-char (point-min))))
         ('at-point (goto-char (point))))
-      (insert "\n" items "\n")
+      (insert items "\n")
+      (beginning-of-line)
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
-      (pcase zk-index-desktop-add-pos
-        ('append (progn
-                   (goto-char (point-max))
-                   (beginning-of-line)))
-        ('prepend (goto-char (point-min)))
-        ('at-point (goto-char (point))))
       (zk-index-desktop-make-buttons))
     (if (string= (buffer-name) zk-index-buffer-name)
         (message "Sent to %s - press D to switch" buffer)
