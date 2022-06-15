@@ -157,8 +157,6 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
   "Minor mode for `zk-index-desktop'."
   :init-value nil
   :keymap zk-index-desktop-map
-  (cursor-face-highlight-mode)
-  (setq-local cursor-face-highlight-nonselected-window t)
   (setq truncate-lines t))
 
 (defvar zk-index-desktop-button-map
