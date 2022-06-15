@@ -686,12 +686,13 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                          (buffer-live-p (get-buffer zk-index-desktop-current)))
                     zk-index-desktop-current
                   (zk-index-desktop-select)))
-        (choice (read-char "Choice: \[s\]witch or \[p\]op-up?")))
+        (choice (unless (eq (current-buffer) zk-index-desktop-current)
+                  (read-char "Choice: \[s\]witch or \[p\]op-up?"))))
     (pcase choice
       ('?s (switch-to-buffer buffer))
       ('?p (pop-to-buffer buffer
                           '(display-buffer-at-bottom)))
-      (_ (zk-index-desktop)))))
+      (_ nil))))
 
 (defun zk-index-desktop-major-mode ()
   (when-let ((mode zk-index-desktop-major-mode))
@@ -711,7 +712,8 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                             (concat
                              zk-index-desktop-basename
                              ".*"))
-                           nil nil zk-index-desktop-basename))
+                           nil nil
+                           (concat zk-index-desktop-basename " ")))
          (file (concat zk-index-desktop-directory "/" desktop)))
     (if (file-exists-p (expand-file-name file))
         (setq zk-index-desktop-current
