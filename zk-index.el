@@ -93,14 +93,14 @@ If nil, buffers will be in `fundamental-mode'.s"
   :type 'function)
 
 (defcustom zk-index-desktop-add-pos 'append
-  "Behavior for placement of notes in ZK-Desktop via 'zk-index-send-to-desktop'.
+  "Behavior for placement of notes in ZK-Desktop via `zk-index-send-to-desktop'.
 
 Options:
-1. 'append - Place notes at end of current ZK-Desktop
-2. 'prepend - Place notes at beginning of current ZK-Desktop
-3. 'at-point - Place notes at current point of current ZK-Desktop
+1. `append - Place notes at end of current ZK-Desktop
+2. `prepend - Place notes at beginning of current ZK-Desktop
+3. `at-point - Place notes at current point of current ZK-Desktop
 
-To quickly change this setting, call 'zk-index-desktop-add-toggle'."
+To quickly change this setting, call `zk-index-desktop-add-toggle'."
   :type '(choice (const :tag "Append" 'append)
                  (const :tag "Prepend" 'prepend)
                  (const :tag "At point" 'at-point)))
@@ -485,7 +485,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (setq mode-name (concat "ZK-Index" string))))
 
 (defun zk-index--reset-mode-line ()
-  "Reset `mode-name' in 'zk-index-mode'."
+  "Reset `mode-name' in `zk-index-mode'."
   (setq mode-name "ZK-Index"
         zk-index-query-mode-line nil
         zk-index-last-focus-terms nil
