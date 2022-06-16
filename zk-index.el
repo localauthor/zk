@@ -84,7 +84,7 @@ The names of all ZK-Desktops should begin with this string."
 
 (defcustom zk-index-desktop-prefix ""
   "String to prepend to note names in ZK-Desktop."
-    :type 'string)
+  :type 'string)
 
 (defcustom zk-index-desktop-major-mode nil
   "Name of major-mode for ZK-Desktop buffers.
@@ -104,6 +104,10 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
   :type '(choice (const :tag "Append" 'append)
                  (const :tag "Prepend" 'prepend)
                  (const :tag "At point" 'at-point)))
+
+(defface zk-index-desktop-button
+  '((t :inherit default))
+  "Face used for buttons in `zk-index-desktop-mode'.")
 
 ;;; ZK-Index Major Mode Settings
 
@@ -322,6 +326,11 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
          (candidates (funcall format-fn files)))
     (zk-index--insert candidates)))
 
+(eval-and-compile
+  (define-button-type 'zk-index
+    'follow-link t
+    'face 'default))
+
 (defun zk-index--insert (candidates)
   "Insert CANDIDATES into ZK-Index."
   (dolist (file candidates)
@@ -330,8 +339,6 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (insert-text-button (concat zk-index-prefix
                                   file)
                           'type 'zk-index
-                          'follow-link t
-                          'face 'default
                           'action
                           (lambda (_)
                             (find-file-other-window
@@ -347,11 +354,6 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                 (count-lines 1 (point)))
       (newline)))
   (message "Notes: %s" (length candidates)))
-
-(eval-and-compile
-  (define-button-type 'zk-index
-    'follow-link t
-    'face 'default))
 
 (defun zk-index-narrowed-p ()
   "Return t when index is narrowed."
@@ -615,7 +617,8 @@ Takes an option POS position argument."
   (let ((button (or pos
                     (button-at (point)))))
     (when (and button
-               (eq (button-type button) 'zk-index))
+               (or (eq (button-type button) 'zk-index)
+                   (eq (button-type button) 'zk-index-desktop)))
       (save-excursion
         (re-search-forward zk-id-regexp)
         (match-string-no-properties 1)))))
@@ -752,6 +755,14 @@ See variable `zk-index-desktop-major-mode'."
       (message "Desktop set to: %s" zk-index-desktop-current)))
   zk-index-desktop-current)
 
+(eval-and-compile
+  (define-button-type 'zk-index-desktop
+    'read-only t
+    'front-sticky t
+    'rear-sticky t
+    'face 'zk-index-desktop-button
+    'cursor-face 'highlight))
+
 ;;;###autoload
 (defun zk-index-desktop-make-buttons ()
   "Re-make buttons in ZK-Desktop."
@@ -784,12 +795,8 @@ See variable `zk-index-desktop-major-mode'."
                   (search-forward title end)
                   (replace-match new-title)
                   (setq end (line-end-position))))
-              (make-text-button beg end 'type 'zk-index
-                                'read-only t
-                                'front-sticky t
-                                'rear-sticky t
+              (make-text-button beg end 'type 'zk-index-desktop
                                 'keymap zk-index-desktop-button-map
-                                'cursor-face 'highlight
                                 'action (lambda (_)
                                           (find-file-other-window
                                            (zk--parse-id 'file-path
