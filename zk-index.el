@@ -150,6 +150,8 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
     (define-key map (kbd "C-<down>") #'zk-index-move-line-down)
     (define-key map (kbd "C-k") #'zk-index-desktop-kill-line)
     (define-key map (kbd "C-d") #'zk-index-desktop-delete-char)
+    (define-key map (kbd "C-w") #'zk-index-desktop-kill-region)
+    (define-key map (kbd "C-y") #'zk-index-desktop-yank)
     ;; (define-key map (kbd "I") #'zk-index-switch-to-index)
     ;; (define-key map (kbd "S") #'zk-index-desktop-select)
     map)
@@ -169,6 +171,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
     (define-key map [remap self-insert-command] 'ignore)
     (define-key map (kbd "C-k") #'zk-index-desktop-kill-line)
     (define-key map (kbd "C-d") #'zk-index-desktop-delete-char)
+    (define-key map (kbd "C-w") #'zk-index-desktop-kill-region)
     map)
   "Keymap for ZK-Desktop buttons.")
 
@@ -993,6 +996,45 @@ With prefix-argument, raise ZK-Desktop in other frame."
         (kill-line)
       (kill-region (line-beginning-position)
                    (line-end-position)))))
+
+(defun zk-index-desktop-kill-region ()
+  "Wrapper around `kill-region' for `zk-index-desktop-mode'."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (cond ((and (use-region-p)
+                (zk-index--button-at-point-p (region-beginning))
+                (not (zk-index--button-at-point-p (region-end))))
+           (kill-region (save-excursion
+                            (goto-char (region-beginning))
+                            (line-beginning-position))
+                          (region-end)))
+          ((and (use-region-p)
+                (not (zk-index--button-at-point-p (region-beginning)))
+                (zk-index--button-at-point-p (region-end)))
+           (kill-region (region-beginning)
+                          (save-excursion
+                            (goto-char (region-end))
+                            (line-end-position))))
+          ((and (use-region-p)
+                (zk-index--button-at-point-p (region-beginning))
+                (zk-index--button-at-point-p (region-end)))
+           (kill-region
+            (save-excursion
+              (goto-char (region-beginning))
+              (line-beginning-position))
+            (save-excursion
+              (goto-char (region-end))
+              (line-end-position))))
+          ((use-region-p)
+           (kill-region (region-beginning)
+                          (region-end))))))
+
+(defun zk-index-desktop-yank ()
+  "Wrapper around `yank' for `zk-index-desktop-mode'."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (yank)
+    (zk-index-desktop-make-buttons)))
 
 (provide 'zk-index)
 
