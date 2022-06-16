@@ -172,6 +172,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
     (define-key map (kbd "C-k") #'zk-index-desktop-kill-line)
     (define-key map (kbd "C-d") #'zk-index-desktop-delete-char)
     (define-key map (kbd "C-w") #'zk-index-desktop-kill-region)
+    (set-keymap-parent map button-map)
     map)
   "Keymap for ZK-Desktop buttons.")
 
