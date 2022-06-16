@@ -602,9 +602,11 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
    zk-index-last-format-function
    zk-index-last-sort-function))
 
-(defun zk-index--button-at-point-p ()
-  "Return zk-id when `zk-index' button is at point."
-  (let ((button (button-at (point))))
+(defun zk-index--button-at-point-p (&optional pos)
+  "Return zk-id when `zk-index' button is at point.
+Takes an option POS position argument."
+  (let ((button (or pos
+                    (button-at (point)))))
     (when (and button
                (eq (button-type button) 'zk-index))
       (save-excursion
