@@ -101,9 +101,9 @@ Options:
 3. `at-point - Place notes at current point of current ZK-Desktop
 
 To quickly change this setting, call `zk-index-desktop-add-toggle'."
-  :type '(choice (const :tag "Append" 'append)
-                 (const :tag "Prepend" 'prepend)
-                 (const :tag "At point" 'at-point)))
+  :type '(choice (const :tag "Append" append)
+                 (const :tag "Prepend" prepend)
+                 (const :tag "At point" at-point)))
 
 (defface zk-index-desktop-button
   '((t :inherit default))
@@ -993,7 +993,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
           ((use-region-p)
            (delete-region (region-beginning)
                           (region-end)))
-          (t (funcall 'delete-char (or current-prefix-arg 1))))))
+          (t (funcall #'delete-char (or current-prefix-arg 1))))))
 
 (defun zk-index-desktop-kill-line ()
   "Kill line in `zk-index-desktop-mode'."

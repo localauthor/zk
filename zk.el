@@ -138,8 +138,8 @@ Options:
 Calling `zk-new-note' with a prefix-argument inserts a link
 regardless of how `zk-new-note-link-insert' is set."
   :type '(choice (const :tag "Always" t)
-                 (const :tag "Ask" 'ask)
-                 (const :tag "Only in zk notes" 'zk)
+                 (const :tag "Ask" ask)
+                 (const :tag "Only in zk notes" zk)
                  (const :tag "Never" nil)))
 
 (defcustom zk-select-file-function #'zk--select-file
@@ -174,7 +174,7 @@ Options:
 The format in which link and title are inserted can be configured
 by setting the variable `zk-link-and-title-format'."
   :type '(choice (const :tag "Always" t)
-                 (const :tag "Ask" 'ask)
+                 (const :tag "Ask" ask)
                  (const :tag "Never" nil)))
 
 (defcustom zk-link-and-title-format "%t [[%i]]"
