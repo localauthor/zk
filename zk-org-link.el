@@ -1,15 +1,8 @@
-;;; zk-org.el --- Org-link integration for zk        -*- lexical-binding: t; -*-
-
-;; Copyright (C) 2022  Grant Rosson
-
-;; Author: Grant Rosson <grantrosson@gmail.com>
-;; Keywords:
-
-;;; zk-org -- Org-link integration for zk -*- lexical-binding: t -*- -
+;;; zk-org-link.el --- Org-link integration for zk        -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022 Grant Rosson
 
-;; Author: Grant Rosson  <https://github.com/localauthor>
+;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: June 25, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
@@ -38,7 +31,10 @@
 
 ;; (with-eval-after-load 'org
 ;;   (with-eval-after-load 'zk
-;;     (require 'zk-org)))
+;;     (require 'zk-org-link)))
+
+;; Thanks to @jgru for getting this started, and @protesilaos for the
+;; push to finish it.
 
 ;;; Code:
 
@@ -48,11 +44,11 @@
 (declare-function org-link-store-props "ol.el")
 
 (org-link-set-parameters "zk"
-			 :follow #'zk-org--follow
-                         :export #'zk-org--export
-			 :store #'zk-org--store
-                         :complete #'zk-org--complete
-                         :help-echo #'zk-org--help-echo)
+			 :follow #'zk-org-link--follow
+                         :export #'zk-org-link--export
+			 :store #'zk-org-link--store
+                         :complete #'zk-org-link--complete
+                         :help-echo #'zk-org-link--help-echo)
 
 ;; Set up org-style link format by setting variables
 (setq zk-link-format "[[zk:%s]]")
@@ -61,14 +57,14 @@
 (setq zk-completion-at-point-format  "[[zk:%i][%t]]")
 (setq zk-enable-link-buttons nil)
 
-(defun zk-org--follow (id)
+(defun zk-org-link--follow (id)
   "Follow an zk ID."
   (let ((file (zk--parse-id 'file-path id)))
     (if file
         (find-file file)
       (user-error "Could not find zk-note with ID %s" id))))
 
-(defun zk-org--export (link description format)
+(defun zk-org-link--export (link description format)
   "Export a `zk:' link from Org files.
 The LINK, DESCRIPTION, and FORMAT are handled by the export
 backend."
@@ -84,7 +80,7 @@ backend."
      ((eq format 'md) (format "[%s](%s.md)" desc p))
      (t path))))
 
-(defun zk-org--store ()
+(defun zk-org-link--store ()
   "Store a link to a zk-note."
   (when (zk-file-p)
     (let ((id (zk--id-at-point)))
@@ -93,7 +89,7 @@ backend."
        :link (concat "zk:" id)
        :description (zk--parse-id 'title id)))))
 
-(defun zk-org--complete ()
+(defun zk-org-link--complete ()
   "Like `zk-insert-link' but for Org integration.
 This lets the user complete a link through the `org-insert-link'
 interface by first selecting the `zk:' hyperlink type."
@@ -101,8 +97,8 @@ interface by first selecting the `zk:' hyperlink type."
    "zk:"
    (zk--parse-file 'id (zk--select-file))))
 
-(defun zk-org--help-echo (_win _obj pos)
-  "Generate help-echo tooltip for zk-org links.
+(defun zk-org-link--help-echo (_win _obj pos)
+  "Generate help-echo tooltip for `zk:' Org links.
 Takes WIN, OBJ, and POS arguments."
   (save-excursion
     (goto-char pos)
@@ -113,6 +109,6 @@ Takes WIN, OBJ, and POS arguments."
       'title
       (match-string 0)))))
 
-(provide 'zk-org)
+(provide 'zk-org-link)
 
-;;; zk-org.el ends here
+;;; zk-org-link.el ends here
