@@ -46,18 +46,17 @@
 (defun zk-org--follow-link (id)
   "Follow an zk ID."
   (let ((file (zk--parse-id 'file-path id)))
-        (if file
-            (find-file file)
-          (user-error "Could not find zk-note with ID %s" id))))
+    (if file
+        (find-file file)
+      (user-error "Could not find zk-note with ID %s" id))))
 
 (defun zk-org--store-link ()
   "Store a link to a zk-note."
   (when (zk-file-p)
-    (let ((zk-cur-id (zk--current-id)))
-      ;;(print (concat "zk:" zk-curid))
+    (let ((id (zk--id-at-point)))
       (org-store-link-props
-        :type "zk"
-        :link (concat "zk:" zk-cur-id)
-        :description zk-cur-id))))
+       :type "zk"
+       :link (concat "zk:" id)
+       :description (zk--parse-id 'title id)))))
 
 (provide 'zk-org)
