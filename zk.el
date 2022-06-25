@@ -401,7 +401,7 @@ supplied. Can take a PROMPT argument."
   "Return an alist ID, title, and file-path triples."
   (mapcar
    (lambda (file)
-     (progn
+     (when (string= (file-name-extension file) zk-file-extension)
        (string-match (concat "\\(?1:"
                              zk-id-regexp
                              "\\).\\(?2:.*?\\)\\."
