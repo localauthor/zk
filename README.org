@@ -8,7 +8,9 @@
 - [[#setup][Setup]]
 - [[#features][Features]]
   - [[#follow-links][Follow Links]]
-    - [[#using-org-mode-and-org-links][Using Org-Mode and Org-Links]]
+    - [[#using-org-mode-and-zk-links][Using Org-Mode and zk-links]]
+    - [[using-bona-fide-org-links-with-zk-org-link.el][Using bona-fide Org-links with zk-org-link.el]]
+    - [[#link-hint.el][Support for link-hint.el]]
   - [[#list-backlinks][List Backlinks]]
   - [[#smart-new-note-creation][Smart New-Note Creation]]
   - [[#insert-links][Insert Links]]
@@ -150,7 +152,7 @@ It is also possible to call the command =zk-follow-link-at-point=
 when a link is at point, or call the command =zk-links-in-note= to be
 presented with a =completing-read= list of all links in the current note.
 
-*** Using Org-Mode and Org-Links
+*** Using Org-Mode and zk-links
 
 In Org-Mode, links in the default format =zk-link-format= (an ID in
 double-brackets) will be treated as internal links. This means that when they
@@ -181,6 +183,33 @@ brackets. With this change, the default link buttons will work as expected.
 Note that using Org links makes the creation of link buttons, via
 =zk-make-link-buttons=, redundant. This link button aspects of the package
 can be disabled by setting =zk-enable-link-buttons= to nil.
+
+*** Using bona-fide Org-links with zk-org-link.el
+
+The companion package =zk-org-link.el= provides a custom Org-link type called
+=zk=, such that links will be styled =[[zk:201812101245]]= instead of
+=[[201812101245]]=. Using Org-links allows notes to be followed as expected,
+as well as exported to various formats via =org-export=, stored via
+=org-store-link=, and completed via =org-insert-link=.
+
+The link styles cannot be combined --- they are not mutually compatible. Use
+one style or the other. That is, either use =zk-org-link.el= or don't. (I do
+not, but here it is anyway.)
+
+To use org-links, include the following in your init.el:
+
+```
+ (with-eval-after-load 'org
+   (with-eval-after-load 'zk
+     (require 'zk-org-link)))
+```
+
+This will set create the =zk= Org-link type and set necessary values for
+several variables. Be sure to load =zk-org-link.el= /after/ zk, as the above
+code snippet does.
+
+NOTE: =zk-completion-at-point= functionality is not available when using
+=zk-org-link.el=.
 
 *** link-hint.el
 
