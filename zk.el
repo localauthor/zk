@@ -392,8 +392,10 @@ supplied. Can take a PROMPT argument."
 
 (defun zk--id-at-point ()
   "Return ID at point."
-  (when (thing-at-point-looking-at zk-id-regexp)
-    (match-string-no-properties 0)))
+  (cond ((thing-at-point-looking-at zk-id-regexp)
+         (match-string-no-properties 0))
+        ((thing-at-point-looking-at zk-link-regexp)
+         (match-string-no-properties 1))))
 
 (defun zk--alist ()
   "Return an alist ID, title, and file-path triples."
