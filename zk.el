@@ -806,9 +806,10 @@ brackets \"[[\" initiates completion."
 (defun zk-copy-link-and-title (&optional arg)
   "Copy link and title for id or file ARG at point."
   (interactive (list (funcall zk-select-file-function "Copy link: ")))
-  (let* ((id (cond ((member arg (zk--id-list))
+  (let* ((zk-id-list (zk--id-list))
+         (id (cond ((member arg zk-id-list)
                     arg)
-                   ((member (car arg) (zk--id-list))
+                   ((member (car arg) zk-id-list)
                     (car arg))
                    ((zk-file-p arg)
                     (zk--parse-file 'id arg))
