@@ -49,20 +49,17 @@
 
 (org-link-set-parameters "zk"
 			 :follow #'zk-org--follow
-                         ;;:complete #'zk-org--complete
                          :export #'zk-org--export
-			 :store #'zk-org--store)
+			 :store #'zk-org--store
+                         :complete #'zk-org--complete
+                         :help-echo #'zk-org--help-echo)
 
-;; Set up org-style link format by setting defcustoms
+;; Set up org-style link format by setting variables
 (setq zk-link-format "[[zk:%s]]")
 (setq zk-link-and-title-format "[[zk:%i][%t]]")
 (setq zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
 (setq zk-completion-at-point-format  "[[zk:%i][%t]]")
 (setq zk-enable-link-buttons nil)
-
-;; FIX
-;; zk-completion-at-point?
-
 
 (defun zk-org--follow (id)
   "Follow an zk ID."
@@ -70,15 +67,6 @@
     (if file
         (find-file file)
       (user-error "Could not find zk-note with ID %s" id))))
-
-(defun zk-org--store ()
-  "Store a link to a zk-note."
-  (when (zk-file-p)
-    (let ((id (zk--id-at-point)))
-      (org-link-store-props
-       :type "zk"
-       :link (concat "zk:" id)
-       :description (zk--parse-id 'title id)))))
 
 (defun zk-org--export (link description format)
   "Export a `zk:' link from Org files.
@@ -95,6 +83,35 @@ backend."
      ((eq format 'ascii) (format "[%s] <zk:%s>" desc path))
      ((eq format 'md) (format "[%s](%s.md)" desc p))
      (t path))))
+
+(defun zk-org--store ()
+  "Store a link to a zk-note."
+  (when (zk-file-p)
+    (let ((id (zk--id-at-point)))
+      (org-link-store-props
+       :type "zk"
+       :link (concat "zk:" id)
+       :description (zk--parse-id 'title id)))))
+
+(defun zk-org--complete ()
+  "Like `zk-insert-link' but for Org integration.
+This lets the user complete a link through the `org-insert-link'
+interface by first selecting the `zk:' hyperlink type."
+  (concat
+   "zk:"
+   (zk--parse-file 'id (zk--select-file))))
+
+(defun zk-org--help-echo (_win _obj pos)
+  "Generate help-echo tooltip for zk-org links.
+Takes WIN, OBJ, and POS arguments."
+  (save-excursion
+    (goto-char pos)
+    (re-search-backward zk-id-regexp)
+    (format
+     "%s"
+     (zk--parse-id
+      'title
+      (match-string 0)))))
 
 (provide 'zk-org)
 
