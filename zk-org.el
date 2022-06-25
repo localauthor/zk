@@ -50,10 +50,11 @@
 (org-link-set-parameters "zk"
 			 :follow #'zk-org--follow
                          ;;:complete #'zk-org--complete
+                         :export #'zk-org--export
 			 :store #'zk-org--store)
 
 ;; Set up org-style link format by setting defcustoms
-(setq zk-link-format "[[zk:%s]]" )
+(setq zk-link-format "[[zk:%s]]")
 (setq zk-link-and-title-format "[[zk:%i][%t]]")
 (setq zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
 (setq zk-completion-at-point-format  "[[zk:%i][%t]]")
@@ -78,6 +79,22 @@
        :type "zk"
        :link (concat "zk:" id)
        :description (zk--parse-id 'title id)))))
+
+(defun zk-org--export (link description format)
+  "Export a `zk:' link from Org files.
+The LINK, DESCRIPTION, and FORMAT are handled by the export
+backend."
+  (let* ((id link)
+         (path (zk--parse-id 'file-path id))
+         (p (file-name-sans-extension path))
+	 (desc (or description (concat "zk:" id))))
+    (cond
+     ((eq format 'html) (format "<a target=\"_blank\" href=\"%s.html\">%s</a>" p desc))
+     ((eq format 'latex) (format "\\href{%s}{%s}" (replace-regexp-in-string "[\\{}$%&_#~^]" "\\\\\\&" path) desc))
+     ((eq format 'texinfo) (format "@uref{%s,%s}" path desc))
+     ((eq format 'ascii) (format "[%s] <zk:%s>" desc path))
+     ((eq format 'md) (format "[%s](%s.md)" desc p))
+     (t path))))
 
 (provide 'zk-org)
 
