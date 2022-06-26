@@ -184,7 +184,7 @@ Note that using Org links makes the creation of link buttons, via
 =zk-make-link-buttons=, redundant. This link button aspects of the package
 can be disabled by setting =zk-enable-link-buttons= to nil.
 
-*** Using bona-fide Org-links with zk-org-link.el
+*** Using Org-links with zk-org-link.el
 
 The companion package =zk-org-link.el= provides a custom Org-link type called
 =zk=, such that links will be styled =[[zk:201812101245]]= instead of
@@ -198,11 +198,11 @@ not, but here it is anyway.)
 
 To use org-links, include the following in your init.el:
 
-```
+ #+begin_src emacs-lisp
  (with-eval-after-load 'org
    (with-eval-after-load 'zk
      (require 'zk-org-link)))
-```
+ #+end_src
 
 This will set create the =zk= Org-link type and set necessary values for
 several variables. Be sure to load =zk-org-link.el= /after/ zk, as the above
