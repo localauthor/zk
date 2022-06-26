@@ -9,7 +9,7 @@
 - [[#features][Features]]
   - [[#follow-links][Follow Links]]
     - [[#using-org-mode-and-zk-links][Using Org-Mode and zk-links]]
-    - [[using-bona-fide-org-links-with-zk-org-link.el][Using bona-fide Org-links with zk-org-link.el]]
+    - [[using-org-links-with-zk-org-link.el][Using Org-links with zk-org-link.el]]
     - [[#link-hint.el][Support for link-hint.el]]
   - [[#list-backlinks][List Backlinks]]
   - [[#smart-new-note-creation][Smart New-Note Creation]]
@@ -445,10 +445,10 @@ The function =zk-index= pops up a buffer listing of all note titles, each of
 which is a clickable button. Clicking a title will pop the note into the above
 window.
 
-The ZK-Index buffer is in a minor mode with a dedicated keymap:
+The ZK-Index buffer is in a major mode with a dedicated keymap:
 
 #+begin_src emacs-lisp
-(defvar zk-index-map
+(defvar zk-index-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "n") #'zk-index-next-line)
     (define-key map (kbd "p") #'zk-index-previous-line)
@@ -458,11 +458,12 @@ The ZK-Index buffer is in a minor mode with a dedicated keymap:
     (define-key map (kbd "s") #'zk-index-search)
     (define-key map (kbd "d") #'zk-index-send-to-desktop)
     (define-key map (kbd "D") #'zk-index-switch-to-desktop)
-    (define-key map (kbd "S") #'zk-index-desktop-select)
     (define-key map (kbd "c") #'zk-index-current-notes)
     (define-key map (kbd "i") #'zk-index-refresh)
+    (define-key map (kbd "S") #'zk-index-sort-size)
     (define-key map (kbd "M") #'zk-index-sort-modified)
     (define-key map (kbd "C") #'zk-index-sort-created)
+    (define-key map (kbd "RET") #'zk-index-open-note)
     (define-key map (kbd "q") #'delete-window)
     (make-composed-keymap map tabulated-list-mode-map))
   "Keymap for ZK-Index buffer.")
@@ -476,9 +477,10 @@ can be disabled by setting =zk-index-auto-scroll= to nil.) In contrast, using
 =C-n= and =C-p= will move the point up and down the list without previewing
 notes.
 
-Pressing =RET= on a note title will open it the corresponding note in the
-above wndow *and* move the point to the note. Pressing =v= (short for for
-'view') will open the note but leave the point in the index.
+Pressing =v= (short for for 'view') on an index item will open the
+corresponding note in =read-only-mode=, such that pressing =q= will quit the
+buffer and return the point to the index. Pressing =RET= on an index item
+will open the corresponding note the expected major mode.
 
 *** Narrowing and Filtering
 
@@ -512,6 +514,9 @@ recently modified notes being sorted to the top of the index. The key =M=
 The key =C= (for 'created') sorts the index by time of creation, with the
 most recently created notes sorted to the top.
 
+The key =S= (for 'size') sorts the index by size of note, with largest notes
+sorted to the top.
+
 ** ZK-Desktop
 
 The feature =zk-desktop= allows users to select and organize groups of notes
@@ -533,13 +538,27 @@ button, just like in =zk-index=.
 In contrast to =zk-index=, all notes on a given desktop are selected and
 placed there individually by the user, note-by-note, rather than en masse and
 programmatically. Additionally, the notes placed on the desktop can be
-rearranged, grouped, and commented on in-line (by using the function
-=zk-index-desktop-edit-mode=, described below).
+rearranged, grouped, and commented on in-line.
 
 It is possible to have several desktops at once, each an individual file, and
 each corresponding to a different project. Use the function
 =zk-index-desktop-select= to switch from working with one desktop to working
 with another.
+
+*** Working with notes on a desktop
+
+The notes listed on in the zk-desktop buffer can be rearranged, a single note
+can appear more than once, and the user can type on the desktop just like in
+a normal buffer --- for example, to create headings or simply to type notes.
+
+A zk-desktop buffers open in =fundamental-mode= by default, but this can be
+changed by setting the variable =zk-index-desktop-major-mode= to the symbol
+for a major mode. Consider setting this to =text-mode=, =outline-mode=, or
+=org-mode=.
+
+#+begin_src emacs-lisp
+(setq zk-index-desktop-major-mode 'outline-mode)
+#+end_src
 
 *** Adding notes to a desktop
 
@@ -551,16 +570,6 @@ point is sent to the desktop. If several notes are selected in the index, all
 notes in the active region are sent to the current deskop. This selection
 feature is usefully combined with the focus/search feature of =zk-index=, to
 allow for sending a lot of relevant notes to a desktop at once.
-
-*** Working with notes on a desktop
-
-The notes listed on in the zk-desktop buffer can be rearranged, a single note
-can appear more than once, and the user can type on the desktop just like in
-a normal buffer --- for example, to create headings or simply to type notes.
-To do so, enter =zk-index-desktop-edit-mode=, bound to =C-+=. The same
-keybinding toggles edit mode on and off.
-
- A "desktop" is just a simple file containing
 
 ** Embark Integration for ZK-Index and ZK-Desktop
 
@@ -580,6 +589,7 @@ in the zk-index buffer.
 - _Emacs-based_
   - [[https://github.com/EFLS/zetteldeft][Zetteldeft]]
   - [[https://github.com/org-roam/org-roam][Org-Roam]]
+  - [[https://git.sr.ht/~protesilaos/denote][Denote]]
 
 - _Non-Emacs_
   - [[https://zettelkasten.de/the-archive/][The Archive]]

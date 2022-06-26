@@ -89,7 +89,7 @@ The names of all ZK-Desktops should begin with this string."
 (defcustom zk-index-desktop-major-mode nil
   "Name of major-mode for ZK-Desktop buffers.
 The value should be a symbol that is a major mode command.
-If nil, buffers will be in `fundamental-mode'.s"
+If nil, buffers will be in `fundamental-mode'."
   :type 'function)
 
 (defcustom zk-index-desktop-add-pos 'append
