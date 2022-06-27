@@ -114,7 +114,7 @@ Set it so that it matches strings generated with
 `zk-id-format'."
   :type 'regexp)
 
-(defcustom zk-tag-regexp "#[a-zA-Z0-9]\\+"
+(defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
   "The regular expression used to search for tags."
   :type 'regexp)
 
