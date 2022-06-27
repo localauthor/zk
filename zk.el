@@ -147,15 +147,25 @@ regardless of how `zk-new-note-link-insert' is set."
 Must take an optional prompt and a list of files"
   :type 'function)
 
-(defcustom zk-grep-function #'zk-grep
+(defcustom zk-search-function #'zk-grep
   "Function used by `zk-search'.
 Must take a single STRING argument."
   :type 'function)
 
-(defcustom zk-tag-grep-function #'zk-grep
+(make-obsolete-variable 'zk-grep-function "The use of the
+  'zk-grep-function' variable is deprecated.
+ 'zk-search-function' should be used instead"
+                        "0.5")
+
+(defcustom zk-tag-search-function #'zk-grep
   "Function used by `zk-tag-search'.
 Must take a single STRING argument."
   :type 'function)
+
+(make-obsolete-variable 'zk-tag-grep-function "The use of the
+  'zk-tag-grep-function' variable is deprecated.
+ 'zk-tag-search-function' should be used instead"
+                        "0.5")
 
 (defcustom zk-link-format "[[%s]]"
   "Format for inserted links.
@@ -846,10 +856,10 @@ brackets \"[[\" initiates completion."
 
 ;;;###autoload
 (defun zk-search (string)
-  "Search for STRING using function set in `zk-grep-function'.
+  "Search for STRING using function set in `zk-search-function'.
 Defaults to `zk-grep.'"
   (interactive "sSearch: ")
-  (funcall zk-grep-function string))
+  (funcall zk-search-function string))
 
 (defun zk-grep (regexp)
   "Wrapper around `rgrep' to search for REGEXP in all notes.
@@ -865,7 +875,7 @@ Opens search results in a grep buffer."
 Select TAG, with completion, from list of all tags in zk notes.
 Defaults to `zk-grep'."
   (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
-  (funcall zk-tag-grep-function tag))
+  (funcall zk-tag-search-function tag))
 
 ;;;###autoload
 (defun zk-tag-insert (tag)
@@ -909,7 +919,7 @@ Select TAG, with completion, from list of all tags in zk notes."
   (interactive)
   (let* ((dead-link-ids (zk--dead-link-id-list)))
     (if dead-link-ids
-        (funcall zk-grep-function (mapconcat
+        (funcall zk-search-function (mapconcat
                                    #'identity
                                    dead-link-ids
                                    "\\|"))
