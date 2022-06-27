@@ -635,20 +635,14 @@ Takes an option POS position argument."
 (define-minor-mode zk-index-view-mode
   "Minor mode for `zk-index-auto-scroll'."
   :init-value nil
+  :global nil
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
             ([remap read-only-mode] . zk-index-view-toggle)
             ((kbd "q") . quit-window))
-  (read-only-mode))
-
-(defun zk-index-view-toggle ()
-  "Toggle `zk-index-view-mode'."
-  (interactive)
   (if zk-index-view-mode
-      (progn
-        (zk-index-view-mode -1)
-        (read-only-mode -1))
-    (zk-index-view-mode)))
+      (read-only-mode)
+    (read-only-mode -1)))
 
 (defun zk-index-next-line ()
   "Move to next line.
@@ -662,7 +656,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                  (kill-buffer)
                  (other-window -1))
                 ((not zk-index-view--kill)
-                 (zk-index-view-toggle)
+                 (zk-index-view-mode)
                  (other-window -1)))
           (forward-button 1)
           (hl-line-highlight)
@@ -682,7 +676,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                  (kill-buffer)
                  (other-window -1))
                 ((not zk-index-view--kill)
-                 (zk-index-view-toggle)
+                 (zk-index-view-mode)
                  (other-window -1)))
           (forward-button -1)
           (hl-line-highlight)
