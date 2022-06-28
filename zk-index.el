@@ -73,6 +73,10 @@
   "Enable automatically showing note at point in ZK-Index."
   :type 'boolean)
 
+(defcustom zk-index-view-hide-cursor t
+  "Hide cursor in `zk-index-view-mode'."
+  :type 'boolean)
+
 (defcustom zk-index-desktop-directory nil
   "Directory for saved ZK-Desktops."
   :type 'directory)
@@ -632,17 +636,30 @@ Takes an option POS position argument."
       (zk-insert-link id)
       (newline))))
 
+(defvar-local zk-index-view--cursor nil)
+
 (define-minor-mode zk-index-view-mode
   "Minor mode for `zk-index-auto-scroll'."
   :init-value nil
   :global nil
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
-            ([remap read-only-mode] . zk-index-view-toggle)
+            ([remap read-only-mode] . zk-index-view-mode)
             ((kbd "q") . quit-window))
   (if zk-index-view-mode
-      (read-only-mode)
-    (read-only-mode -1)))
+      (progn
+        (read-only-mode)
+        (when zk-index-view-hide-cursor
+          (progn
+            (scroll-lock-mode 1)
+            (setq-local zk-index-view--cursor
+                        cursor-type)
+            (setq-local cursor-type nil))))
+    (read-only-mode -1)
+    (when zk-index-view-hide-cursor
+      (scroll-lock-mode -1)
+      (setq-local cursor-type (or zk-index-view--cursor
+                                  t)))))
 
 (defun zk-index-next-line ()
   "Move to next line.
