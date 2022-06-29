@@ -7,7 +7,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.2
 ;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "24.3") (consult "0.14"))
+;; Package-Requires: ((emacs "27.1") (consult "0.14"))
 
 
 ;; This program is free software; you can redistribute it and/or modify

@@ -8,7 +8,7 @@
 ;; Version: 0.6
 ;; Homepage: https://github.com/localauthor/zk
 
-;; Package-Requires: ((emacs "26.1")(zk "0.3"))
+;; Package-Requires: ((emacs "27.1")(zk "0.3"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
