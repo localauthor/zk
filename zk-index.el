@@ -752,7 +752,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                             (concat
                              zk-index-desktop-basename
                              ".*"))
-                           nil nil
+                           nil nil nil nil
                            (concat zk-index-desktop-basename " ")))
          (file (concat zk-index-desktop-directory "/" desktop)))
     (if (file-exists-p (expand-file-name file))
