@@ -169,7 +169,11 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
   "Minor mode for `zk-index-desktop'."
   :init-value nil
   :keymap zk-index-desktop-map
-  (setq truncate-lines t))
+  (when zk-index-desktop-mode
+    (zk-index-desktop-make-buttons)
+    (when-let ((mode zk-index-desktop-major-mode))
+      (funcall mode))
+    (setq truncate-lines t)))
 
 (defvar zk-index-desktop-button-map
   (let ((map (make-sparse-keymap)))
@@ -644,6 +648,7 @@ Takes an option POS position argument."
   :global nil
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
+            ((kbd "d") . zk-index-send-to-desktop)
             ([remap read-only-mode] . zk-index-view-mode)
             ((kbd "q") . quit-window))
   (if zk-index-view-mode
@@ -722,12 +727,6 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                           '(display-buffer-at-bottom)))
       (_ nil))))
 
-(defun zk-index-desktop-major-mode ()
-  "Set major mode in ZK-Desktop.
-See variable `zk-index-desktop-major-mode'."
-  (when-let ((mode zk-index-desktop-major-mode))
-    (funcall mode)
-    (zk-index-desktop-mode)))
 
 ;;;###autoload
 (defun zk-index-desktop-select ()
@@ -753,12 +752,10 @@ See variable `zk-index-desktop-major-mode'."
         (setq zk-index-desktop-current desktop)))
     (with-current-buffer zk-index-desktop-current
       (setq require-final-newline 'visit-save)
-      (zk-index-desktop-make-buttons)
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (set-visited-file-name file t t)
       (zk-index-desktop-mode)
-      (zk-index-desktop-major-mode)
       (save-buffer))
     (if (and (not (eq last-command 'zk-index-desktop))
              (y-or-n-p (format "Visit %s? " zk-index-desktop-current)))
@@ -889,8 +886,6 @@ at point."
     (unless (get-buffer buffer)
       (generate-new-buffer buffer))
     (with-current-buffer buffer
-      (zk-index-desktop-mode)
-      (zk-index-desktop-major-mode)
       (setq require-final-newline 'visit-save)
       (pcase zk-index-desktop-add-pos
         ('append (progn
@@ -906,7 +901,7 @@ at point."
       (beginning-of-line)
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
-      (zk-index-desktop-make-buttons))
+      (zk-index-desktop-mode))
     (if (string= (buffer-name) zk-index-buffer-name)
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
