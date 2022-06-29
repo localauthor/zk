@@ -663,6 +663,7 @@ Takes an option POS position argument."
   (if zk-index-view-mode
       (progn
         (read-only-mode)
+        (use-local-map zk-index-mode-map)
         (when zk-index-view-hide-cursor
           (progn
             (scroll-lock-mode 1)
@@ -670,6 +671,7 @@ Takes an option POS position argument."
                         cursor-type)
             (setq-local cursor-type nil))))
     (read-only-mode -1)
+    (use-local-map nil)
     (when zk-index-view-hide-cursor
       (scroll-lock-mode -1)
       (setq-local cursor-type (or zk-index-view--cursor
