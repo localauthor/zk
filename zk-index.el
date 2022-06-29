@@ -349,9 +349,18 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                           'type 'zk-index
                           'action
                           (lambda (_)
-                            (find-file-other-window
-                             (zk--parse-id 'file-path
-                                           id)))
+                            (let* ((file
+                                    (zk--parse-id 'file-path
+                                                  id))
+                                   (buffer
+                                    (find-file-noselect file)))
+                              (if (one-window-p)
+                                  (pop-to-buffer buffer
+                                                 (display-buffer-in-direction
+                                                  buffer
+                                                  '((direction . top)
+                                                    (window-height . 0.6))))
+                                (find-file-other-window file))))
                           'help-echo (lambda (_win _obj _pos)
                                        (format
                                         "%s"
