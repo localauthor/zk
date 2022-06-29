@@ -864,6 +864,7 @@ Defaults to `zk-grep.'"
 (defun zk-grep (regexp)
   "Wrapper around `rgrep' to search for REGEXP in all notes.
 Opens search results in a grep buffer."
+  (interactive "sSearch: ")
   (grep-compute-defaults)
   (rgrep regexp (concat "*." zk-file-extension) zk-directory nil))
 
