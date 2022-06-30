@@ -105,7 +105,8 @@ Only search the range between just after the point and BOUND."
     "Pop up a frame containing zk-file for ID at point.
 Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
     (interactive)
-    (let* ((id (zk--id-at-point))
+    (let* ((id (or (zk--id-at-point)
+                   (zk-index--button-at-point-p)))
            (file (zk--parse-id 'file-path id))
            (buffer (get-file-buffer file))
            (frame (selected-frame)))
