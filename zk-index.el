@@ -144,6 +144,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 \\{zk-index-mode-map}"
   :interactive nil
   (setq mode-name "ZK-Index")
+  (setq zk-index-mode-line-orig mode-line-misc-info)
   (read-only-mode)
   (hl-line-mode)
   (make-local-variable 'show-paren-mode)
@@ -196,6 +197,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-desktop-current nil)
 (defvar zk-index-query-history nil)
+(defvar zk-index-mode-line-orig nil)
 
 (declare-function zk-file-p zk)
 (declare-function zk--grep-id-list zk)
@@ -458,7 +460,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
           (if zk-index-last-focus-terms
               (concat zk-index-last-focus-terms "\" + \"" string)
             string))
-    (concat " [Focus: \"" zk-index-last-focus-terms "\"]"))
+    (concat "[Focus: \"" zk-index-last-focus-terms "\"]"))
    ;;mix
    ((eq zk-index-last-query 'search)
     ;;outcome
@@ -467,14 +469,14 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
           (if zk-index-last-focus-terms
               (concat zk-index-last-focus-terms "\" + \"" string)
             string))
-    (concat " [Search: \"" zk-index-last-search-terms "\" |"
+    (concat "[Search: \"" zk-index-last-search-terms "\" |"
             " Focus: \"" zk-index-last-focus-terms "\"]"))
    ;;neither
    ((not zk-index-last-query)
     ;; outcome
     (setq zk-index-last-query 'focus)
     (setq zk-index-last-focus-terms string)
-    (concat " [Focus: \"" string "\"]"))))
+    (concat "[Focus: \"" string "\"]"))))
 
 (defun zk-index-search-mode-line (string)
   "Add STRING to modeline for `zk-index-search'."
@@ -486,7 +488,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
           (if zk-index-last-search-terms
               (concat zk-index-last-search-terms "\" + \"" string)
             string))
-    (concat " [Search: \"" zk-index-last-search-terms "\"]"))
+    (concat "[Search: \"" zk-index-last-search-terms "\"]"))
    ;;mix
    ((eq zk-index-last-query 'focus)
     ;;outcome
@@ -495,24 +497,24 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
           (if zk-index-last-search-terms
               (concat zk-index-last-search-terms "\" + \"" string)
             string))
-    (concat " [Focus: \"" zk-index-last-focus-terms "\" |"
+    (concat "[Focus: \"" zk-index-last-focus-terms "\" |"
             " Search: \"" zk-index-last-search-terms "\"]"))
    ;;neither
    ((not zk-index-last-query)
     ;; outcome
     (setq zk-index-last-query 'search)
     (setq zk-index-last-search-terms string)
-    (concat " [Search: \"" string "\"]"))))
+    (concat "[Search: \"" string "\"]"))))
 
 (defun zk-index--set-mode-line (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
   (when (eq major-mode 'zk-index-mode)
-    (setq mode-name (concat "ZK-Index" string))))
+    (setq-local mode-line-misc-info string)))
 
 (defun zk-index--reset-mode-line ()
   "Reset `mode-name' in `zk-index-mode'."
-  (setq mode-name "ZK-Index"
-        zk-index-query-mode-line nil
+  (setq-local mode-line-misc-info zk-index-mode-line-orig)
+  (setq zk-index-query-mode-line nil
         zk-index-last-focus-terms nil
         zk-index-last-search-terms nil))
 
