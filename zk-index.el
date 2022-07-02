@@ -427,11 +427,6 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                   (zk--id-list string))
                  ((eq command 'zk-index-search)
                   (zk--grep-id-list string))))
-         (mode-line
-          (cond ((eq command 'zk-index-focus)
-                 (zk-index-focus-mode-line string))
-                ((eq command 'zk-index-search)
-                 (zk-index-search-mode-line string))))
          (ids
           (mapcar
            (lambda (x)
@@ -441,8 +436,13 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
          (files (zk--parse-id 'file-path (remq nil ids))))
     (add-to-history 'zk-index-query-history string)
     (when files
-      (setq zk-index-query-mode-line mode-line)
-      (zk-index--set-mode-line mode-line))
+      (let ((mode-line
+             (cond ((eq command 'zk-index-focus)
+                    (zk-index-focus-mode-line string))
+                   ((eq command 'zk-index-search)
+                    (zk-index-search-mode-line string)))))
+        (setq zk-index-query-mode-line mode-line)
+        (zk-index--set-mode-line mode-line)))
     (when (stringp files)
       (setq files (list files)))
     (or files
