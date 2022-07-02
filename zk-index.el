@@ -118,6 +118,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 (defvar zk-index-last-query nil)
 (defvar zk-index-last-focus-terms nil)
 (defvar zk-index-last-search-terms nil)
+(defvar zk-index-mode-line-orig nil)
 
 (defvar zk-index-mode-map
   (let ((map (make-sparse-keymap)))
@@ -197,7 +198,6 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-desktop-current nil)
 (defvar zk-index-query-history nil)
-(defvar zk-index-mode-line-orig nil)
 
 (declare-function zk-file-p zk)
 (declare-function zk--grep-id-list zk)
@@ -319,6 +319,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (unless (zk-index-narrowed-p)
         (progn
           (zk-index--reset-mode-line)
+          (zk-index--reset-mode-name)
           (forward-line line))))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
@@ -444,7 +445,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                    ((eq command 'zk-index-search)
                     (zk-index-search-mode-line string)))))
         (setq zk-index-query-mode-line mode-line)
-        (zk-index--set-mode-line mode-line)))
+        (zk-index--set-mode-line mode-line)
+        (zk-index--reset-mode-name)))
     (when (stringp files)
       (setq files (list files)))
     (or files
@@ -507,12 +509,12 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
     (concat "[Search: \"" string "\"]"))))
 
 (defun zk-index--set-mode-line (string)
-  "Add STRING to `mode-name' in `zk-index-mode'."
+  "Add STRING to mode-line in `zk-index-mode'."
   (when (eq major-mode 'zk-index-mode)
     (setq-local mode-line-misc-info string)))
 
 (defun zk-index--reset-mode-line ()
-  "Reset `mode-name' in `zk-index-mode'."
+  "Reset mode-line in `zk-index-mode'."
   (setq-local mode-line-misc-info zk-index-mode-line-orig)
   (setq zk-index-query-mode-line nil
         zk-index-last-focus-terms nil
@@ -537,8 +539,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
                     #'zk-index--sort-modified)
-  (zk-index--set-mode-line
-   (concat " by modified" zk-index-query-mode-line)))
+    (zk-index--set-mode-name " by modified"))
 
 (defun zk-index-sort-created ()
   "Sort index by date created."
@@ -546,9 +547,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
                     #'zk-index--sort-created)
-  (zk-index--set-mode-line
-   (concat " by created" zk-index-query-mode-line)))
-
+    (zk-index--set-mode-name " by created"))
 
 (defun zk-index-sort-size ()
   "Sort index by size."
@@ -556,8 +555,16 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
                     #'zk-index--sort-size)
-  (zk-index--set-mode-line
-   (concat " by size" zk-index-query-mode-line)))
+  (zk-index--set-mode-name " by size"))
+
+(defun zk-index--set-mode-name (string)
+  "Add STRING to `mode-name' in `zk-index-mode'."
+  (when (eq major-mode 'zk-index-mode)
+    (setq mode-name (concat "ZK-Index" string))))
+
+(defun zk-index--reset-mode-name ()
+  "Reset `mode-name' in `zk-index-mode'."
+  (setq mode-name "ZK-Index"))
 
 (defun zk-index--current-file-list ()
   "Return list files in current index."
