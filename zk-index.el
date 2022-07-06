@@ -603,11 +603,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   "Sort LIST for latest modification."
   (sort list
         (lambda (a b)
-          (let ((one
-                 (file-attribute-size (file-attributes a)))
-                (two
-                 (file-attribute-size (file-attributes b))))
-            (time-less-p two one)))))
+          (> (file-attribute-size (file-attributes a))
+             (file-attribute-size (file-attributes b))))))
 
 ;;; ZK-Index Keymap Commands
 
