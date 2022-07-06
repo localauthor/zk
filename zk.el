@@ -623,6 +623,8 @@ title."
             (setq new-title header-title)
           (setq new-title (read-string "New title: " file-title)))
       (setq new-title (read-string "New title: " file-title)))
+    (when (string-match "\n" new-title)
+      (setq new-title (replace-regexp-in-string "\n" "" new-title)))
     (save-excursion
       (goto-char (point-min))
       (re-search-forward id)
@@ -634,9 +636,9 @@ title."
                      id
                      zk-file-name-separator
                      (replace-regexp-in-string
-                     " "
-                     zk-file-name-separator
-                     new-title)
+                      " "
+                      zk-file-name-separator
+                      new-title)
                      "." zk-file-extension)))
       (rename-file buffer-file-name new-file t)
       (set-visited-file-name new-file t t)
