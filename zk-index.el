@@ -218,6 +218,7 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
     (add-to-list 'embark-multitarget-actions 'zk-copy-link-and-title)
     (add-to-list 'embark-multitarget-actions 'zk-follow-link-at-point)
     (add-to-list 'embark-target-finders 'zk-index-embark-target)
+    (add-to-list 'embark-exporters-alist '(zk-file . zk-index))
     (define-key zk-file-map (kbd "d") #'zk-index-send-to-desktop)
     (define-key zk-id-map (kbd "d") #'zk-index-send-to-desktop)
     (define-key zk-id-map (kbd "i") #'zk-index-insert-link)))
