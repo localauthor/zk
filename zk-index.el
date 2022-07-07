@@ -275,32 +275,33 @@ FILES must be a list of filepaths. If nil, all files in
 ;;; Main Stack
 
 ;;;###autoload
-(defun zk-index (&optional files format-fn sort-fn)
+(defun zk-index (&optional files format-fn sort-fn buf-name)
   "Open ZK-Index, with optional FILES, FORMAT-FN, and SORT-FN."
   (interactive)
   (setq zk-index-last-format-function format-fn)
   (setq zk-index-last-sort-function sort-fn)
   (let ((inhibit-message t)
-        (buffer zk-index-buffer-name)
+        (buf-name (or buf-name
+                      zk-index-buffer-name))
         (list (or files
                   (zk--directory-files t))))
-    (unless (get-buffer buffer)
+    (unless (get-buffer buf-name)
       (progn
         (when zk-default-backlink
           (unless (zk-file-p)
             (zk-find-file-by-id zk-default-backlink)))
-        (generate-new-buffer buffer)
-        (with-current-buffer buffer
+        (generate-new-buffer buf-name)
+        (with-current-buffer buf-name
           (zk-index--sort list format-fn sort-fn)
           (zk-index-mode)
           (setq truncate-lines t)
           (goto-char (point-min)))))
     (when files
-      (zk-index-refresh files format-fn sort-fn))
-      (pop-to-buffer buffer
+      (zk-index-refresh files format-fn sort-fn buf-name))
+      (pop-to-buffer buf-name
                      '(display-buffer-at-bottom))))
 
-(defun zk-index-refresh (&optional files format-fn sort-fn)
+(defun zk-index-refresh (&optional files format-fn sort-fn buf-name)
   "Refresh the index.
 Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
@@ -310,14 +311,16 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
                    (zk--directory-files t)))
         (sort-fn (or sort-fn
                      (setq zk-index-last-sort-function nil)))
+        (buf-name (or buf-name
+                      zk-index-buffer-name))
         (line))
-    (with-current-buffer zk-index-buffer-name
+    (with-current-buffer buf-name
       (setq line (line-number-at-pos))
       (erase-buffer)
       (zk-index--sort files format-fn sort-fn)
       (goto-char (point-min))
       (setq truncate-lines t)
-      (unless (zk-index-narrowed-p)
+      (unless (zk-index-narrowed-p buf-name)
         (progn
           (zk-index--reset-mode-line)
           (zk-index--reset-mode-name)
@@ -377,9 +380,10 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
       (newline)))
   (message "Notes: %s" (length candidates)))
 
-(defun zk-index-narrowed-p ()
+(defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed."
-  (with-current-buffer zk-index-buffer-name
+  (with-current-buffer (or buf-name
+                           zk-index-buffer-name)
     (if (< (count-lines (point-min) (point-max))
            (length (zk--id-list)))
         t nil)))
@@ -395,7 +399,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (zk-index-refresh
    (zk-index-query-files)
    zk-index-last-format-function
-   zk-index-last-sort-function))
+   zk-index-last-sort-function
+   (buffer-name)))
 
 ;;;; Index Focus
 ;; narrow index based on search of note titles (case sensitive)
@@ -407,15 +412,16 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (zk-index-refresh
    (zk-index-query-files)
    zk-index-last-format-function
-   zk-index-last-sort-function))
+   zk-index-last-sort-function
+   (buffer-name)))
 
 ;;;; Low-level Query Functions
 
 (defun zk-index-query-files ()
   "Return narrowed list of notes, based on focus or search query."
   (let* ((command this-command)
-         (scope (if (zk-index-narrowed-p)
-                    (zk-index--current-id-list)
+         (scope (if (zk-index-narrowed-p (buffer-name))
+                    (zk-index--current-id-list (buffer-name))
                   (progn
                     (setq zk-index-last-query nil)
                     (zk--id-list))))
@@ -521,10 +527,11 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
         zk-index-last-focus-terms nil
         zk-index-last-search-terms nil))
 
-(defun zk-index--current-id-list ()
+(defun zk-index--current-id-list (buf-name)
   "Return list of IDs for current index, as filepaths."
   (let (ids)
-    (with-current-buffer zk-index-buffer-name
+    (with-current-buffer (or buf-name
+                             zk-index-buffer-name)
       (save-excursion
         (goto-char (point-min))
         (save-match-data
@@ -539,7 +546,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
-                    #'zk-index--sort-modified)
+                    #'zk-index--sort-modified
+                    (buffer-name))
     (zk-index--set-mode-name " by modified"))
 
 (defun zk-index-sort-created ()
@@ -547,7 +555,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
-                    #'zk-index--sort-created)
+                    #'zk-index--sort-created
+                    (buffer-name))
     (zk-index--set-mode-name " by created"))
 
 (defun zk-index-sort-size ()
@@ -555,7 +564,8 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (interactive)
   (zk-index-refresh (zk-index--current-file-list)
                     zk-index-last-format-function
-                    #'zk-index--sort-size)
+                    #'zk-index--sort-size
+                    (buffer-name))
   (zk-index--set-mode-name " by size"))
 
 (defun zk-index--set-mode-name (string)
@@ -569,7 +579,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
 
 (defun zk-index--current-file-list ()
   "Return list files in current index."
-  (let* ((ids (zk-index--current-id-list))
+  (let* ((ids (zk-index--current-id-list (buffer-name)))
          (files (zk--parse-id 'file-path ids)))
     (when files
       files)))
@@ -880,7 +890,7 @@ at point."
                  (mapconcat
                   #'identity
                   (funcall zk-index-format-function files) "\n")))
-          ((string= (buffer-name) zk-index-buffer-name)
+          ((string= (buffer-name) zk-index-buffer-name) ;; FIX-ME
            (setq items (if (use-region-p)
                            (buffer-substring
                             (save-excursion
@@ -921,7 +931,7 @@ at point."
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (zk-index-desktop-mode))
-    (if (string= (buffer-name) zk-index-buffer-name)
+    (if (string= (buffer-name) zk-index-buffer-name) ;; FIX-ME
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
 
