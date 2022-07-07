@@ -207,6 +207,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 
 (defvar embark-multitarget-actions)
 (defvar embark-target-finders)
+(defvar embark-exporters-alist)
 
 (defun zk-index-setup-embark ()
   "Setup Embark integration for zk.
@@ -276,7 +277,7 @@ FILES must be a list of filepaths. If nil, all files in
 
 ;;;###autoload
 (defun zk-index (&optional files format-fn sort-fn buf-name)
-  "Open ZK-Index, with optional FILES, FORMAT-FN, and SORT-FN."
+  "Open ZK-Index, with optional FILES, FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive)
   (setq zk-index-last-format-function format-fn)
   (setq zk-index-last-sort-function sort-fn)
@@ -303,7 +304,7 @@ FILES must be a list of filepaths. If nil, all files in
 
 (defun zk-index-refresh (&optional files format-fn sort-fn buf-name)
   "Refresh the index.
-Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
+Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive)
   (let ((inhibit-message t)
         (inhibit-read-only t)
@@ -381,7 +382,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
   (message "Notes: %s" (length candidates)))
 
 (defun zk-index-narrowed-p (buf-name)
-  "Return t when index is narrowed."
+  "Return t when index is narrowed in buffer BUF-NAME."
   (with-current-buffer (or buf-name
                            zk-index-buffer-name)
     (if (< (count-lines (point-min) (point-max))
@@ -528,7 +529,7 @@ Optionally refresh with FILES, using FORMAT-FN and SORT-FN."
         zk-index-last-search-terms nil))
 
 (defun zk-index--current-id-list (buf-name)
-  "Return list of IDs for current index, as filepaths."
+  "Return list of IDs for index in BUF-NAME, as filepaths."
   (let (ids)
     (with-current-buffer (or buf-name
                              zk-index-buffer-name)
