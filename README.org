@@ -588,6 +588,7 @@ This also adds =zk-index-send-to-deskop= to =zk-id-map= and =zk-file-map=, to
 facilitate sending files to desktop from the minibuffer or via =embark-act=
 in the zk-index buffer.
 
+Finally, calling =embark-export= on zk-files in the minibuffer will open a *new* ZK-Index buffer listing those files.
 
 * Comparable Zettelkasten(-like) Implementations 
 
