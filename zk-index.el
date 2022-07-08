@@ -350,15 +350,34 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index--insert (candidates)
   "Insert CANDIDATES into ZK-Index."
   (dolist (file candidates)
-    (insert-text-button (concat zk-index-prefix
-                                file)
-                        'type 'zk-index
-                        'action 'zk-index-button-action
-                        'help-echo 'zk-index-help-echo)
-    (unless (eq (length candidates)
-                (count-lines 1 (point)))
-      (newline)))
+    (insert (concat zk-index-prefix file "\n")))
+  (goto-char (point-min))
+  (zk-index-make-buttons)
   (message "Notes: %s" (length candidates)))
+
+(defun zk-index-make-buttons ()
+  "Make buttons in ZK-Index."
+  (interactive)
+  (let ((inhibit-read-only t)
+        (ids (zk--id-list)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward zk-id-regexp nil t)
+        (let* ((beg (line-beginning-position))
+               (end (line-end-position))
+               (id (match-string-no-properties 1)))
+          (when (member id ids)
+            (beginning-of-line)
+            (make-text-button beg end
+                              'type 'zk-index
+                              'action 'zk-index-button-action
+                              'help-echo 'zk-index-help-echo)
+            (when zk-index-invisible-ids
+              (beginning-of-line)
+              (re-search-forward id)
+              (replace-match
+               (propertize id 'invisible t))
+              (goto-char (match-end 0)))))))))
 
 ;;;; Utilities
 
