@@ -351,35 +351,40 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index--insert (candidates)
   "Insert CANDIDATES into ZK-Index."
   (dolist (file candidates)
-    (string-match zk-id-regexp file)
-    (let ((id (match-string 0 file)))
-      (insert-text-button (concat zk-index-prefix
-                                  file)
-                          'type 'zk-index
-                          'action
-                          (lambda (_)
-                            (let* ((file
-                                    (zk--parse-id 'file-path
-                                                  id))
-                                   (buffer
-                                    (find-file-noselect file)))
-                              (if (one-window-p)
-                                  (pop-to-buffer buffer
-                                                 (display-buffer-in-direction
-                                                  buffer
-                                                  '((direction . top)
-                                                    (window-height . 0.6))))
-                                (find-file-other-window file))))
-                          'help-echo (lambda (_win _obj _pos)
-                                       (format
-                                        "%s"
-                                        (zk--parse-id
-                                         'title
-                                         id)))))
+    (insert-text-button (concat zk-index-prefix
+                                file)
+                        'type 'zk-index
+                        'action 'zk-index-button-action
+                        'help-echo 'zk-index-help-echo)
     (unless (eq (length candidates)
                 (count-lines 1 (point)))
       (newline)))
   (message "Notes: %s" (length candidates)))
+
+;;;; Utilities
+
+(defun zk-index-button-action (_)
+  "Action taken when `zk-index' button is pressed."
+  (let* ((id (zk-index--button-at-point-p))
+        (file (zk--parse-id 'file-path id))
+        (buffer
+         (find-file-noselect file)))
+    (if (one-window-p)
+        (pop-to-buffer buffer
+                       (display-buffer-in-direction
+                        buffer
+                        '((direction . top)
+                          (window-height . 0.6))))
+      (find-file-other-window file))))
+
+(defun zk-index-help-echo (win _obj pos)
+  "Generate help-echo zk-index button in WIN at POS."
+  (with-selected-window win
+    (let ((id (save-excursion
+                (goto-char pos)
+                (re-search-forward zk-id-regexp (line-end-position) t)
+                (match-string-no-properties 0))))
+      (format "%s" (zk--parse-id 'title id)))))
 
 (defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed in buffer BUF-NAME."
@@ -839,12 +844,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                                           (find-file-other-window
                                            (zk--parse-id 'file-path
                                                          id)))
-                                'help-echo (lambda (_win _obj _pos)
-                                             (format
-                                              "%s"
-                                              (zk--parse-id
-                                               'title
-                                               id))))
+                                'help-echo 'zk-index-help-echo)
               (when zk-index-invisible-ids
                 (beginning-of-line)
                 ;; find zk-links and plain zk-ids
