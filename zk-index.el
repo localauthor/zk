@@ -812,58 +812,63 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
   (when (and (string-match-p zk-index-desktop-basename (buffer-name))
              (file-in-directory-p default-directory zk-index-desktop-directory))
-    (let ((ids (zk--id-list))
-          (zk-alist (zk--alist))
-          (inhibit-read-only t))
+    (let ((inhibit-read-only t))
       (save-excursion
+        ;; replace titles
+        (goto-char (point-min))
+        (let ((ids (zk--id-list))
+              (zk-alist (zk--alist)))
+          (while (re-search-forward zk-id-regexp nil t)
+            (let* ((beg (line-beginning-position))
+                   (end (line-end-position))
+                   (id  (progn
+                          (save-match-data
+                            (beginning-of-line)
+                            (when (re-search-forward "\\[\\[" end t)
+                              (replace-match ""))
+                            (when (re-search-forward "]]" end t)
+                              (replace-match "")))
+                          (match-string-no-properties 1)))
+                   (title (buffer-substring-no-properties beg (match-beginning 0)))
+                   (new-title (concat zk-index-desktop-prefix
+                                      (zk--parse-id 'title id zk-alist) " ")))
+              (when (member id ids)
+                (beginning-of-line)
+                (unless (string= title new-title)
+                  (progn
+                    (search-forward title end)
+                    (replace-match new-title)))))
+            (goto-char (match-end 0))))
+        ;; make buttons
         (goto-char (point-min))
         (while (re-search-forward zk-id-regexp nil t)
           (let* ((beg (line-beginning-position))
                  (end (line-end-position))
-                 (id  (progn
-                        (save-match-data
-                          (beginning-of-line)
-                          (when (re-search-forward "\\[\\[" end t)
-                            (replace-match ""))
-                          (when (re-search-forward "]]" end t)
-                            (replace-match "")))
-                        (match-string-no-properties 1)))
-                 (title (buffer-substring-no-properties beg (match-beginning 0)))
-                 (new-title (concat zk-index-desktop-prefix
-                                    (zk--parse-id 'title id zk-alist) " ")))
-            (when (member id ids)
+                 (id (match-string-no-properties 1)))
+            (make-text-button beg end 'type 'zk-index-desktop
+                              'keymap zk-index-desktop-button-map
+                              'action (lambda (_)
+                                        (find-file-other-window
+                                         (zk--parse-id 'file-path
+                                                       id)))
+                              'help-echo 'zk-index-help-echo)
+            (when zk-index-invisible-ids
               (beginning-of-line)
-              (unless (string= title new-title)
+              ;; find zk-links and plain zk-ids
+              (if (re-search-forward zk-link-regexp (line-end-position) t)
+                  (replace-match
+                   (propertize (match-string 0) 'invisible t) nil t)
                 (progn
-                  (search-forward title end)
-                  (replace-match new-title)
-                  (setq end (line-end-position))))
-              (make-text-button beg end 'type 'zk-index-desktop
-                                'keymap zk-index-desktop-button-map
-                                'action (lambda (_)
-                                          (find-file-other-window
-                                           (zk--parse-id 'file-path
-                                                         id)))
-                                'help-echo 'zk-index-help-echo)
-              (when zk-index-invisible-ids
-                (beginning-of-line)
-                ;; find zk-links and plain zk-ids
-                (if (re-search-forward zk-link-regexp (line-end-position) t)
-                    (replace-match
-                     (propertize (match-string 0) 'invisible t) nil t)
-                  (progn
-                    (re-search-forward id)
-                    (replace-match
-                     (propertize id
-                                 'invisible t
-                                 'read-only t
-                                 'front-sticky t
-                                 'rear-sticky t)))))
-              (add-text-properties beg (+ beg 1)
-                                   '(front-sticky nil))
-              (goto-char (match-end 0)))))))))
-
-
+                  (re-search-forward id)
+                  (replace-match
+                   (propertize id
+                               'invisible t
+                               'read-only t
+                               'front-sticky t
+                               'rear-sticky t)))))
+            (add-text-properties beg (+ beg 1)
+                                 '(front-sticky nil))
+            (goto-char (match-end 0))))))))
 
 ;;;###autoload
 (defun zk-index-send-to-desktop (&optional files)
