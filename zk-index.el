@@ -143,7 +143,6 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 (define-derived-mode zk-index-mode nil "ZK-Index"
   "Mode for `zk-index'.
 \\{zk-index-mode-map}"
-  :interactive nil
   (setq mode-name "ZK-Index")
   (setq zk-index-mode-line-orig mode-line-misc-info)
   (read-only-mode)
