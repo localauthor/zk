@@ -77,6 +77,14 @@
   "Hide cursor in `zk-index-view-mode'."
   :type 'boolean)
 
+(defcustom zk-index-button-display-function 'zk-index-button-display-action
+  "Function called when buttons pressed in ZK-Index and ZK-Desktop.
+The function is called by `zk-index-button-action'. A custom
+function must take two arguments, FILE and BUFFER respectively.
+See the default function `zk-index-button-display-action' for an
+example."
+  :type 'function)
+
 (defcustom zk-index-desktop-directory nil
   "Directory for saved ZK-Desktops."
   :type 'directory)
@@ -381,12 +389,20 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 ;;;; Utilities
 
-(defun zk-index-button-action (_)
-  "Action taken when `zk-index' button is pressed."
-  (let* ((id (zk-index--button-at-point-p))
-        (file (zk--parse-id 'file-path id))
-        (buffer
-         (find-file-noselect file)))
+(defun zk-index-button-display-action (file buffer)
+  "Function to display FILE or BUFFER on button press in Index and Desktop."
+  (if (file-in-directory-p zk-index-desktop-directory
+                           default-directory)
+      ;; display action for ZK-Desktop
+      (progn
+        (if (one-window-p)
+            (pop-to-buffer buffer
+                           (display-buffer-in-direction
+                            buffer
+                            '((direction . bottom)
+                              (window-height . 0.5))))
+          (find-file-other-window file)))
+    ;; display action for ZK-Index
     (if (one-window-p)
         (pop-to-buffer buffer
                        (display-buffer-in-direction
@@ -394,6 +410,14 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
                         '((direction . top)
                           (window-height . 0.6))))
       (find-file-other-window file))))
+
+(defun zk-index-button-action (_)
+  "Action taken when `zk-index' button is pressed."
+  (let* ((id (zk-index--button-at-point-p))
+         (file (zk--parse-id 'file-path id))
+         (buffer
+          (find-file-noselect file)))
+    (funcall zk-index-button-display-function file buffer)))
 
 (defun zk-index-help-echo (win _obj pos)
   "Generate help-echo zk-index button in WIN at POS."
@@ -865,10 +889,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                  (id (match-string-no-properties 1)))
             (make-text-button beg end 'type 'zk-index-desktop
                               'keymap zk-index-desktop-button-map
-                              'action (lambda (_)
-                                        (find-file-other-window
-                                         (zk--parse-id 'file-path
-                                                       id)))
+                              'action 'zk-index-button-action
                               'help-echo 'zk-index-help-echo)
             (when zk-index-invisible-ids
               (beginning-of-line)
