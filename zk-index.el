@@ -293,21 +293,23 @@ FILES must be a list of filepaths. If nil, all files in
                       zk-index-buffer-name))
         (list (or files
                   (zk--directory-files t))))
-    (unless (get-buffer buf-name)
-      (progn
-        (when zk-default-backlink
-          (unless (zk-file-p)
-            (zk-find-file-by-id zk-default-backlink)))
-        (generate-new-buffer buf-name)
-        (with-current-buffer buf-name
-          (zk-index--sort list format-fn sort-fn)
-          (zk-index-mode)
-          (setq truncate-lines t)
-          (goto-char (point-min)))))
-    (when files
-      (zk-index-refresh files format-fn sort-fn buf-name))
+    (if (not (get-buffer buf-name))
+        (progn
+          (when zk-default-backlink
+            (unless (zk-file-p)
+              (zk-find-file-by-id zk-default-backlink)))
+          (generate-new-buffer buf-name)
+          (with-current-buffer buf-name
+            (zk-index--sort list format-fn sort-fn)
+            (zk-index-mode)
+            (setq truncate-lines t)
+            (goto-char (point-min)))
+          (pop-to-buffer buf-name
+                         '(display-buffer-at-bottom)))
+      (when files
+        (zk-index-refresh files format-fn sort-fn buf-name))
       (pop-to-buffer buf-name
-                     '(display-buffer-at-bottom))))
+                     '(display-buffer-at-bottom)))))
 
 (defun zk-index-refresh (&optional files format-fn sort-fn buf-name)
   "Refresh the index.
@@ -363,6 +365,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (zk-index-make-buttons)
   (message "Notes: %s" (length candidates)))
 
+;;;###autoload
 (defun zk-index-make-buttons ()
   "Make buttons in ZK-Index."
   (interactive)
