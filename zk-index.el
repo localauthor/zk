@@ -444,11 +444,13 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-search ()
   "Narrow index based on regexp search of note contents."
   (interactive)
-  (zk-index-refresh
-   (zk-index-query-files)
-   zk-index-last-format-function
-   zk-index-last-sort-function
-   (buffer-name)))
+  (if (eq major-mode 'zk-index-mode)
+      (zk-index-refresh
+       (zk-index-query-files)
+       zk-index-last-format-function
+       zk-index-last-sort-function
+       (buffer-name))
+    (user-error "Not in a ZK-Index")))
 
 ;;;; Index Focus
 ;; narrow index based on search of note titles (case sensitive)
@@ -457,11 +459,13 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-focus ()
   "Narrow index based on regexp search of note titles."
   (interactive)
-  (zk-index-refresh
-   (zk-index-query-files)
-   zk-index-last-format-function
-   zk-index-last-sort-function
-   (buffer-name)))
+  (if (eq major-mode 'zk-index-mode)
+      (zk-index-refresh
+       (zk-index-query-files)
+       zk-index-last-format-function
+       zk-index-last-sort-function
+       (buffer-name))
+    (user-error "Not in a ZK-Index")))
 
 ;;;; Low-level Query Functions
 
@@ -592,29 +596,38 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-sort-modified ()
   "Sort index by last modified."
   (interactive)
-  (zk-index-refresh (zk-index--current-file-list)
-                    zk-index-last-format-function
-                    #'zk-index--sort-modified
-                    (buffer-name))
-    (zk-index--set-mode-name " by modified"))
+  (if (eq major-mode 'zk-index-mode)
+      (progn
+        (zk-index-refresh (zk-index--current-file-list)
+                          zk-index-last-format-function
+                          #'zk-index--sort-modified
+                          (buffer-name))
+        (zk-index--set-mode-name " by modified"))
+    (user-error "Not in a ZK-Index")))
 
 (defun zk-index-sort-created ()
   "Sort index by date created."
   (interactive)
-  (zk-index-refresh (zk-index--current-file-list)
-                    zk-index-last-format-function
-                    #'zk-index--sort-created
-                    (buffer-name))
-    (zk-index--set-mode-name " by created"))
+  (if (eq major-mode 'zk-index-mode)
+      (progn
+        (zk-index-refresh (zk-index--current-file-list)
+                          zk-index-last-format-function
+                          #'zk-index--sort-created
+                          (buffer-name))
+        (zk-index--set-mode-name " by created"))
+    (user-error "Not in a ZK-Index")))
 
 (defun zk-index-sort-size ()
   "Sort index by size."
   (interactive)
-  (zk-index-refresh (zk-index--current-file-list)
-                    zk-index-last-format-function
-                    #'zk-index--sort-size
-                    (buffer-name))
-  (zk-index--set-mode-name " by size"))
+  (if (eq major-mode 'zk-index-mode)
+      (progn
+        (zk-index-refresh (zk-index--current-file-list)
+                          zk-index-last-format-function
+                          #'zk-index--sort-size
+                          (buffer-name))
+        (zk-index--set-mode-name " by size"))
+    (user-error "Not in a ZK-Index")))
 
 (defun zk-index--set-mode-name (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
