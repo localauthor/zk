@@ -1111,9 +1111,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
   "Kill line in `zk-index-desktop-mode'."
   (interactive)
   (let ((inhibit-read-only t))
-    (if (save-excursion
-          (beginning-of-line)
-          (looking-at-p "[[:space:]]*$"))
+    (if (not (zk-index--button-at-point-p))
         (kill-line)
       (kill-region (line-beginning-position)
                    (line-end-position)))))
