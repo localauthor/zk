@@ -25,8 +25,12 @@
 
 ;;; Commentary:
 
-;; This package provides integration between citar and zk, allowing  To use,
-;; arrange for the package to be loaded:
+;; This package provides integration between zk and Citar
+;; <https://github.com/emacs-citar/citar>, allowing zk notes with
+;; bibliographic citekeys in their titles to be registered as notes in the
+;; Citar interface.
+
+;; To use, arrange for the package to be loaded:
 
 ;; (with-eval-after-load 'citar
 ;;   (with-eval-after-load 'zk
