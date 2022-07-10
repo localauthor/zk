@@ -167,6 +167,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
     (define-key map (kbd "C-<down>") #'zk-index-move-line-down)
     (define-key map (kbd "C-k") #'zk-index-desktop-kill-line)
     (define-key map (kbd "C-d") #'zk-index-desktop-delete-char)
+    (define-key map (kbd "DEL") #'zk-index-desktop-delete-backward-char)
     (define-key map (kbd "C-w") #'zk-index-desktop-kill-region)
     (define-key map (kbd "C-y") #'zk-index-desktop-yank)
     ;; (define-key map (kbd "I") #'zk-index-switch-to-index)
@@ -1054,42 +1055,57 @@ With prefix-argument, raise ZK-Desktop in other frame."
     (transpose-lines 1)
     (forward-line -2)))
 
+(defun zk-index-desktop-delete-region-maybe ()
+  "Maybe delete region in `zk-index-desktop-mode'."
+  (cond ((and (not (use-region-p))
+              (zk-index--button-at-point-p))
+         (delete-region (line-beginning-position)
+                        (line-end-position)))
+        ((and (use-region-p)
+              (zk-index--button-at-point-p (region-beginning))
+              (not (zk-index--button-at-point-p (region-end))))
+         (delete-region (save-excursion
+                          (goto-char (region-beginning))
+                          (line-beginning-position))
+                        (region-end))
+         t)
+        ((and (use-region-p)
+              (not (zk-index--button-at-point-p (region-beginning)))
+              (zk-index--button-at-point-p (region-end)))
+         (delete-region (region-beginning)
+                        (save-excursion
+                          (goto-char (region-end))
+                          (line-end-position)))
+         t)
+        ((and (use-region-p)
+              (zk-index--button-at-point-p (region-beginning))
+              (zk-index--button-at-point-p (region-end)))
+         (delete-region
+          (save-excursion
+            (goto-char (region-beginning))
+            (line-beginning-position))
+          (save-excursion
+            (goto-char (region-end))
+            (line-end-position)))
+         t)
+        ((use-region-p)
+         (delete-region (region-beginning)
+                        (region-end))
+         t)))
+
 (defun zk-index-desktop-delete-char ()
   "Wrapper around `delete-char' for `zk-index-desktop-mode'."
   (interactive)
   (let ((inhibit-read-only t))
-    (cond ((and (not (use-region-p))
-                (zk-index--button-at-point-p))
-           (delete-region (line-beginning-position)
-                          (line-end-position)))
-          ((and (use-region-p)
-                (zk-index--button-at-point-p (region-beginning))
-                (not (zk-index--button-at-point-p (region-end))))
-           (delete-region (save-excursion
-                            (goto-char (region-beginning))
-                            (line-beginning-position))
-                          (region-end)))
-          ((and (use-region-p)
-                (not (zk-index--button-at-point-p (region-beginning)))
-                (zk-index--button-at-point-p (region-end)))
-           (delete-region (region-beginning)
-                          (save-excursion
-                            (goto-char (region-end))
-                            (line-end-position))))
-          ((and (use-region-p)
-                (zk-index--button-at-point-p (region-beginning))
-                (zk-index--button-at-point-p (region-end)))
-           (delete-region
-            (save-excursion
-              (goto-char (region-beginning))
-              (line-beginning-position))
-            (save-excursion
-              (goto-char (region-end))
-              (line-end-position))))
-          ((use-region-p)
-           (delete-region (region-beginning)
-                          (region-end)))
-          (t (funcall #'delete-char (or current-prefix-arg 1))))))
+    (unless (zk-index-desktop-delete-region-maybe)
+      (funcall #'delete-char (or current-prefix-arg 1)))))
+
+(defun zk-index-desktop-delete-backward-char ()
+  "Wrapper around `delete-backward-char' for `zk-index-desktop-mode'."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (unless (zk-index-desktop-delete-region-maybe)
+      (funcall #'delete-char (or current-prefix-arg -1)))))
 
 (defun zk-index-desktop-kill-line ()
   "Kill line in `zk-index-desktop-mode'."
