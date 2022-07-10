@@ -40,20 +40,14 @@
 ;; the citekeys in the title of your notes.
 
 ;; You can also customize the template for titling new notes, with the
-;; variable `zk-citar-title-template'.
+;; variable `zk-citar-title-template'. See the variable `citar-templates' for
+;; examples.
 
 ;;; Code:
 
 (require 'zk)
 (require 'citar)
 
-;;;; Register citar-note-source
-
-(citar-register-notes-source 'zk '(:name "zk"
-                                   :category zk-file
-                                   :hasnote zk-citar-file-has-notes
-                                   :action zk-citar-open-note
-                                   :items zk-citar--get-note-files))
 
 ;;;; Custom variables
 
@@ -72,9 +66,18 @@
 Must include \"${=key=}\"."
   :type 'string)
 
-;;;; hasnote
 
-(defun zk-citar-file-has-notes (&optional _entries)
+;;;; items
+
+(defun zk-citar--get-note-files (keys)
+  "Return list of notes associated with KEYS."
+  (let ((notehash (zk-citar--get-notes-hash keys)))
+    (flatten-list (map-values notehash))))
+
+
+;;;; hasitems
+
+(defun zk-citar--file-has-notes (&optional _entries)
   "Return predicate testing whether cite key has associated notes."
   (let ((files (zk-citar--get-notes-hash)))
     (lambda (key)
@@ -91,28 +94,28 @@ Must include \"${=key=}\"."
                             (match-string 0 file)))))
           (push file (gethash key files)))))))
 
-;;;; action
 
-(defun zk-citar-open-note (key entry)
-  "Open a note file from KEY and ENTRY."
-  (let ((file (car (zk-citar--get-note-files (list key)))))
-    (if file
-        (funcall 'find-file file)
-      (when (y-or-n-p "No note associated - create one?")
-        (let* ((title
-                (subst-char-in-string ?: ?-
-                                      (citar-format--entry
-                                       zk-citar-title-template
-                                       entry))))
-          (zk-new-note title))))))
+;;;; create
 
-;;;; items
+(defun zk-citar--create-note (key entry)
+  "Create a note file from KEY and ENTRY."
+  (when (y-or-n-p "No note associated - create one?")
+    (let* ((title
+            (subst-char-in-string ?: ?-
+                                  (citar-format--entry
+                                   zk-citar-title-template
+                                   entry))))
+      (zk-new-note title))))
 
-(defun zk-citar--get-note-files (keys)
-  "Return list of notes associated with KEYS."
-  (let ((notehash (zk-citar--get-notes-hash keys)))
-    (flatten-list (map-values notehash))))
 
+;;;; Register citar-note-source
+
+(citar-register-notes-source 'zk '(:name "zk"
+                                   :category zk-file
+                                   :items zk-citar--get-note-files
+                                   :hasitems zk-citar--file-has-notes
+                                   :open find-file
+                                   :create zk-citar--create-note))
 
 (provide 'zk-citar)
 ;;; zk-citar.el ends here
