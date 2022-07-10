@@ -97,7 +97,7 @@ Must include \"${=key=}\"."
 
 ;;;; create
 
-(defun zk-citar--create-note (key entry)
+(defun zk-citar--create-note (_key entry)
   "Create a note file from KEY and ENTRY."
   (when (y-or-n-p "No note associated - create one?")
     (let* ((title
