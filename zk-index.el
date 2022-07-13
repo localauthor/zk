@@ -176,12 +176,11 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
   "Minor mode for `zk-index-desktop'."
   :init-value nil
   :keymap zk-index-desktop-map
-  (when zk-index-desktop-mode
-    (zk-index-desktop-make-buttons)
-    (when-let ((mode zk-index-desktop-major-mode))
-      (funcall mode)
-      (use-local-map zk-index-desktop-map))
-    (setq truncate-lines t)))
+  (zk-index-desktop-make-buttons)
+  (when-let ((mode zk-index-desktop-major-mode))
+    (funcall mode))
+  (setq truncate-lines t)
+  (setq-local zk-index-desktop-mode t))
 
 (defvar zk-index-desktop-button-map
   (let ((map (make-sparse-keymap)))
