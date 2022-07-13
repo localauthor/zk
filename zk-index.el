@@ -888,42 +888,53 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                               (replace-match "")))
                           (match-string-no-properties 1)))
                    (title (buffer-substring-no-properties beg (match-beginning 0)))
-                   (new-title (concat zk-index-desktop-prefix
-                                      (zk--parse-id 'title id zk-alist) " ")))
-              (when (member id ids)
-                (beginning-of-line)
-                (unless (string= title new-title)
-                  (progn
-                    (search-forward title end)
-                    (replace-match new-title)))))
-            (goto-char (match-end 0))))
+                   (new-title (when (member id ids)
+                                (concat zk-index-desktop-prefix
+                                        (zk--parse-id 'title id zk-alist) " "))))
+              (beginning-of-line)
+              (if new-title
+                  (unless (string= title new-title)
+                    (progn
+                      (search-forward title end)
+                      (replace-match new-title)))
+                (progn
+                  (search-forward title end)
+                  (replace-match (propertize title 'face 'error))))
+              (end-of-line)))
         ;; make buttons
         (goto-char (point-min))
         (while (re-search-forward zk-id-regexp nil t)
           (let* ((beg (line-beginning-position))
                  (end (line-end-position))
                  (id (match-string-no-properties 1)))
-            (make-text-button beg end 'type 'zk-index-desktop
-                              'keymap zk-index-desktop-button-map
-                              'action 'zk-index-button-action
-                              'help-echo 'zk-index-help-echo)
-            (when zk-index-invisible-ids
-              (beginning-of-line)
-              ;; find zk-links and plain zk-ids
-              (if (re-search-forward zk-link-regexp (line-end-position) t)
-                  (replace-match
-                   (propertize (match-string 0) 'invisible t) nil t)
+            (if (member id ids)
                 (progn
-                  (re-search-forward id)
-                  (replace-match
-                   (propertize id
-                               'invisible t
-                               'read-only t
-                               'front-sticky t
-                               'rear-sticky t)))))
-            (add-text-properties beg (+ beg 1)
-                                 '(front-sticky nil))
-            (goto-char (match-end 0))))))))
+                  (make-text-button beg end 'type 'zk-index-desktop
+                                    'keymap zk-index-desktop-button-map
+                                    'action 'zk-index-button-action
+                                    'help-echo 'zk-index-help-echo)
+                  (when zk-index-invisible-ids
+                    (beginning-of-line)
+                    ;; find zk-links and plain zk-ids
+                    (if (re-search-forward zk-link-regexp (line-end-position) t)
+                        (replace-match
+                         (propertize (match-string 0) 'invisible t) nil t)
+                      (progn
+                        (re-search-forward id)
+                        (replace-match
+                         (propertize id
+                                     'invisible t
+                                     'read-only t
+                                     'front-sticky t
+                                     'rear-sticky t)))))
+                  (add-text-properties beg (+ beg 1)
+                                       '(front-sticky nil)))
+              ;;(put-text-property beg end 'font-lock-face 'error)
+              (end-of-line)
+              (overlay-put (make-overlay (point) (point))
+                           'before-string
+                           (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
+          (end-of-line)))))))
 
 ;;;###autoload
 (defun zk-index-send-to-desktop (&optional files)
