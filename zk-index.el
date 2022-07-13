@@ -365,6 +365,11 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (goto-char (point-min))
   (zk-index-make-buttons)
   (message "Notes: %s" (length candidates)))
+  (when (eq major-mode 'zk-index-mode)
+    (dolist (file candidates)
+      (insert (concat zk-index-prefix file "\n")))
+    (goto-char (point-min))
+    (zk-index-make-buttons)
 
 ;;;###autoload
 (defun zk-index-make-buttons ()
