@@ -326,13 +326,13 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
     (with-current-buffer buf-name
       (setq line (line-number-at-pos))
       (erase-buffer)
+      (zk-index--reset-mode-name)
       (zk-index--sort files format-fn sort-fn)
       (goto-char (point-min))
       (setq truncate-lines t)
       (unless (zk-index-narrowed-p buf-name)
         (progn
           (zk-index--reset-mode-line)
-          (zk-index--reset-mode-name)
           (forward-line line))))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
@@ -358,16 +358,12 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index--insert (candidates)
   "Insert CANDIDATES into ZK-Index."
-  (dolist (file candidates)
-    (insert (concat zk-index-prefix file "\n")))
-  (goto-char (point-min))
-  (zk-index-make-buttons)
-  (message "Notes: %s" (length candidates)))
   (when (eq major-mode 'zk-index-mode)
     (dolist (file candidates)
       (insert (concat zk-index-prefix file "\n")))
     (goto-char (point-min))
     (zk-index-make-buttons)
+    (zk-index--set-mode-name (format " [%s]" (length candidates)))))
 
 ;;;###autoload
 (defun zk-index-make-buttons ()
@@ -639,7 +635,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index--set-mode-name (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
   (when (eq major-mode 'zk-index-mode)
-    (setq mode-name (concat "ZK-Index" string))))
+    (setq mode-name (concat mode-name string))))
 
 (defun zk-index--reset-mode-name ()
   "Reset `mode-name' in `zk-index-mode'."
