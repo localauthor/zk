@@ -120,7 +120,8 @@ Must include \"${=key=}\"."
                                    :items zk-citar--get-note-files
                                    :hasitems zk-citar--file-has-notes
                                    :open find-file
-                                   :create zk-citar--create-note))
+                                   :create zk-citar--create-note
+                                   :transform file-name-nondirectory))
 
 (provide 'zk-citar)
 ;;; zk-citar.el ends here
