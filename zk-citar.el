@@ -89,8 +89,9 @@ Must include \"${=key=}\"."
 
 (defun zk-citar--get-notes-hash (&optional keys)
   "Return hash-table with KEYS with file notes."
-  (let ((files (make-hash-table :test 'equal))
-        (filematch (or (car keys) zk-citar-citekey-regexp)))
+  (let* ((files (make-hash-table :test 'equal))
+        (key-string  (string-join keys "\\|"))
+        (filematch (or key-string zk-citar-citekey-regexp)))
     (prog1 files
       (dolist (file (zk--directory-files t filematch))
         (let ((key (or (car keys)
