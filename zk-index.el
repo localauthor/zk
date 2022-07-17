@@ -287,7 +287,8 @@ FILES must be a list of filepaths. If nil, all files in
   (interactive)
   (setq zk-index-last-format-function format-fn)
   (setq zk-index-last-sort-function sort-fn)
-  (let ((inhibit-message t)
+  (let ((inhibit-message nil)
+        (inhibit-read-only t)
         (buf-name (or buf-name
                       zk-index-buffer-name))
         (list (or files
@@ -299,8 +300,8 @@ FILES must be a list of filepaths. If nil, all files in
               (zk-find-file-by-id zk-default-backlink)))
           (generate-new-buffer buf-name)
           (with-current-buffer buf-name
-            (zk-index--sort list format-fn sort-fn)
             (zk-index-mode)
+            (zk-index--sort list format-fn sort-fn)
             (setq truncate-lines t)
             (goto-char (point-min)))
           (pop-to-buffer buf-name
