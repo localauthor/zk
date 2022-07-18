@@ -927,7 +927,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                                      'invisible t
                                      'read-only t
                                      'front-sticky t
-                                     'rear-sticky t)))))
+                                     'rear-nonsticky t)))))
                   (add-text-properties beg (+ beg 1)
                                        '(front-sticky nil)))
               ;;(put-text-property beg end 'font-lock-face 'error)
@@ -1107,16 +1107,24 @@ With prefix-argument, raise ZK-Desktop in other frame."
 (defun zk-index-desktop-delete-char ()
   "Wrapper around `delete-char' for `zk-index-desktop-mode'."
   (interactive)
-  (let ((inhibit-read-only t))
-    (unless (zk-index-desktop-delete-region-maybe)
-      (funcall #'delete-char (or current-prefix-arg 1)))))
+  (unless (and (looking-back zk-id-regexp)
+               (save-excursion
+                 (beginning-of-line)
+                 (zk-index--button-at-point-p)))
+    (let ((inhibit-read-only t))
+      (unless (zk-index-desktop-delete-region-maybe)
+        (funcall #'delete-char (or current-prefix-arg 1))))))
 
 (defun zk-index-desktop-delete-backward-char ()
   "Wrapper around `delete-backward-char' for `zk-index-desktop-mode'."
   (interactive)
-  (let ((inhibit-read-only t))
-    (unless (zk-index-desktop-delete-region-maybe)
-      (funcall #'delete-char (or current-prefix-arg -1)))))
+  (unless (and (looking-back zk-id-regexp)
+               (save-excursion
+                 (beginning-of-line)
+                 (zk-index--button-at-point-p)))
+    (let ((inhibit-read-only t))
+      (unless (zk-index-desktop-delete-region-maybe)
+        (funcall #'delete-char (or current-prefix-arg -1))))))
 
 (defun zk-index-desktop-kill-line ()
   "Kill line in `zk-index-desktop-mode'."
