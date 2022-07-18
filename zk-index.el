@@ -712,19 +712,16 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
    zk-index-last-sort-function))
 
 (defun zk-index--button-at-point-p (&optional pos)
-  "Return zk-id when `zk-index' or `zk-desktop' button at point.
+  "Return zk-id when `zk-index' button is at point.
 Takes an option POS position argument."
-  (save-excursion
-    (re-search-backward zk-id-regexp (line-beginning-position) t)
-    (let ((button (or pos
-                      (button-at (point))
-                      (button-at (- (point) 1)))))
-      (when (and button
-                 (or (eq (button-type button) 'zk-index)
-                     (eq (button-type button) 'zk-index-desktop)))
-        (save-excursion
-          (re-search-forward zk-id-regexp)
-          (match-string-no-properties 1))))))
+  (let ((button (or pos
+                    (button-at (point)))))
+    (when (and button
+               (or (eq (button-type button) 'zk-index)
+                   (eq (button-type button) 'zk-index-desktop)))
+      (save-excursion
+        (re-search-forward zk-id-regexp)
+        (match-string-no-properties 1)))))
 
 (defun zk-index-insert-link (&optional id)
   "Insert zk-link in `other-window' for button ID at point."
@@ -933,6 +930,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                                      'rear-sticky t)))))
                   (add-text-properties beg (+ beg 1)
                                        '(front-sticky nil)))
+              ;;(put-text-property beg end 'font-lock-face 'error)
               (end-of-line)
               (overlay-put (make-overlay (point) (point))
                            'before-string
@@ -1073,8 +1071,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (cond ((and (not (use-region-p))
               (zk-index--button-at-point-p))
          (delete-region (line-beginning-position)
-                        (line-end-position))
-         t)
+                        (line-end-position)))
         ((and (use-region-p)
               (zk-index--button-at-point-p (region-beginning))
               (not (zk-index--button-at-point-p (region-end))))
