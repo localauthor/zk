@@ -963,7 +963,7 @@ at point."
                  (mapconcat
                   #'identity
                   (funcall zk-index-format-function files) "\n")))
-          ((string= (buffer-name) zk-index-buffer-name) ;; FIX-ME
+          ((eq major-mode 'zk-index-mode)
            (setq items (if (use-region-p)
                            (buffer-substring
                             (save-excursion
@@ -1004,7 +1004,7 @@ at point."
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (zk-index-desktop-mode))
-    (if (string= (buffer-name) zk-index-buffer-name) ;; FIX-ME
+    (if (eq major-mode 'zk-index-mode)
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
 
