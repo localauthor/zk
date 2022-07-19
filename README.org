@@ -53,7 +53,8 @@ understandable, and eminently forkable Zettelkasten implementation for Emacs.
 Fork away, and make it your own.
 
 Video demonstrations:
-- [[https://www.youtube.com/watch?v=BixlUK4QTNk][zk (core functionality)]]
+- [[https://www.youtube.com/watch?v=BixlUK4QTNk][zk - Setup and Main Features]]
+- [[https://www.youtube.com/watch?v=oEgdJlojlU8][zk - Getting Started - Hydra and Inbox Note]]
 - [[https://www.youtube.com/watch?v=7qNT87dphiA][zk-index and zk-desktop]]
 - [[https://www.youtube.com/watch?v=O6iSV4pQQ5g][zk-luhmann]]
 
