@@ -1107,7 +1107,8 @@ With prefix-argument, raise ZK-Desktop in other frame."
 (defun zk-index-desktop-delete-char ()
   "Wrapper around `delete-char' for `zk-index-desktop-mode'."
   (interactive)
-  (unless (and (looking-back zk-id-regexp)
+  (unless (and (looking-back zk-id-regexp
+                             (line-beginning-position))
                (save-excursion
                  (beginning-of-line)
                  (zk-index--button-at-point-p)))
@@ -1118,7 +1119,8 @@ With prefix-argument, raise ZK-Desktop in other frame."
 (defun zk-index-desktop-delete-backward-char ()
   "Wrapper around `delete-backward-char' for `zk-index-desktop-mode'."
   (interactive)
-  (unless (and (looking-back zk-id-regexp)
+  (unless (and (looking-back zk-id-regexp
+                             (line-beginning-position))
                (save-excursion
                  (beginning-of-line)
                  (zk-index--button-at-point-p)))
