@@ -863,18 +863,16 @@ brackets \"[[\" initiates completion."
   "Search for STRING using function set in `zk-search-function'.
 Defaults to `zk-grep.'"
   (interactive
-   (list (read-from-minibuffer "Search: "
-                               nil nil nil
-                               'zk-search-history)))
+   (list (read-string "Search: "
+                      nil 'zk-search-history)))
   (funcall zk-search-function string))
 
 (defun zk-grep (regexp)
   "Wrapper around `rgrep' to search for REGEXP in all notes.
 Opens search results in a grep buffer."
   (interactive
-   (list (read-from-minibuffer "zk-grep: "
-                               nil nil nil
-                               'zk-search-history)))
+   (list (read-string "zk-grep: "
+                      nil 'zk-search-history)))
   (grep-compute-defaults)
   (rgrep regexp (concat "*." zk-file-extension) zk-directory nil))
 
