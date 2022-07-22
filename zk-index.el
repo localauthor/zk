@@ -203,7 +203,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 (defvar zk-index-last-format-function nil)
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-desktop-current nil)
-(defvar zk-search-history nil)
+(defvar zk-search-history)
 
 (declare-function zk-file-p zk)
 (declare-function zk--grep-id-list zk)
