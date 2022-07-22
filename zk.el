@@ -213,7 +213,7 @@ will be replaced by its ID."
 
 (defvar zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
 
-(defvar zk-history nil)
+(defvar zk-file-history nil)
 
 ;;; Embark Integration
 
@@ -385,7 +385,7 @@ supplied. Can take a PROMPT argument."
              (group-function . zk--group-function)
              (category . zk-file))
          (complete-with-action action files string predicate)))
-     nil t nil 'zk-history)))
+     nil t nil 'zk-file-history)))
 
 (defun zk--group-function (file transform)
   "TRANSFORM completion candidate FILE to note title."
