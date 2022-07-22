@@ -93,9 +93,10 @@
   "Search 'zk-directory' with 'consult-grep'.
 With option for INITIAL input when called non-interactively."
   (interactive)
+  (let ((consult--grep-history zk-search-history))
   (if initial
       (consult-grep zk-directory (format "%s" initial))
-    (consult-grep zk-directory)))
+    (consult-grep zk-directory))))
 
 (defun zk-consult-grep-tag-search (tag)
   "Search for TAG in 'zk-directory' using 'consult-grep'.
