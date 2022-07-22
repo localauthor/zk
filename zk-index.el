@@ -203,7 +203,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 (defvar zk-index-last-format-function nil)
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-desktop-current nil)
-(defvar zk-index-query-history nil)
+(defvar zk-search-history nil)
 
 (declare-function zk-file-p zk)
 (declare-function zk--grep-id-list zk)
@@ -487,7 +487,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
                     "Focus: ")
                    ((eq command 'zk-index-search)
                     "Search: "))
-                  nil 'zk-index-query-history))
+                  nil 'zk-search-history))
          (query (cond
                  ((eq command 'zk-index-focus)
                   (zk--id-list string))
@@ -500,7 +500,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
                x))
            query))
          (files (zk--parse-id 'file-path (remq nil ids))))
-    (add-to-history 'zk-index-query-history string)
+    (add-to-history 'zk-search-history string)
     (when files
       (let ((mode-line
              (cond ((eq command 'zk-index-focus)
