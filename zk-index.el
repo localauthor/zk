@@ -1109,8 +1109,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (interactive)
   (unless (and (and (looking-back zk-id-regexp
                                   (line-beginning-position))
-                    (looking-at "$"
-                                (line-end-position)))
+                    (looking-at "$"))
                (save-excursion
                  (beginning-of-line)
                  (zk-index--button-at-point-p)))
