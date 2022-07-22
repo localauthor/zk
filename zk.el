@@ -662,7 +662,8 @@ title."
 (defun zk-find-file-by-full-text-search (str)
   "Find files containing regexp STR."
   (interactive
-   (list (read-string "Search string: ")))
+   (list (read-string "Search string: "
+                      nil 'zk-search-history)))
   (let ((files (zk--grep-file-list str)))
     (if files
         (find-file (funcall zk-select-file-function
