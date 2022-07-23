@@ -388,8 +388,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
               (beginning-of-line)
               (re-search-forward id)
               (replace-match
-               (propertize id 'invisible t))
-              (goto-char (match-end 0)))))))))
+               (propertize id 'invisible t)))
+              (goto-char (match-end 0))))))))
 
 ;;;; Utilities
 
