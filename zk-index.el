@@ -862,6 +862,9 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
     'read-only t
     'front-sticky t
     'rear-sticky t
+    'keymap zk-index-desktop-button-map
+    'action 'zk-index-button-action
+    'help-echo 'zk-index-help-echo
     'face 'zk-index-desktop-button
     'cursor-face 'highlight))
 
@@ -910,10 +913,7 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                  (id (match-string-no-properties 1)))
             (if (member id ids)
                 (progn
-                  (make-text-button beg end 'type 'zk-index-desktop
-                                    'keymap zk-index-desktop-button-map
-                                    'action 'zk-index-button-action
-                                    'help-echo 'zk-index-help-echo)
+                  (make-text-button beg end 'type 'zk-index-desktop)
                   (when zk-index-invisible-ids
                     (beginning-of-line)
                     ;; find zk-links and plain zk-ids
@@ -923,14 +923,17 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                       (progn
                         (re-search-forward id)
                         (replace-match
-                         (propertize id
-                                     'invisible t
-                                     'read-only t
-                                     'front-sticky t
-                                     'rear-nonsticky t)))))
+                          (propertize id
+                                      'read-only t
+                                      'front-sticky t
+                                      'rear-nonsticky t))
+                        ;; enable invisibility in org-mode
+                        (overlay-put
+                         (make-overlay (match-beginning 0) (match-end 0))
+                         'invisible t)
+                        )))
                   (add-text-properties beg (+ beg 1)
                                        '(front-sticky nil)))
-              ;;(put-text-property beg end 'font-lock-face 'error)
               (end-of-line)
               (overlay-put (make-overlay (point) (point))
                            'before-string
