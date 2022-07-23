@@ -179,7 +179,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
   (zk-index-desktop-make-buttons)
   (when-let ((mode zk-index-desktop-major-mode))
     (funcall mode))
-  (setq truncate-lines t)
+  ;;(setq truncate-lines t)
   (setq-local zk-index-desktop-mode t))
 
 (defvar zk-index-desktop-button-map
