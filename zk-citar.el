@@ -1,4 +1,4 @@
-;;; zk-citar.el --- Citar integration                -*- lexical-binding: t; -*-
+;;; zk-citar.el --- Citar integration for zk                -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022  Grant Rosson
 
@@ -7,7 +7,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
 ;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "27.1") (citar "1.0") (zk "0.4"))
+;; Package-Requires: ((emacs "27.1") (citar "0.9.7") (zk "0.4"))
 ;; Keywords: tools, extensions
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -36,12 +36,12 @@
 ;;   (with-eval-after-load 'zk
 ;;     (require 'zk-citar)))
 
-;; And set the following variable:
+;; Then set the following variable:
 
 ;; (setq citar-notes-source 'zk)
 
-;; Then set `zk-citar-citekey-regexp' to a regular expression that will match
-;; the citekeys in the title of your notes.
+;; And finally set `zk-citar-citekey-regexp' to a regular expression that will match
+;; the citekeys found in the title of your notes.
 
 ;; You can also customize the template for titling new notes, with the
 ;; variable `zk-citar-title-template'. See the variable `citar-templates' for
@@ -61,7 +61,7 @@
   :group 'files
   :prefix "zk-citar")
 
-(defcustom zk-citar-citekey-regexp "[a-z]+[0-9]\\{4\\}[a-z]?"
+(defcustom zk-citar-citekey-regexp nil
   "Regular expression to match citekeys in note file-names."
   :type 'string)
 
@@ -73,31 +73,26 @@ Must include \"${=key=}\"."
 
 ;;;; items
 
-(defun zk-citar--get-note-files (keys)
-  "Return list of notes associated with KEYS."
-  (let ((notehash (zk-citar--get-notes-hash keys)))
-    (flatten-list (map-values notehash))))
-
-
-;;;; hasitems
-
-(defun zk-citar--file-has-notes (&optional _entries)
-  "Return predicate testing whether cite key has associated notes."
-  (let ((files (zk-citar--get-notes-hash)))
-    (lambda (key)
-      (gethash key files))))
-
-(defun zk-citar--get-notes-hash (&optional keys)
+(defun zk-citar--get-notes (&optional keys)
   "Return hash-table with KEYS with file notes."
   (let* ((files (make-hash-table :test 'equal))
-        (key-string  (string-join keys "\\|"))
-        (filematch (or key-string zk-citar-citekey-regexp)))
+         (key-string (string-join keys "\\|"))
+         (filematch (or key-string zk-citar-citekey-regexp)))
     (prog1 files
       (dolist (file (zk--directory-files t filematch))
         (let ((key (or (car keys)
                        (and (string-match zk-citar-citekey-regexp file)
                             (match-string 0 file)))))
           (push file (gethash key files)))))))
+
+
+;;;; hasitems
+
+(defun zk-citar--has-notes (&optional _entries)
+  "Return predicate testing whether cite key has associated notes."
+  (let ((files (zk-citar--get-notes)))
+    (lambda (key)
+      (gethash key files))))
 
 
 ;;;; create
@@ -117,8 +112,8 @@ Must include \"${=key=}\"."
 
 (citar-register-notes-source 'zk '(:name "zk"
                                    :category zk-file
-                                   :items zk-citar--get-note-files
-                                   :hasitems zk-citar--file-has-notes
+                                   :items zk-citar--get-notes
+                                   :hasitems zk-citar--has-notes
                                    :open find-file
                                    :create zk-citar--create-note
                                    :transform file-name-nondirectory))
