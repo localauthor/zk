@@ -287,6 +287,7 @@ FILES must be a list of filepaths. If nil, all files in
               (zk-find-file-by-id zk-default-backlink)))
           (generate-new-buffer buf-name)
           (with-current-buffer buf-name
+            (setq default-directory (expand-file-name zk-directory))
             (zk-index-mode)
             (zk-index--sort list format-fn sort-fn)
             (setq truncate-lines t)
