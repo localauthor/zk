@@ -104,6 +104,17 @@ for example, the file-name will be in the form
 rendered with spaces."
   :type 'string)
 
+(defcustom zk-file-name-title-optional nil
+  "If non-nil, file names can consist of IDs only, like \"202012341234\".
+For things to work as expected, also need to set `zk--parse-file-function'
+so it can return the title for a given file."
+  :type 'boolean)
+
+(defcustom zk--parse-file-function #'zk--parse-file
+  "A function taking two arguments, TARGET and FILE, which returns either 'id
+or 'title (as specified by TARGET) for the given FILE."
+  :type 'function)
+
 (defcustom zk-enable-link-buttons t
   "When non-nil, valid zk-id links will be clickable buttons.
 Allows `zk-make-link-buttons' to be added to `find-file-hook', so
