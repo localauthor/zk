@@ -338,8 +338,8 @@ subdirectories of `zk-directory' (with the exception of those matching
                             dir))))))
               (if full
                   (mapcar #'expand-file-name all-files)
-                (mapcar #'(lambda (file)
-                            (file-relative-name file zk-directory))
+                (mapcar (lambda (file)
+                          (file-relative-name file zk-directory))
                         all-files)))))
          (files (remq nil (mapcar
                            (lambda (x)
