@@ -124,8 +124,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 ;;; ZK-Index Major Mode Settings
 
 (defvar zk-index-mode-line-orig nil
-  "Value of `mode-line-misc-info' at the start of the mode so we can reset to
-it when not using `mode-line-misc-info'.")
+  "Value of `mode-line-misc-info' at the start of mode.")
 
 (defvar zk-index-mode-map
   (let ((map (make-sparse-keymap)))
@@ -474,9 +473,10 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 ;;;; Low-level Query Functions
 
 (defvar zk-index-query-terms nil
-  "An ordered list of items in the form of (COMMAND . TERM), where COMMAND is
-'ZK-INDEX-FOCUS or 'ZK-INDEX-SEARCH, and TERM is the search string. More
-recent items are in the front.")
+  "Ordered list of current query terms.
+Takes form of (COMMAND . TERM), where COMMAND is 'ZK-INDEX-FOCUS
+or 'ZK-INDEX-SEARCH, and TERM is the query string. Recent
+items listed first.")
 
 (defun zk-index-query-files ()
   "Return narrowed list of notes, based on focus or search query."
@@ -510,8 +510,9 @@ recent items are in the front.")
         (error "No matches for \"%s\"" string))))
 
 (defun zk-index-query-mode-line (query-command string)
-  "Generate new mode line string after QUERY-COMMAND (either `zk-index-focus'
-or `zk-search-focus') narrowed the index with STRING"
+  "Generate new mode line after query.
+QUERY-COMMAND is either `zk-index-focus' or `zk-index-search',
+with query term STRING."
   (push (cons query-command string) zk-index-query-terms)
   ;; Sort the different terms into two lists
   (let (focused
@@ -538,11 +539,11 @@ or `zk-search-focus') narrowed the index with STRING"
                                 (split-string (symbol-name (car query)) "-")))
                               ": \""
                               (cdr query))))
-                ;; Put the last query type at the end
-                (sort (remq nil formatted)
-                      (lambda (a b)
-                        (not (equal (car a) query-command))))
-                "\" | ")
+                         ;; Put the last query type at the end
+                         (sort (remq nil formatted)
+                               (lambda (a _b)
+                                 (not (equal (car a) query-command))))
+                         "\" | ")
               "\"]"))))
 
 (defun zk-index--set-mode-line (string)
