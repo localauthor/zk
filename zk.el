@@ -5,7 +5,7 @@
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 4, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.4
+;; Version: 0.5
 ;; Homepage: https://github.com/localauthor/zk
 ;; Package-Requires: ((emacs "25.1"))
 
@@ -330,11 +330,11 @@ subdirectories of `zk-directory' (with the exception of those matching
           (if (not zk-directory-recursive)
               (directory-files zk-directory full regexp)
             (directory-files-recursively
-                    zk-directory regexp nil
-                    (lambda (dir)
-                      (not (string-match
-                            zk-directory-recursive-ignore-dir-regexp
-                            dir))))))
+             zk-directory regexp nil
+             (lambda (dir)
+               (not (string-match
+                     zk-directory-recursive-ignore-dir-regexp
+                     dir))))))
          (useful-files
           (remq nil (mapcar
                      (lambda (x)
