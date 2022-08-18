@@ -5,9 +5,9 @@
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 4, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.4
+;; Version: 0.5
 ;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "24.4"))
+;; Package-Requires: ((emacs "25.1"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -79,6 +79,16 @@
 
 (defcustom zk-directory nil
   "Main zk directory."
+  :type 'string)
+
+;; Borrowed from Deft by Jason R. Blevins <jblevins@xbeta.org>
+(defcustom zk-directory-recursive nil
+  "Recursively search for files in subdirectories of `zk-directory'."
+  :type 'boolean)
+
+(defcustom zk-directory-recursive-ignore-dir-regexp
+  "\\(?:\\.\\|\\.\\.\\)$"
+  "Regexp for subdirs to be ignored when ‘zk-directory-recursive’ is non-nil."
   :type 'string)
 
 (defcustom zk-file-extension nil
@@ -307,26 +317,39 @@ called in an internal loop."
   (match-string 0 buffer-file-name))
 
 (defun zk--directory-files (&optional full regexp)
-  "Return list of zk-files in `zk-directory' .
+  "Return list of zk-files in `zk-directory'.
 Excludes lockfiles, autosave files, and backup files. When FULL is
 non-nil, return full file-paths. If REGEXP is non-nil, it must be
-a regexp to replace the default, `zk-id-regexp'."
+a regexp to replace the default, `zk-id-regexp'.
+
+When `zk-directory-recursive' is non-nil, searches recursively in
+subdirectories of `zk-directory' (except those matching
+`zk-directory-recursive-ignore-dir-regexp') and returns full
+file-paths."
   (let* ((regexp (or regexp zk-id-regexp))
-         (list (directory-files zk-directory full regexp))
-         (files (remq nil (mapcar
-                           (lambda (x)
-                             (when
-                                 (and (string-match (concat "\\(?1:"
-                                                            zk-id-regexp
-                                                            "\\).\\(?2:.*?\\)\\."
-                                                            zk-file-extension
-                                                            ".*")
-                                                    x)
-                                      (not (string-match-p
-                                            "^[.]\\|[#|~]$"
-                                            (file-name-nondirectory x))))
-                               x))
-                           list))))
+         (list
+          (if (not zk-directory-recursive)
+              (directory-files zk-directory full regexp)
+            (directory-files-recursively
+             zk-directory regexp nil
+             (lambda (dir)
+               (not (string-match
+                     zk-directory-recursive-ignore-dir-regexp
+                     dir))))))
+         (files
+          (remq nil (mapcar
+                     (lambda (x)
+                       (when (and (string-match (concat "\\(?1:"
+                                                        zk-id-regexp
+                                                        "\\).\\(?2:.*?\\)\\."
+                                                        zk-file-extension
+                                                        ".*")
+                                                x)
+                                  (not (string-match-p
+                                        "^[.]\\|[#|~]$"
+                                        (file-name-nondirectory x))))
+                         x))
+                     list))))
     files))
 
 (defun zk--current-notes-list ()
