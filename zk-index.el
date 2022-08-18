@@ -198,6 +198,8 @@ it when not using `mode-line-misc-info'.")
 
 ;;; Declarations
 
+(defvar zk-index-last-sort-function nil)
+(defvar zk-index-last-format-function nil)
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-query-terms nil)
 (defvar zk-index-desktop-current nil)
