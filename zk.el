@@ -81,6 +81,15 @@
   "Main zk directory."
   :type 'string)
 
+;; Borrowed from Deft by Jason R. Blevins <jblevins@xbeta.org>
+(defcustom zk-directory-recursive nil
+  "Recursively search for files in subdirectories of `zk-directory'.")
+
+(defcustom zk-directory-recursive-ignore-dir-regexp
+  "\\(?:\\.\\|\\.\\.\\)$"
+  "Regular expression for subdirectories to be ignored while searching for
+files recursively, i.e. when ‘zk-directory-recursive’ is non-nil.")
+
 (defcustom zk-file-extension nil
   "The extension for zk files."
   :type 'string)
@@ -307,12 +316,30 @@ called in an internal loop."
   (match-string 0 buffer-file-name))
 
 (defun zk--directory-files (&optional full regexp)
-  "Return list of zk-files in `zk-directory' .
+  "Return list of zk-files in `zk-directory'.
 Excludes lockfiles, autosave files, and backup files. When FULL is
 non-nil, return full file-paths. If REGEXP is non-nil, it must be
-a regexp to replace the default, `zk-id-regexp'."
+a regexp to replace the default, `zk-id-regexp'.
+
+If `zk-directory-recursive' is non-nil, then search recursively in
+subdirectories of `zk-directory' (with the exception of those matching
+`zk-directory-recursive-ignore-dir-regexp')."
   (let* ((regexp (or regexp zk-id-regexp))
-         (list (directory-files zk-directory full regexp))
+         (list
+          (if (not zk-directory-recursive)
+              (directory-files zk-directory full regexp)
+            (let ((all-files
+                   (directory-files-recursively
+                    zk-directory regexp nil
+                    (lambda (dir)
+                      (not (string-match
+                            zk-directory-recursive-ignore-dir-regexp
+                            dir))))))
+              (if full
+                  (mapcar #'expand-file-name all-files)
+                (mapcar #'(lambda (file)
+                            (file-relative-name file zk-directory))
+                        all-files)))))
          (files (remq nil (mapcar
                            (lambda (x)
                              (when
