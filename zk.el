@@ -83,12 +83,13 @@
 
 ;; Borrowed from Deft by Jason R. Blevins <jblevins@xbeta.org>
 (defcustom zk-directory-recursive nil
-  "Recursively search for files in subdirectories of `zk-directory'.")
+  "Recursively search for files in subdirectories of `zk-directory'."
+  :type 'boolean)
 
 (defcustom zk-directory-recursive-ignore-dir-regexp
   "\\(?:\\.\\|\\.\\.\\)$"
-  "Regular expression for subdirectories to be ignored while searching for
-files recursively, i.e. when ‘zk-directory-recursive’ is non-nil.")
+  "Regexp for subdirs to be ignored when ‘zk-directory-recursive’ is non-nil."
+  :type 'string)
 
 (defcustom zk-file-extension nil
   "The extension for zk files."
