@@ -324,38 +324,32 @@ a regexp to replace the default, `zk-id-regexp'.
 
 If `zk-directory-recursive' is non-nil, then search recursively in
 subdirectories of `zk-directory' (with the exception of those matching
-`zk-directory-recursive-ignore-dir-regexp')."
+`zk-directory-recursive-ignore-dir-regexp') and return full file-paths."
   (let* ((regexp (or regexp zk-id-regexp))
-         (list
+         (files
           (if (not zk-directory-recursive)
               (directory-files zk-directory full regexp)
-            (let ((all-files
-                   (directory-files-recursively
+            (directory-files-recursively
                     zk-directory regexp nil
                     (lambda (dir)
                       (not (string-match
                             zk-directory-recursive-ignore-dir-regexp
                             dir))))))
-              (if full
-                  (mapcar #'expand-file-name all-files)
-                (mapcar (lambda (file)
-                          (file-relative-name file zk-directory))
-                        all-files)))))
-         (files (remq nil (mapcar
-                           (lambda (x)
-                             (when
-                                 (and (string-match (concat "\\(?1:"
-                                                            zk-id-regexp
-                                                            "\\).\\(?2:.*?\\)\\."
-                                                            zk-file-extension
-                                                            ".*")
-                                                    x)
-                                      (not (string-match-p
-                                            "^[.]\\|[#|~]$"
-                                            (file-name-nondirectory x))))
-                               x))
-                           list))))
-    files))
+         (useful-files
+          (remq nil (mapcar
+                     (lambda (x)
+                       (when (and (string-match (concat "\\(?1:"
+                                                        zk-id-regexp
+                                                        "\\).\\(?2:.*?\\)\\."
+                                                        zk-file-extension
+                                                        ".*")
+                                                x)
+                                  (not (string-match-p
+                                        "^[.]\\|[#|~]$"
+                                        (file-name-nondirectory x))))
+                         x))
+                     files))))
+    useful-files))
 
 (defun zk--current-notes-list ()
   "Return list of files for currently open notes."
