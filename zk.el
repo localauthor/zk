@@ -322,11 +322,12 @@ Excludes lockfiles, autosave files, and backup files. When FULL is
 non-nil, return full file-paths. If REGEXP is non-nil, it must be
 a regexp to replace the default, `zk-id-regexp'.
 
-If `zk-directory-recursive' is non-nil, then search recursively in
-subdirectories of `zk-directory' (with the exception of those matching
-`zk-directory-recursive-ignore-dir-regexp') and return full file-paths."
+When `zk-directory-recursive' is non-nil, searches recursively in
+subdirectories of `zk-directory' (except those matching
+`zk-directory-recursive-ignore-dir-regexp') and returns full
+file-paths."
   (let* ((regexp (or regexp zk-id-regexp))
-         (files
+         (list
           (if (not zk-directory-recursive)
               (directory-files zk-directory full regexp)
             (directory-files-recursively
@@ -335,7 +336,7 @@ subdirectories of `zk-directory' (with the exception of those matching
                (not (string-match
                      zk-directory-recursive-ignore-dir-regexp
                      dir))))))
-         (useful-files
+         (files
           (remq nil (mapcar
                      (lambda (x)
                        (when (and (string-match (concat "\\(?1:"
@@ -348,8 +349,8 @@ subdirectories of `zk-directory' (with the exception of those matching
                                         "^[.]\\|[#|~]$"
                                         (file-name-nondirectory x))))
                          x))
-                     files))))
-    useful-files))
+                     list))))
+    files))
 
 (defun zk--current-notes-list ()
   "Return list of files for currently open notes."
