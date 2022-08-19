@@ -265,20 +265,21 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
 
 ;;; Low-Level Functions
 
-(defun zk-file-p (&optional file)
-  "Return t if `current-buffer' is a zk-file.
-With optional argument FILE."
-  (let* ((file (if (stringp file) file
-                 (car file)))
-         (dir (or file
-                  default-directory))
-         (file-name (or file
-                        buffer-file-name)))
-    (when (and file-name
-               (file-exists-p file-name)
-               (file-in-directory-p dir zk-directory)
-               (string-match-p zk-id-regexp file-name))
-      t)))
+(defun zk-file-p (&optional file strict)
+  "Return t if FILE is a zk-file.
+If FILE is not given, get it from `buffer-file-name'. If STRICT is non-nil,
+make sure the file is in `zk-directory', otherwise just match against
+`zk-id-regexp'."
+  (let ((file (cond ((stringp file) file)
+                    ((null file) buffer-file-name)
+                    ((listp file) (car file))
+                    (t
+                     (signal 'wrong-type-argument '(file))))))
+    (and file
+         (file-exists-p file)
+         (string-match-p zk-id-regexp file)
+         (or (not strict)
+             (file-in-directory-p file zk-directory)))))
 
 (defun zk--generate-id ()
   "Generate and return a zk ID.
