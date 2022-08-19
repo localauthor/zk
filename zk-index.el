@@ -250,33 +250,21 @@ by the ID and `%t' by the title. It can be a string, such as \"%t
 
 FILES must be a list of filepaths. If nil, all files in
 `zk-directory' will be returned as formatted candidates."
-  (let* ((zk-index-format (if zk-index-invisible-ids "%t %i"
+  (let* ((zk-index-format (if zk-index-invisible-ids
+                              "%t %i"
                             zk-index-format))
-         (format (or format
-                     zk-index-format))
-         (list (or files
-                   (zk--directory-files)))
+         (format (or format zk-index-format))
+         (list (or files (zk--directory-files)))
          (output))
-    (dolist (file list)
-      (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
-        (let ((id (if zk-index-invisible-ids
-                      (propertize (match-string 1 file) 'invisible t)
-                    (match-string 1 file)))
-              (title (replace-regexp-in-string
-                      zk-file-name-separator
-                      " "
-                      (match-string 2 file))))
-          (when id
-            (push (format-spec format
-                               `((?i . ,id)(?t . ,title)))
-                  output)))))
-    output))
+    (dolist (file list output)
+      (let ((id (if zk-index-invisible-ids
+                    (propertize (zk--parse-file 'id file) 'invisible t)
+                  (zk--parse-file 'id file)))
+            (title (zk--parse-file 'title file)))
+        (when id
+          (push (format-spec format
+                             `((?i . ,id) (?t . ,title)))
+                output))))))
 
 ;;; Main Stack
 

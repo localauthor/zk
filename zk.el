@@ -420,14 +420,7 @@ supplied. Can take a PROMPT argument."
 (defun zk--group-function (file transform)
   "TRANSFORM completion candidate FILE to note title."
   (if transform
-      (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
-        (match-string 2 file))
+      (zk--parse-file 'title file)
     "zk"))
 
 (defun zk--id-at-point ()
@@ -439,20 +432,12 @@ supplied. Can take a PROMPT argument."
 
 (defun zk--alist ()
   "Return an alist ID, title, and file-path triples."
-  (mapcar
-   (lambda (file)
-     (when (string= (file-name-extension file) zk-file-extension)
-       (string-match (concat "\\(?1:"
-                             zk-id-regexp
-                             "\\).\\(?2:.*?\\)\\."
-                             zk-file-extension
-                             ".*")
-                     file)
-       `(,(match-string-no-properties 1 file)
-         ,(replace-regexp-in-string zk-file-name-separator " "
-                                    (match-string-no-properties 2 file))
-         ,file)))
-   (zk--directory-files t)))
+  (mapcar (lambda (file)
+            (when (zk-file-p file)
+              (list (zk--parse-file 'id file)
+                    (zk--parse-file 'title file)
+                    file)))
+          (zk--directory-files t)))
 
 (defun zk--parse-id (target ids &optional zk-alist)
   "Return TARGET, either `file-path or `title, from files with IDS.
@@ -806,22 +791,13 @@ FILES must be a list of filepaths. If nil, all files in
          (list (or files
                    (zk--directory-files)))
          (output))
-    (dolist (file list)
-      (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
-        (let ((id (match-string 1 file))
-              (title (replace-regexp-in-string zk-file-name-separator " "
-                                               (match-string 2 file))))
-          (when id
-            (push (format-spec format
-                               `((?i . ,id)(?t . ,title)))
-                  output)))))
-    output))
+    (dolist (file list output)
+      (let ((id (zk--parse-file 'id file))
+            (title (zk--parse-file 'id file)))
+        (when id
+          (push (format-spec format
+                             `((?i . ,id) (?t . ,title)))
+                output))))))
 
 (defun zk-completion-at-point ()
   "Completion-at-point function for zk-links.
@@ -1018,14 +994,7 @@ Backlinks and Links-in-Note are grouped separately."
 (defun zk--network-group-function (file transform)
   "Group FILE by type and TRANSFORM."
   (if transform
-      (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
-        (match-string 2 file))
+      (zk--parse-file 'title file)
     (cond
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
      ((eq 'link (get-text-property 0 'type file)) "Links-in-Note"))))
