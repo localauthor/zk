@@ -67,6 +67,10 @@ Each note is a separate file, named as follows: a unique ID number followed
 by the title of the note followed by the file extension (set in the variable
 =zk-extension=), e.g. "202012091130 On the origin of species.txt".
 
+Note: Like with many other aspects of ZK, both of these points are customizable with
+=zk-directory-recursive= and =zk-file-name-title-optional=, respectively. For simplicity's
+sake, this document describes the default format.
+
 ** IDs and Links
 
 The primary connector between notes is the simple link, which takes the form

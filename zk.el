@@ -44,11 +44,12 @@
 ;; Linking to such a note involves nothing more than placing the string
 ;; [[202012091130]] into another note in the directory.
 
-;; A note's filename is constructed as follows: the zk ID number followed by
-;; the title of the note followed by the file extension, e.g. "202012091130
-;; On the origin of species.txt". A key consequence of this ID/linking scheme
-;; is that a note's title can change without any existing links to the note
-;; being broken, wherever they might be in the directory.
+;; By default (see `zk-file-name-title-optional'), note's filename is
+;; constructed as follows: the zk ID number followed by the title of the note
+;; followed by the file extension, e.g. "202012091130 On the origin of
+;; species.txt". A key consequence of this ID/linking scheme is that a note's
+;; title can change without any existing links to the note being broken,
+;; wherever they might be in the directory.
 
 ;; The directory is a single folder containing all notes.
 
@@ -106,8 +107,8 @@ rendered with spaces."
 
 (defcustom zk-file-name-title-optional nil
   "If non-nil, file names can consist of IDs only, like \"202012341234\".
-For things to work as expected, also need to set `zk--parse-file-function'
-so it can return the title for a given file."
+Note: If you change this value, also set `zk--parse-file-function' to a
+function that can return the title for a given file."
   :type 'boolean)
 
 (defcustom zk--parse-file-function #'zk--parse-file-name
