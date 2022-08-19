@@ -116,6 +116,10 @@ function that can return the title for a given file."
 or 'title (as specified by TARGET) for the given FILE."
   :type 'function)
 
+(defcustom zk--id-file-path-function #'zk--id-file-path
+  "Given a zk ID and TITLE, return a full file path."
+  :type 'function)
+
 (defcustom zk-enable-link-buttons t
   "When non-nil, valid zk-id links will be clickable buttons.
 Allows `zk-make-link-buttons' to be added to `find-file-hook', so
@@ -304,15 +308,19 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--id-file-path (id title)
   "Given a zk ID and TITLE, return a full file path based on `zk-directory',
-`zk-file-name-separator', and `zk-file-name-separator'."
-  (replace-regexp-in-string " "
-                            zk-file-name-separator
-                            (format "%s/%s%s%s.%s"
-                                    zk-directory
-                                    id
-                                    zk-file-name-separator
-                                    title
-                                    zk-file-extension)))
+`zk-file-name-separator', and `zk-file-name-separator'. If
+`zk--id-file-path-function' is different from the current function, call
+that instead."
+  (if (not (equal zk--id-file-path-function 'zk--id-file-path))
+      (funcall zk--id-file-path-function)
+    (replace-regexp-in-string " "
+                              zk-file-name-separator
+                              (format "%s/%s%s%s.%s"
+                                      zk-directory
+                                      id
+                                      zk-file-name-separator
+                                      title
+                                      zk-file-extension))))
 
 (defun zk--id-list (&optional str zk-alist)
   "Return a list of zk IDs for notes in `zk-directory'.
