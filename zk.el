@@ -639,7 +639,7 @@ title."
   (interactive)
   (read-only-mode -1)
   (let* ((id (zk--current-id))
-         (file-title (zk--parse-id 'title id))
+         (file-title (zk--parse-file-name 'title id))
          (header-title (progn
                          (save-excursion
                            (goto-char (point-min))
@@ -653,8 +653,7 @@ title."
             (setq new-title header-title)
           (setq new-title (read-string "New title: " file-title)))
       (setq new-title (read-string "New title: " file-title)))
-    (when (string-match "\n" new-title)
-      (setq new-title (replace-regexp-in-string "\n" "" new-title)))
+    (setq new-title (string-trim new-title)) ; trims [ \t\n\r]+ on both ends
     (save-excursion
       (goto-char (point-min))
       (re-search-forward id)
