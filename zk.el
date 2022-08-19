@@ -302,6 +302,18 @@ The ID is created using `zk-id-time-string-format'."
       (setq id (number-to-string id)))
     id))
 
+(defun zk--id-file-path (id title)
+  "Given a zk ID and TITLE, return a full file path based on `zk-directory',
+`zk-file-name-separator', and `zk-file-name-separator'."
+  (replace-regexp-in-string " "
+                            zk-file-name-separator
+                            (format "%s/%s%s%s.%s"
+                                    zk-directory
+                                    id
+                                    zk-file-name-separator
+                                    title
+                                    zk-file-extension)))
+
 (defun zk--id-list (&optional str zk-alist)
   "Return a list of zk IDs for notes in `zk-directory'.
 Optional search for regexp STR in note title, case-insenstive.
@@ -577,15 +589,7 @@ Optional TITLE argument."
                    (buffer-substring
                     (point)
                     (point-max)))))
-         (file-name (replace-regexp-in-string " "
-                                              zk-file-name-separator
-                                              (concat
-                                               (format "%s/%s%s%s.%s"
-                                                       zk-directory
-                                                       new-id
-                                                       zk-file-name-separator
-                                                       title
-                                                       zk-file-extension)))))
+         (file-name (zk--id-file-path new-id title)))
     (unless orig-id
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
@@ -649,15 +653,7 @@ title."
       (re-search-forward " ")
       (delete-region (point) (line-end-position))
       (insert new-title))
-    (let ((new-file (concat
-                     zk-directory "/"
-                     id
-                     zk-file-name-separator
-                     (replace-regexp-in-string
-                      " "
-                      zk-file-name-separator
-                      new-title)
-                     "." zk-file-extension)))
+    (let ((new-file (zk--id-file-path id new-title)))
       (rename-file buffer-file-name new-file t)
       (set-visited-file-name new-file t t)
       (save-buffer))))
