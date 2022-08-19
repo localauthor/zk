@@ -347,22 +347,15 @@ file-paths."
              (lambda (dir)
                (not (string-match
                      zk-directory-recursive-ignore-dir-regexp
-                     dir))))))
-         (files
-          (remq nil (mapcar
-                     (lambda (x)
-                       (when (and (string-match (concat "\\(?1:"
-                                                        zk-id-regexp
-                                                        "\\).\\(?2:.*?\\)\\."
-                                                        zk-file-extension
-                                                        ".*")
-                                                x)
-                                  (not (string-match-p
-                                        "^[.]\\|[#|~]$"
-                                        (file-name-nondirectory x))))
-                         x))
-                     list))))
-    files))
+                     dir)))))))
+    (remq nil (mapcar
+               (lambda (x)
+                 (when (and (zk-file-p x)
+                            (not (string-match-p
+                                  "^[.]\\|[#|~]$"
+                                  (file-name-nondirectory x))))
+                   x))
+               list))))
 
 (defun zk--current-notes-list ()
   "Return list of files for currently open notes."
