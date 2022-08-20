@@ -315,11 +315,12 @@ that instead."
       (funcall zk--id-file-path-function)
     (replace-regexp-in-string " "
                               zk-file-name-separator
-                              (format "%s/%s%s%s.%s"
+                              (format "%s/%s%s.%s"
                                       zk-directory
                                       id
-                                      zk-file-name-separator
-                                      title
+                                      (if title
+                                          (concat zk-file-name-separator title)
+                                        "")
                                       zk-file-extension))))
 
 (defun zk--id-list (&optional str zk-alist)
