@@ -684,7 +684,7 @@ title."
          (new-title
           (string-trim                  ;  trim [ \t\n\r]+ on both ends
            (if (and file-title
-                    (not zk-file-name-title-optional)
+                    (not zk-file-name-id-only)
                     (not (string= file-title header-title))
                     (y-or-n-p
                      (format "Change title in filename from \"%s\" to \"%s\"? "
