@@ -117,7 +117,7 @@ title."
 Must take two arguments TARGET (either `id or `title) and FILE."
   :type 'function)
 
-(defcustom zk--id-file-path-function #'zk--id-file-path
+(defcustom zk-new-file-path-function #'zk-new-file-path
   "Given a zk ID and TITLE, return a full file path."
   :type 'function)
 
@@ -314,22 +314,20 @@ The ID is created using `zk-id-time-string-format'."
       (setq id (number-to-string id)))
     id))
 
-(defun zk--id-file-path (id title)
-  "Given a zk ID and TITLE, return a full file path based on `zk-directory',
-`zk-file-name-separator', and `zk-file-name-separator'. If
-`zk--id-file-path-function' is different from the current function, call
-that instead."
-  (if (not (equal zk--id-file-path-function 'zk--id-file-path))
-      (funcall zk--id-file-path-function)
-    (replace-regexp-in-string " "
-                              zk-file-name-separator
-                              (format "%s/%s%s.%s"
-                                      zk-directory
-                                      id
-                                      (if title
-                                          (concat zk-file-name-separator title)
-                                        "")
-                                      zk-file-extension))))
+(defun zk-new-file-path (id title)
+  "Generate file-path for new note.
+Takes an ID and TITLE and returns a full file path, based on
+values of `zk-directory', `zk-file-name-separator', and
+`zk-file-name-separator'."
+  (replace-regexp-in-string " "
+                            zk-file-name-separator
+                            (format "%s/%s%s.%s"
+                                    zk-directory
+                                    id
+                                    (if title
+                                        (concat zk-file-name-separator title)
+                                      "")
+                                    zk-file-extension)))
 
 (defun zk--id-list (&optional str zk-alist)
   "Return a list of zk IDs for notes in `zk-directory'.
@@ -628,10 +626,10 @@ Optional TITLE argument."
                    (buffer-substring
                     (point)
                     (point-max)))))
-         (file-name (zk--id-file-path
-                     new-id
-                     (when (not zk-file-name-id-only)
-                       title))))
+         (file-name (funcall zk-new-file-path-function
+                             new-id
+                             (when (not zk-file-name-id-only)
+                               title))))
     (unless orig-id
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
@@ -698,7 +696,7 @@ title."
     ;; with the new title even if `zk-file-name-id-only' is non-nil.
     (when (or file-title
               (not zk-file-name-id-only))
-      (let ((new-file (zk--id-file-path id new-title)))
+      (let ((new-file (funcall zk-new-file-path-function id new-title)))
         (rename-file buffer-file-name new-file t)
         (set-visited-file-name new-file t t)))
     (save-buffer)))
