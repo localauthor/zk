@@ -513,9 +513,11 @@ On each file, call `zk--parse-file-function' and collect the results."
 file-path, as a string.A note's title is understood to be the portion of its
 filename following the zk ID, in the format `zk-id-regexp', and preceding the
 file extension. This is the default value of `zk--parse-file-function'."
-  (when (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
+  (when (string-match (concat "\\(?1:" zk-id-regexp "\\)"
+                              (if zk-file-name-title-optional
+                                  ""
+                                zk-file-name-separator)
+                              "\\(?2:.*?\\)\\."
                               zk-file-extension)
                       file)
     (replace-regexp-in-string zk-file-name-separator " "
