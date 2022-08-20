@@ -154,10 +154,10 @@ insertion. See `zk-new-note-header' for an example."
   :type 'function)
 
 (defcustom zk-update-note-header-function #'zk-update-note-header
-  "Function called by `zk-rename-note' to udpate the header in an existing
-note. A user-defined function should locate the existing header and modify it
-according to the arguments ID and NEW-TITLE passed to it. See
-`zk-update-note-header' for an example."
+  "Function called by `zk-rename-note' to update title in header.
+A user-defined function should locate the existing header and
+modify it according to the arguments ID and NEW-TITLE passed to
+it. See `zk-update-note-header' for an example."
   :type 'function)
 
 (defcustom zk-new-note-link-insert 'ask
