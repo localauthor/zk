@@ -152,6 +152,13 @@ those corresponding values from `zk-new-note' available for
 insertion. See `zk-new-note-header' for an example."
   :type 'function)
 
+(defcustom zk-update-note-header-function #'zk-update-note-header
+  "Function called by `zk-rename-note' to udpate the header in an existing
+note. A user-defined function should locate the existing header and modify it
+according to the arguments ID and NEW-TITLE passed to it. See
+`zk-update-note-header' for an example."
+  :type 'function)
+
 (defcustom zk-new-note-link-insert 'ask
   "Should `zk-new-note' insert link to new note at point?
 
@@ -671,7 +678,7 @@ title."
                              file-title header-title)))
                header-title
              (read-string "New title: " (or file-title header-title))))))
-    (zk-update-note-header new-title id)
+    (funcall zk-update-note-header-function new-title id)
     (when (not zk-file-name-title-optional)
       (let ((new-file (zk--id-file-path id new-title)))
         (rename-file buffer-file-name new-file t)
