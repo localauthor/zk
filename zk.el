@@ -686,7 +686,6 @@ title."
          (new-title
           (string-trim                  ;  trim [ \t\n\r]+ on both ends
            (if (and file-title
-                    (not zk-file-name-id-only)
                     (not (string= file-title header-title))
                     (y-or-n-p
                      (format "Change title in filename from \"%s\" to \"%s\"? "
@@ -694,7 +693,10 @@ title."
                header-title
              (read-string "New title: " (or file-title header-title))))))
     (funcall zk-update-note-header-function new-title id)
-    (when (not zk-file-name-id-only)
+    ;; If the file name /does/ contain a title, do rename the file
+    ;; with the new title even if `zk-file-name-id-only' is non-nil.
+    (when (or file-title
+              (not zk-file-name-id-only))
       (let ((new-file (zk--id-file-path id new-title)))
         (rename-file buffer-file-name new-file t)
         (set-visited-file-name new-file t t)))
