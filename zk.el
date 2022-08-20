@@ -598,7 +598,10 @@ Optional TITLE argument."
                    (buffer-substring
                     (point)
                     (point-max)))))
-         (file-name (zk--id-file-path new-id title)))
+         (file-name (zk--id-file-path
+                     new-id
+                     (when (not zk-file-name-title-optional)
+                       title))))
     (unless orig-id
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
