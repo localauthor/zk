@@ -107,8 +107,9 @@ rendered with spaces."
 
 (defcustom zk-file-name-id-only nil
   "If non-nil, file names consist of IDs only without the title.
-Note: If you change this value, also set `zk--parse-file-function' to a
-function that can return the title for a given file."
+Note: If you change this value, also set `zk--parse-file-function' to
+`zk--parse-file-header' or another function that can return the note's
+title."
   :type 'boolean)
 
 (defcustom zk--parse-file-function #'zk--parse-file-name
@@ -533,6 +534,23 @@ file extension. This is the default value of `zk--parse-file-function'."
                                               ('title 2))
                                             file))))
 
+(defun zk--parse-file-header (target file)
+  "Return TARGET, either 'id or 'title, from the given FILE, a single
+file-path, as a string. Unlike `zk--parse-file-name', attempt to get the note
+title from the file header."
+  (when (string-match zk-id-regexp file)
+    (let ((id (match-string 0 file)))
+      (if (eql target 'id)
+          id
+        (with-temp-buffer
+          (insert-file-contents file)
+          (goto-char (point-min))
+          (when (re-search-forward
+                 (concat id (regexp-quote zk-file-name-separator))
+                 nil t)
+            (buffer-substring-no-properties
+             (match-end 0) (line-end-position))))))))
+
 ;;; Buttons
 
 (defun zk-setup-auto-link-buttons ()
@@ -662,12 +680,7 @@ title."
   (read-only-mode -1)
   (let* ((id (zk--current-id))
          (file-title (zk--parse-file-name 'title buffer-file-name))
-         (header-title (save-excursion
-                         (goto-char (point-min))
-                         (re-search-forward (concat id "."))
-                         (buffer-substring-no-properties
-                          (point)
-                          (line-end-position))))
+         (header-title (zk--parse-file-header 'title buffer-file-name))
          (new-title
           (string-trim                  ;  trim [ \t\n\r]+ on both ends
            (if (and file-title
