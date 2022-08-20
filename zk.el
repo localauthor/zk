@@ -107,14 +107,14 @@ rendered with spaces."
 
 (defcustom zk-file-name-id-only nil
   "If non-nil, file names consist of IDs only without the title.
-Note: If you change this value, also set `zk--parse-file-function' to
-`zk--parse-file-header' or another function that can return the note's
+Note: If you change this value, also set `zk-parse-file-function' to
+`zk-parse-file-header' or another function that can return the note's
 title."
   :type 'boolean)
 
-(defcustom zk--parse-file-function #'zk--parse-file-name
-  "A function taking two arguments, TARGET and FILE, which returns either 'id
-or 'title (as specified by TARGET) for the given FILE."
+(defcustom zk-parse-file-function #'zk-parse-file-name
+  "Function called by `zk--parse-file' to return id or title of given FILE.
+Must take two arguments TARGET (either `id or `title) and FILE."
   :type 'function)
 
 (defcustom zk--id-file-path-function #'zk--id-file-path
@@ -505,10 +505,10 @@ in an internal loop."
 (defun zk--parse-file (target file-or-files)
   "Return TARGET, either `id or `title, from FILE-OR-FILES.
 Takes a single file-path, as a string, or a list of file-paths.
-On each file, call `zk--parse-file-function' and collect the results."
+On each file, call `zk-parse-file-function' and collect the results."
   (let ((result
          (mapcar (lambda (file)
-                   (funcall zk--parse-file-function target file))
+                   (funcall zk-parse-file-function target file))
                  (if (listp file-or-files)
                      file-or-files
                    (list file-or-files)))))
@@ -516,11 +516,12 @@ On each file, call `zk--parse-file-function' and collect the results."
         (car result)
       result)))
 
-(defun zk--parse-file-name (target file)
-  "Return TARGET, either 'id or 'title, from the given FILE, a single
-file-path, as a string. A note's title is understood to be the portion of its
-filename following the zk ID, in the format `zk-id-regexp', and preceding the
-file extension. This is the default value of `zk--parse-file-function'."
+(defun zk-parse-file-name (target file)
+  "Return TARGET, either `id or `title, from the given FILE.
+A note's title is understood to be the portion of its filename
+following the zk ID, in the format `zk-id-regexp', and preceding
+the file extension. This is the default value of
+`zk-parse-file-function'."
   (when (string-match (concat "\\(?1:" zk-id-regexp "\\)"
                               zk-file-name-separator
                               (if zk-file-name-id-only
@@ -536,9 +537,9 @@ file extension. This is the default value of `zk--parse-file-function'."
                                           " "
                                           (match-string 2 file)))))))
 
-(defun zk--parse-file-header (target file)
-  "Return TARGET, either 'id or 'title, from the given FILE, a single
-file-path, as a string. Unlike `zk--parse-file-name', attempt to get the note
+(defun zk-parse-file-header (target file)
+  "Return TARGET, either `id or `title, from the given FILE.
+Unlike `zk-parse-file-name', attempt to get the note
 title from the file header."
   (when (string-match zk-id-regexp file)
     (let ((id (match-string 0 file)))
@@ -681,8 +682,8 @@ title."
   (interactive)
   (read-only-mode -1)
   (let* ((id (zk--current-id))
-         (file-title (zk--parse-file-name 'title buffer-file-name))
-         (header-title (zk--parse-file-header 'title buffer-file-name))
+         (file-title (zk-parse-file-name 'title buffer-file-name))
+         (header-title (zk-parse-file-header 'title buffer-file-name))
          (new-title
           (string-trim                  ;  trim [ \t\n\r]+ on both ends
            (if (and file-title
