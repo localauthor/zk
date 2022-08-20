@@ -662,16 +662,16 @@ title."
   (read-only-mode -1)
   (let* ((id (zk--current-id))
          (file-title (zk--parse-file-name 'title id))
-         (header-title (progn
-                         (save-excursion
-                           (goto-char (point-min))
-                           (re-search-forward (concat id "."))
-                           (buffer-substring-no-properties
-                            (point)
-                            (line-end-position)))))
+         (header-title (save-excursion
+                         (goto-char (point-min))
+                         (re-search-forward (concat id "."))
+                         (buffer-substring-no-properties
+                          (point)
+                          (line-end-position))))
          (new-title
           (string-trim                  ;  trim [ \t\n\r]+ on both ends
-           (if (and (not zk-file-name-title-optional)
+           (if (and file-title
+                    (not zk-file-name-title-optional)
                     (not (string= file-title header-title))
                     (y-or-n-p
                      (format "Change title in filename from \"%s\" to \"%s\"? "
@@ -682,8 +682,8 @@ title."
     (when (not zk-file-name-title-optional)
       (let ((new-file (zk--id-file-path id new-title)))
         (rename-file buffer-file-name new-file t)
-        (set-visited-file-name new-file t t)
-        (save-buffer)))))
+        (set-visited-file-name new-file t t)))
+    (save-buffer)))
 
 ;;; Find File
 
