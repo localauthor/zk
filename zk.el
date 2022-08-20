@@ -635,6 +635,15 @@ Optionally use ORIG-ID for backlink."
       (newline)))
   (insert "===\n\n"))
 
+(defun zk-update-note-header (new-title id)
+  "Update the title in an existing note with given ID to NEW-TITLE."
+  (save-excursion
+    (goto-char (point-min))
+    (re-search-forward id)
+    (re-search-forward " ")
+    (delete-region (point) (line-end-position))
+    (insert new-title)))
+
 ;;;###autoload
 (defun zk-rename-note ()
   "Rename current note and replace title in header.
@@ -653,23 +662,21 @@ title."
                            (buffer-substring-no-properties
                             (point)
                             (line-end-position)))))
-         (new-title))
-    (if (not (string= file-title header-title))
-        (if (y-or-n-p (format "Change from \"%s\" to \"%s\"? " file-title header-title))
-            (setq new-title header-title)
-          (setq new-title (read-string "New title: " file-title)))
-      (setq new-title (read-string "New title: " file-title)))
-    (setq new-title (string-trim new-title)) ; trims [ \t\n\r]+ on both ends
-    (save-excursion
-      (goto-char (point-min))
-      (re-search-forward id)
-      (re-search-forward " ")
-      (delete-region (point) (line-end-position))
-      (insert new-title))
-    (let ((new-file (zk--id-file-path id new-title)))
-      (rename-file buffer-file-name new-file t)
-      (set-visited-file-name new-file t t)
-      (save-buffer))))
+         (new-title
+          (string-trim                  ;  trim [ \t\n\r]+ on both ends
+           (if (and (not zk-file-name-title-optional)
+                    (not (string= file-title header-title))
+                    (y-or-n-p
+                     (format "Change title in filename from \"%s\" to \"%s\"? "
+                             file-title header-title)))
+               header-title
+             (read-string "New title: " (or file-title header-title))))))
+    (zk-update-note-header new-title id)
+    (when (not zk-file-name-title-optional)
+      (let ((new-file (zk--id-file-path id new-title)))
+        (rename-file buffer-file-name new-file t)
+        (set-visited-file-name new-file t t)
+        (save-buffer)))))
 
 ;;; Find File
 
