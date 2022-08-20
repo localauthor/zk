@@ -661,7 +661,7 @@ title."
   (interactive)
   (read-only-mode -1)
   (let* ((id (zk--current-id))
-         (file-title (zk--parse-file-name 'title id))
+         (file-title (zk--parse-file-name 'title buffer-file-name))
          (header-title (save-excursion
                          (goto-char (point-min))
                          (re-search-forward (concat id "."))
