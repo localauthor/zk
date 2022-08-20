@@ -518,21 +518,23 @@ On each file, call `zk--parse-file-function' and collect the results."
 
 (defun zk--parse-file-name (target file)
   "Return TARGET, either 'id or 'title, from the given FILE, a single
-file-path, as a string.A note's title is understood to be the portion of its
+file-path, as a string. A note's title is understood to be the portion of its
 filename following the zk ID, in the format `zk-id-regexp', and preceding the
 file extension. This is the default value of `zk--parse-file-function'."
   (when (string-match (concat "\\(?1:" zk-id-regexp "\\)"
+                              zk-file-name-separator
                               (if zk-file-name-id-only
-                                  ""
-                                zk-file-name-separator)
+                                  "*"   ; i.e. separator is optional
+                                "")
                               "\\(?2:.*?\\)\\."
                               zk-file-extension)
                       file)
-    (replace-regexp-in-string zk-file-name-separator " "
-                              (match-string (pcase target
-                                              ('id    1)
-                                              ('title 2))
-                                            file))))
+    (pcase target
+      ('id    (match-string 1 file))
+      ('title (unless (string-empty-p (match-string 2 file))
+                (replace-regexp-in-string zk-file-name-separator
+                                          " "
+                                          (match-string 2 file)))))))
 
 (defun zk--parse-file-header (target file)
   "Return TARGET, either 'id or 'title, from the given FILE, a single
