@@ -301,6 +301,7 @@ otherwise just match against `zk-id-regexp'."
                      (signal 'wrong-type-argument '(file))))))
     (and file
          (file-exists-p file)
+         (string-match-p zk-file-extension (file-name-extension file))
          (string-match-p zk-id-regexp file)
          (or (not strict)
              (file-in-directory-p file zk-directory)))))
