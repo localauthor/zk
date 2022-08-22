@@ -544,14 +544,15 @@ title from the file header."
     (let ((id (match-string 0 file)))
       (if (eql target 'id)
           id
-        (with-temp-buffer
-          (insert-file-contents file)
-          (goto-char (point-min))
-          (when (re-search-forward
-                 (concat id (regexp-quote zk-file-name-separator))
-                 nil t)
-            (buffer-substring-no-properties
-             (match-end 0) (line-end-position))))))))
+        (when (file-exists-p file)
+          (with-temp-buffer
+            (insert-file-contents file)
+            (goto-char (point-min))
+            (when (re-search-forward
+                   (concat id (regexp-quote zk-file-name-separator))
+                   nil t)
+              (buffer-substring-no-properties
+               (match-end 0) (line-end-position)))))))))
 
 ;;; Buttons
 
