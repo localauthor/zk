@@ -225,7 +225,7 @@ link type, as follows:
 #+begin_src emacs-lisp
 (defun zk-link-hint--zk-link-at-point-p ()
   "Return the id of the zk-link at point or nil."
-  (thing-at-point-looking-at zk-link-regexp))
+  (thing-at-point-looking-at (zk-link-regexp)))
 
 (defun zk-link-hint--next-zk-link (&optional bound)
   "Find the next zk-link.

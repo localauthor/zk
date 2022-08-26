@@ -909,16 +909,16 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                   (when zk-index-invisible-ids
                     (beginning-of-line)
                     ;; find zk-links and plain zk-ids
-                    (if (re-search-forward zk-link-regexp (line-end-position) t)
+                    (if (re-search-forward (zk-link-regexp) (line-end-position) t)
                         (replace-match
                          (propertize (match-string 0) 'invisible t) nil t)
                       (progn
                         (re-search-forward id)
                         (replace-match
-                          (propertize id
-                                      'read-only t
-                                      'front-sticky t
-                                      'rear-nonsticky t))
+                         (propertize id
+                                     'read-only t
+                                     'front-sticky t
+                                     'rear-nonsticky t))
                         ;; enable invisibility in org-mode
                         (overlay-put
                          (make-overlay (match-beginning 0) (match-end 0))
