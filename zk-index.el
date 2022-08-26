@@ -134,6 +134,7 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
     (define-key map (kbd "o") #'other-window)
     (define-key map (kbd "f") #'zk-index-focus)
     (define-key map (kbd "s") #'zk-index-search)
+    (define-key map (kbd "g") #'zk-index-query-refresh)
     (define-key map (kbd "d") #'zk-index-send-to-desktop)
     (define-key map (kbd "D") #'zk-index-switch-to-desktop)
     (define-key map (kbd "c") #'zk-index-current-notes)
@@ -324,6 +325,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
         (buf-name (or buf-name
                       zk-index-buffer-name))
         (line))
+    (setq zk-index-last-format-function format-fn)
+    (setq zk-index-last-sort-function sort-fn)
     (with-current-buffer buf-name
       (setq line (line-number-at-pos))
       (erase-buffer)
@@ -509,6 +512,17 @@ items listed first.")
       (setq files (list files)))
     (or files
         (error "No matches for \"%s\"" string))))
+
+(defun zk-index-query-refresh ()
+  "Refresh narrowed index, based on last focus or search query."
+  (interactive)
+  (let ((mode mode-name)
+        (files (zk-index--current-file-list)))
+    (unless (stringp files)
+      (zk-index-refresh files
+                        nil
+                        zk-index-last-sort-function)
+      (setq mode-name mode))))
 
 (defun zk-index-query-mode-line (query-command string)
   "Generate new mode line after query.
