@@ -398,8 +398,9 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index-button-display-action (file buffer)
   "Function to display FILE or BUFFER on button press in Index and Desktop."
-  (if (file-in-directory-p zk-index-desktop-directory
-                           default-directory)
+  (if (and zk-index-desktop-directory
+	       (file-in-directory-p zk-index-desktop-directory
+				                default-directory))
       ;; display action for ZK-Desktop
       (progn
         (if (one-window-p)
@@ -815,6 +816,8 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
 (defun zk-index-desktop-select ()
   "Select a ZK-Desktop to work with."
   (interactive)
+  (unless zk-index-desktop-directory
+    (error "Please set `zk-index-desktop-directory' first"))
   (let* ((last-command last-command)
          (desktop
           (completing-read "Select or Create ZK-Desktop: "
@@ -937,7 +940,7 @@ Also works on FILES or group of files in minibuffer, and on zk-id
 at point."
   (interactive)
   (unless zk-index-desktop-directory
-    (error "Please set 'zk-index-desktop-directory'"))
+    (error "Please set `zk-index-desktop-directory' first"))
   (let ((inhibit-read-only t)
         (buffer) (items))
     (cond ((eq 1 (length files))
