@@ -570,14 +570,14 @@ Takes an ID and TITLE and returns a full file path, based on values of
 `zk-file-extension'. If no TITLE is supplied, the file name will consist of
 ID only."
   (let ((file-name
-         (string-replace " "
-                         zk-file-name-separator
-                         (format "%s%s.%s"
-                                 id
-                                 (if title
-                                     (concat " " title)
-                                   "")
-                                 zk-file-extension))))
+         (replace-regexp-in-string " "
+                                   zk-file-name-separator
+                                   (format "%s%s.%s"
+                                           id
+                                           (if title
+                                               (concat " " title)
+                                             "")
+                                           zk-file-extension))))
     (concat (file-name-as-directory zk-directory)
             (file-name-as-directory (funcall zk-directory-subdir-function id))
             file-name)))
