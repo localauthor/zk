@@ -396,8 +396,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-button-display-action (file buffer)
   "Function to display FILE or BUFFER on button press in Index and Desktop."
   (if (and zk-index-desktop-directory
-	   (file-in-directory-p zk-index-desktop-directory
-				default-directory))
+	       (file-in-directory-p zk-index-desktop-directory
+				                default-directory))
       ;; display action for ZK-Desktop
       (progn
         (if (one-window-p)
