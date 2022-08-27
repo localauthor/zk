@@ -555,6 +555,23 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
 
 ;;; Note Functions
 
+(defun zk--new-file-path (id title)
+  "Generate file-path for new note.
+Takes an ID and TITLE and returns a full file path, based on values of
+`zk-directory', `zk-file-name-separator', and
+`zk-file-name-separator'."
+  (format "%s/%s%s.%s"
+          zk-directory
+          id
+          (if title
+              ;; Only replace spaces with `zk-file-name-separator'
+              ;; inside the title, since `zk-directory' might contain
+              ;; valid spaces.
+              (concat zk-file-name-separator
+                      (string-replace " " zk-file-name-separator title))
+            "")
+          zk-file-extension))
+
 ;;;###autoload
 (defun zk-new-note (&optional title)
   "Create a new note, insert link at point of creation.
@@ -584,15 +601,7 @@ Optional TITLE argument."
                    (buffer-substring
                     (point)
                     (point-max)))))
-         (file-name (replace-regexp-in-string " "
-                                              zk-file-name-separator
-                                              (concat
-                                               (format "%s/%s%s%s.%s"
-                                                       zk-directory
-                                                       new-id
-                                                       zk-file-name-separator
-                                                       title
-                                                       zk-file-extension)))))
+         (file-name (zk--new-file-path new-id title)))
     (unless orig-id
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
@@ -656,15 +665,7 @@ title."
       (re-search-forward " ")
       (delete-region (point) (line-end-position))
       (insert new-title))
-    (let ((new-file (concat
-                     zk-directory "/"
-                     id
-                     zk-file-name-separator
-                     (replace-regexp-in-string
-                      " "
-                      zk-file-name-separator
-                      new-title)
-                     "." zk-file-extension)))
+    (let ((new-file (zk--new-file-path id new-title)))
       (rename-file buffer-file-name new-file t)
       (set-visited-file-name new-file t t)
       (save-buffer))))
