@@ -193,8 +193,7 @@ replaced by a note's ID."
 
 ;; This needs to be a macro in order to reflect user changes to the variables.
 (defmacro zk-link-regexp ()
-  "Returns the regexp matching a zk link based on `zk-link-format' and
-`zk-id-regexp'."
+  "Returns regexp for zk-link based on `zk-link-format' and `zk-id-regexp'."
   '(format (regexp-quote zk-link-format) zk-id-regexp))
 
 (defcustom zk-link-and-title t
