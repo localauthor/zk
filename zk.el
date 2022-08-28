@@ -183,6 +183,12 @@ Used in conjunction with `format', the string `%s' will be
 replaced by a note's ID."
   :type 'string)
 
+;; This needs to be a macro in order to reflect user changes to the variables.
+(defmacro zk-link-regexp ()
+  "Returns the regexp matching a zk link based on `zk-link-format' and
+`zk-id-regexp'."
+  '(format (regexp-quote zk-link-format) zk-id-regexp))
+
 (defcustom zk-link-and-title t
   "Should `zk-insert-link' insert both link and title?
 
@@ -220,8 +226,6 @@ See `zk-current-notes' for details."
 The string `%t' will be replaced by the note's title and `%i'
 will be replaced by its ID."
   :type 'string)
-
-(defvar zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
 
 (defvar zk-file-history nil)
 (defvar zk-search-history nil)
@@ -429,7 +433,7 @@ supplied. Can take a PROMPT argument."
   "Return ID at point."
   (cond ((thing-at-point-looking-at zk-id-regexp)
          (match-string-no-properties 0))
-        ((thing-at-point-looking-at zk-link-regexp)
+        ((thing-at-point-looking-at (zk-link-regexp))
          (match-string-no-properties 1))))
 
 (defun zk--alist ()
@@ -531,14 +535,14 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
                     (button-at pos)))))))
 
 (defun zk-make-link-buttons ()
-  "Make zk-link-regexps in current buffer into zk-link buttons."
+  "Make `zk-link-regexp's in current buffer into zk-link buttons."
   (interactive)
   (when (and (zk-file-p)
              zk-enable-link-buttons)
     (let ((ids (zk--id-list)))
       (save-excursion
         (goto-char (point-min))
-        (while (re-search-forward zk-link-regexp nil t)
+        (while (re-search-forward (zk-link-regexp) nil t)
           (let ((beg (match-beginning 1))
                 (end (match-end 1))
                 (id (match-string-no-properties 1)))
@@ -549,7 +553,7 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
   "Find `zk-link-regexp' before point and make it a zk-link button."
   (interactive)
   (save-excursion
-    (re-search-backward zk-link-regexp (line-beginning-position))
+    (re-search-backward (zk-link-regexp) (line-beginning-position))
     (make-button (match-beginning 1) (match-end 1)
                  'type 'zk-link)))
 
@@ -720,13 +724,13 @@ Optionally call a custom function by setting the variable
       (error "No zk-link at point"))))
 
 (defun zk--links-in-note-list ()
-  "Return list of links in note with ID."
-  (let ((id-list)
-        (zk-ids (zk--id-list)))
+  "Return list of zk files that are linked from the current buffer."
+  (let ((zk-ids (zk--id-list))
+        id-list)
     (save-buffer)
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward zk-link-regexp nil t)
+      (while (re-search-forward (zk-link-regexp) nil t)
         (if (member (match-string-no-properties 1) zk-ids)
             (push (match-string-no-properties 1) id-list))))
     (cond ((null id-list)
@@ -735,6 +739,7 @@ Optionally call a custom function by setting the variable
            (list (zk--parse-id 'file-path id-list)))
           (t
            (zk--parse-id 'file-path (delete-dups id-list))))))
+
 
 ;;;###autoload
 (defun zk-links-in-note ()
@@ -924,7 +929,7 @@ Select TAG, with completion, from list of all tags in zk notes."
   (let* ((files (shell-command-to-string (concat
                                           "grep -ohir -e "
                                           (shell-quote-argument
-                                           zk-link-regexp)
+                                           (zk-link-regexp))
                                           " "
                                           zk-directory " 2>/dev/null")))
          (list (split-string files "\n" t))

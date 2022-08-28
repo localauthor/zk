@@ -53,7 +53,6 @@
 ;; Set up org-style link format by setting variables
 (setq zk-link-format "[[zk:%s]]")
 (setq zk-link-and-title-format "[[zk:%i][%t]]")
-(setq zk-link-regexp (format (regexp-quote zk-link-format) zk-id-regexp))
 (setq zk-enable-link-buttons nil)
 
 (defun zk-org-link--follow (id)
