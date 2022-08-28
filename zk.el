@@ -195,7 +195,7 @@ replaced by a note's ID."
 (defmacro zk-link-regexp ()
   "Returns the regexp matching a zk link based on `zk-link-format' and
 `zk-id-regexp'."
-  `(format (regexp-quote ,zk-link-format) ,zk-id-regexp))
+  '(format (regexp-quote zk-link-format) zk-id-regexp))
 
 (defcustom zk-link-and-title t
   "Should `zk-insert-link' insert both link and title?
