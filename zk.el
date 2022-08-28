@@ -547,12 +547,15 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
   (interactive)
   (when (and (zk-file-p)
              zk-enable-link-buttons)
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward (zk-link-regexp) nil t)
-        (let ((beg (match-beginning 1))
-              (end (match-end 1)))
-          (make-button beg end 'type 'zk-link))))))
+    (let ((ids (zk--id-list)))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward (zk-link-regexp) nil t)
+          (let ((beg (match-beginning 1))
+                (end (match-end 1))
+                (id (match-string-no-properties 1)))
+            (when (member id ids)
+              (make-button beg end 'type 'zk-link))))))))
 
 (defun zk-make-button-before-point ()
   "Find `zk-link-regexp' before point and make it a zk-link button."
@@ -733,15 +736,21 @@ Optionally call a custom function by setting the variable
 
 (defun zk--links-in-note-list ()
   "Return list of zk files that are linked from the current buffer."
-  (let (id-list)
+  (let ((zk-ids (zk--id-list))
+        id-list)
     (save-buffer)
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward (zk-link-regexp) nil t)
-        (push (match-string-no-properties 1) id-list)))
-    (if (null id-list)
-        (message "No zk-links in note")
-      (zk--parse-ids 'file-path (delete-dups id-list)))))
+        (if (member (match-string-no-properties 1) zk-ids)
+            (push (match-string-no-properties 1) id-list))))
+    (cond ((null id-list)
+           (error "No zk-links in note"))
+          ((eq 1 (length id-list))
+           (list (zk--parse-id 'file-path id-list)))
+          (t
+           (zk--parse-id 'file-path (delete-dups id-list))))))
+
 
 ;;;###autoload
 (defun zk-links-in-note ()
