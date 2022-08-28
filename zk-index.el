@@ -897,40 +897,39 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                   (search-forward title end)
                   (replace-match (propertize title 'face 'error))))
               (end-of-line)))
-        ;; make buttons
-        (goto-char (point-min))
-        (while (re-search-forward zk-id-regexp nil t)
-          (let* ((beg (line-beginning-position))
-                 (end (line-end-position))
-                 (id (match-string-no-properties 1)))
-            (if (member id ids)
-                (progn
-                  (make-text-button beg end 'type 'zk-index-desktop)
-                  (when zk-index-invisible-ids
-                    (beginning-of-line)
-                    ;; find zk-links and plain zk-ids
-                    (if (re-search-forward (zk-link-regexp) (line-end-position) t)
-                        (replace-match
-                         (propertize (match-string 0) 'invisible t) nil t)
-                      (progn
-                        (re-search-forward id)
-                        (replace-match
-                         (propertize id
-                                     'read-only t
-                                     'front-sticky t
-                                     'rear-nonsticky t))
-                        ;; enable invisibility in org-mode
-                        (overlay-put
-                         (make-overlay (match-beginning 0) (match-end 0))
-                         'invisible t)
-                        )))
-                  (add-text-properties beg (+ beg 1)
-                                       '(front-sticky nil)))
-              (end-of-line)
-              (overlay-put (make-overlay (point) (point))
-                           'before-string
-                           (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
-          (end-of-line)))))))
+          ;; make buttons
+          (goto-char (point-min))
+          (while (re-search-forward zk-id-regexp nil t)
+            (let* ((beg (line-beginning-position))
+                   (end (line-end-position))
+                   (id (match-string-no-properties 1)))
+              (if (member id ids)
+                  (progn
+                    (make-text-button beg end 'type 'zk-index-desktop)
+                    (when zk-index-invisible-ids
+                      (beginning-of-line)
+                      ;; find zk-links and plain zk-ids
+                      (if (re-search-forward (zk-link-regexp) (line-end-position) t)
+                          (replace-match
+                           (propertize (match-string 0) 'invisible t) nil t)
+                        (progn
+                          (re-search-forward id)
+                          (replace-match
+                           (propertize id
+                                       'read-only t
+                                       'front-sticky t
+                                       'rear-nonsticky t))
+                          ;; enable invisibility in org-mode
+                          (overlay-put
+                           (make-overlay (match-beginning 0) (match-end 0))
+                           'invisible t))))
+                    (add-text-properties beg (+ beg 1)
+                                         '(front-sticky nil)))
+                (end-of-line)
+                (overlay-put (make-overlay (point) (point))
+                             'before-string
+                             (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
+            (end-of-line)))))))
 
 ;;;###autoload
 (defun zk-index-send-to-desktop (&optional files)
