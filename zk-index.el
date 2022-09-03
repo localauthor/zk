@@ -576,12 +576,12 @@ with query term STRING."
 (defun zk-index--current-id-list (buf-name)
   "Return list of IDs for index in BUF-NAME, as filepaths."
   (let (ids)
-    (with-current-buffer (or buf-name
-                             zk-index-buffer-name)
-      (save-excursion
+    (save-excursion
+      (with-current-buffer (or buf-name
+                               zk-index-buffer-name)
         (goto-char (point-min))
         (save-match-data
-          (while (re-search-forward zk-id-regexp nil t)
+          (while (re-search-forward (concat "^" zk-id-regexp) nil t)
             (push (match-string-no-properties 0) ids)))
         ids))))
 
