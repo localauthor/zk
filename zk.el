@@ -83,13 +83,20 @@
 
 ;; Borrowed from Deft by Jason R. Blevins <jblevins@xbeta.org>
 (defcustom zk-directory-recursive nil
-  "Recursively search for files in subdirectories of `zk-directory'."
+  "Recursively search for files in subdirectories of `zk-directory'.
+If you set this, also consider setting `zk-subdirectory-function'."
   :type 'boolean)
 
 (defcustom zk-directory-recursive-ignore-dir-regexp
   "\\(?:\\.\\|\\.\\.\\)$"
   "Regexp for subdirs to be ignored when ‘zk-directory-recursive’ is non-nil."
   :type 'string)
+
+(defcustom zk-subdirectory-function nil
+  "A function that given a zk ID, returns a relative subdirectory in
+`zk-directory' where the note should be stored. The default is to save
+all zk files directly in `zk-directory'."
+  :type 'function)
 
 (defcustom zk-file-extension nil
   "The extension for zk files."
@@ -560,18 +567,20 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
 
 (defun zk--note-file-path (id title)
   "Generate full file-path for note with given ID and TITLE based on
-`zk-directory', `zk-file-name-separator', and `zk-file-extension'."
+`zk-directory', `zk-subdirectory-function', `zk-file-name-separator',
+and `zk-file-extension'."
   (let ((base-name
          (format "%s%s%s.%s"
                  id
                  zk-file-name-separator
                  title
                  zk-file-extension)))
-     (concat (file-name-as-directory zk-directory)
-             (replace-regexp-in-string " "
-                                       zk-file-name-separator
-                                       base-name))))
-
+    (concat (file-name-as-directory zk-directory)
+            (when (functionp zk-subdirectory-function)
+              (file-name-as-directory (funcall zk-subdirectory-function id)))
+            (replace-regexp-in-string " "
+                                      zk-file-name-separator
+                                      base-name))))
 
 ;;;###autoload
 (defun zk-new-note (&optional title)
