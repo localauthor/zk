@@ -559,18 +559,19 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
 ;;; Note Functions
 
 (defun zk--note-file-path (id title)
-  "Generate file-path for new note.
-Takes an ID and TITLE and returns a full file path, based on values of
-`zk-directory', `zk-file-name-separator', and
-`zk-file-name-separator'."
-  (format "%s/%s%s%s.%s"
-          zk-directory
-          id
-          zk-file-name-separator
-          ;; Only replace spaces with inside the title, since `zk-directory'
-          ;; might contain valid spaces.
-          (replace-regexp-in-string " " zk-file-name-separator title)
-          zk-file-extension))
+  "Generate full file-path for note with given ID and TITLE based on
+`zk-directory', `zk-file-name-separator', and `zk-file-extension'."
+  (let ((base-name
+         (format "%s%s%s.%s"
+                 id
+                 zk-file-name-separator
+                 title
+                 zk-file-extension)))
+     (concat (file-name-as-directory zk-directory)
+             (replace-regexp-in-string " "
+                                       zk-file-name-separator
+                                       base-name))))
+
 
 ;;;###autoload
 (defun zk-new-note (&optional title)
