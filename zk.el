@@ -204,10 +204,10 @@ Used in conjunction with `format', the string `%s' will be
 replaced by a note's ID."
   :type 'string)
 
-;; This needs to be a macro in order to reflect user changes to the variables.
-(defmacro zk-link-regexp ()
-  "Returns regexp for zk-link based on `zk-link-format' and `zk-id-regexp'."
-  '(format (regexp-quote zk-link-format) zk-id-regexp))
+(defun zk-link-regexp ()
+  "Return the correct regexp for zk links.
+The value is based on `zk-link-format' and `zk-id-regexp'."
+  (format (regexp-quote zk-link-format) zk-id-regexp))
 
 (defcustom zk-link-and-title t
   "Should `zk-insert-link' insert both link and title?
