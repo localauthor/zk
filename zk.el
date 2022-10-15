@@ -93,9 +93,10 @@ If you set this, also consider setting `zk-subdirectory-function'."
   :type 'string)
 
 (defcustom zk-subdirectory-function nil
-  "A function that given a zk ID, returns a relative subdirectory in
-`zk-directory' where the note should be stored. The default is to save
-all zk files directly in `zk-directory'."
+  "Function that returns a subdirectory of `zk-directory'.
+Used when `zk-directory-recursive' is non-nil to create new notes
+in the desired subdirectory. When nil, new notes are created in
+`zk-directory'."
   :type 'function)
 
 (defcustom zk-file-extension nil
@@ -566,15 +567,12 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
 ;;; Note Functions
 
 (defun zk--note-file-path (id title)
-  "Generate full file-path for note with given ID and TITLE based on
-`zk-directory', `zk-subdirectory-function', `zk-file-name-separator',
-and `zk-file-extension'."
-  (let ((base-name
-         (format "%s%s%s.%s"
-                 id
-                 zk-file-name-separator
-                 title
-                 zk-file-extension)))
+  "Generate full file-path for note with given ID and TITLE."
+  (let ((base-name (format "%s%s%s.%s"
+                           id
+                           zk-file-name-separator
+                           title
+                           zk-file-extension)))
     (concat (file-name-as-directory zk-directory)
             (when (functionp zk-subdirectory-function)
               (file-name-as-directory (funcall zk-subdirectory-function id)))
