@@ -364,12 +364,7 @@ file-paths."
          (files
           (remq nil (mapcar
                      (lambda (x)
-                       (when (and (string-match (concat "\\(?1:"
-                                                        zk-id-regexp
-                                                        "\\).\\(?2:.*?\\)\\."
-                                                        zk-file-extension
-                                                        ".*")
-                                                x)
+                       (when (and (string-match (zk-file-name-regexp) x)
                                   (not (string-match-p
                                         "^[.]\\|[#|~]$"
                                         (file-name-nondirectory x))))
@@ -440,12 +435,7 @@ supplied. Can take a PROMPT argument."
   "TRANSFORM completion candidate FILE to note title."
   (if transform
       (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
+        (string-match (zk-file-name-regexp) file)
         (match-string 2 file))
     "zk"))
 
@@ -461,15 +451,10 @@ supplied. Can take a PROMPT argument."
   (mapcar
    (lambda (file)
      (when (string= (file-name-extension file) zk-file-extension)
-       (string-match (concat "\\(?1:"
-                             zk-id-regexp
-                             "\\).\\(?2:.*?\\)\\."
-                             zk-file-extension
-                             ".*")
-                     file)
-       `(,(match-string-no-properties 1 file)
+       (string-match (zk-file-name-regexp) file)
+       `(,(match-string 1 file)
          ,(replace-regexp-in-string zk-file-name-separator " "
-                                    (match-string-no-properties 2 file))
+                                    (match-string 2 file))
          ,file)))
    (zk--directory-files t)))
 
@@ -824,12 +809,7 @@ FILES must be a list of filepaths. If nil, all files in
          (output))
     (dolist (file list)
       (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
+        (string-match (zk-file-name-regexp) file)
         (let ((id (match-string 1 file))
               (title (replace-regexp-in-string zk-file-name-separator " "
                                                (match-string 2 file))))
@@ -1037,12 +1017,7 @@ Backlinks and Links-in-Note are grouped separately."
   "Group FILE by type and TRANSFORM."
   (if transform
       (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
+        (string-match (zk-file-name-regexp) file)
         (match-string 2 file))
     (cond
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")

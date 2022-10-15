@@ -260,12 +260,7 @@ FILES must be a list of filepaths. If nil, all files in
          (output))
     (dolist (file list)
       (progn
-        (string-match (concat "\\(?1:"
-                              zk-id-regexp
-                              "\\).\\(?2:.*?\\)\\."
-                              zk-file-extension
-                              ".*")
-                      file)
+        (string-match (zk-file-name-regexp) file)
         (let ((id (if zk-index-invisible-ids
                       (propertize (match-string 1 file) 'invisible t)
                     (match-string 1 file)))
