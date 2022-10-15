@@ -305,6 +305,10 @@ otherwise just match against `zk-file-name-regexp'."
              (save-match-data
                (file-in-directory-p file zk-directory))))))
 
+(defun zk--de-separator (string)
+  "Substitute `zk-file-name-separator' with spaces in STRING."
+  (replace-regexp-in-string zk-file-name-separator " " string))
+
 (defun zk--generate-id ()
   "Generate and return a zk ID.
 The ID is created using `zk-id-time-string-format'."
@@ -453,8 +457,7 @@ supplied. Can take a PROMPT argument."
      (when (string= (file-name-extension file) zk-file-extension)
        (string-match (zk-file-name-regexp) file)
        `(,(match-string 1 file)
-         ,(replace-regexp-in-string zk-file-name-separator " "
-                                    (match-string 2 file))
+         ,(zk--de-separator (match-string 2 file))
          ,file)))
    (zk--directory-files t)))
 
@@ -506,10 +509,7 @@ file extension."
              (when (string-match (zk-file-name-regexp) file)
                (pcase target
                  ('id    (match-string 1 file))
-                 ('title (replace-regexp-in-string
-                          (regexp-quote zk-file-name-separator)
-                          " "
-                          (match-string 2 file)))
+                 ('title (zk--de-separator (match-string 2 file)))
                  (_ (signal 'wrong-type-argument
                             `((and symbolp
                                    (or id title))
@@ -811,8 +811,7 @@ FILES must be a list of filepaths. If nil, all files in
       (progn
         (string-match (zk-file-name-regexp) file)
         (let ((id (match-string 1 file))
-              (title (replace-regexp-in-string zk-file-name-separator " "
-                                               (match-string 2 file))))
+              (title (zk--de-separator (match-string 2 file))))
           (when id
             (push (format-spec format
                                `((?i . ,id)(?t . ,title)))
