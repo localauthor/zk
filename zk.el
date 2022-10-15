@@ -83,13 +83,21 @@
 
 ;; Borrowed from Deft by Jason R. Blevins <jblevins@xbeta.org>
 (defcustom zk-directory-recursive nil
-  "Recursively search for files in subdirectories of `zk-directory'."
+  "Recursively search for files in subdirectories of `zk-directory'.
+If you set this, also consider setting `zk-subdirectory-function'."
   :type 'boolean)
 
 (defcustom zk-directory-recursive-ignore-dir-regexp
   "\\(?:\\.\\|\\.\\.\\)$"
   "Regexp for subdirs to be ignored when ‘zk-directory-recursive’ is non-nil."
   :type 'string)
+
+(defcustom zk-subdirectory-function nil
+  "Function that returns a subdirectory of `zk-directory'.
+Used when `zk-directory-recursive' is non-nil to create new notes
+in the desired subdirectory. When nil, new notes are created in
+`zk-directory'."
+  :type 'function)
 
 (defcustom zk-file-extension nil
   "The extension for zk files."
@@ -558,6 +566,20 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
 
 ;;; Note Functions
 
+(defun zk--note-file-path (id title)
+  "Generate full file-path for note with given ID and TITLE."
+  (let ((base-name (format "%s%s%s.%s"
+                           id
+                           zk-file-name-separator
+                           title
+                           zk-file-extension)))
+    (concat (file-name-as-directory zk-directory)
+            (when (functionp zk-subdirectory-function)
+              (file-name-as-directory (funcall zk-subdirectory-function id)))
+            (replace-regexp-in-string " "
+                                      zk-file-name-separator
+                                      base-name))))
+
 ;;;###autoload
 (defun zk-new-note (&optional title)
   "Create a new note, insert link at point of creation.
@@ -587,15 +609,7 @@ Optional TITLE argument."
                    (buffer-substring
                     (point)
                     (point-max)))))
-         (file-name (replace-regexp-in-string " "
-                                              zk-file-name-separator
-                                              (concat
-                                               (format "%s/%s%s%s.%s"
-                                                       zk-directory
-                                                       new-id
-                                                       zk-file-name-separator
-                                                       title
-                                                       zk-file-extension)))))
+         (file-name (zk--note-file-path new-id title)))
     (unless orig-id
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
@@ -659,15 +673,7 @@ title."
       (re-search-forward " ")
       (delete-region (point) (line-end-position))
       (insert new-title))
-    (let ((new-file (concat
-                     zk-directory "/"
-                     id
-                     zk-file-name-separator
-                     (replace-regexp-in-string
-                      " "
-                      zk-file-name-separator
-                      new-title)
-                     "." zk-file-extension)))
+    (let ((new-file (zk--note-file-path id new-title)))
       (rename-file buffer-file-name new-file t)
       (set-visited-file-name new-file t t)
       (save-buffer))))
