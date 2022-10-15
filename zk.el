@@ -132,6 +132,19 @@ Set it so that it matches strings generated with
 `zk-id-format'."
   :type 'regexp)
 
+(defun zk-file-name-regexp ()
+  "Return the correct regexp matching zk file names.
+The regexp captures these groups:
+
+Group 1 is the zk ID.
+Group 2 is the title."
+  (concat "\\(?1:" zk-id-regexp "\\)"
+          (regexp-quote zk-file-name-separator)
+          "\\(?2:[^.]*?\\)"
+          "\\."
+          zk-file-extension
+          ".*"))
+
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
   "The regular expression used to search for tags."
   :type 'regexp)
@@ -499,23 +512,23 @@ Takes a single file-path, as a string, or a list of file-paths.
 A note's title is understood to be the portion of its filename
 following the zk ID, in the format `zk-id-regexp', and preceding the
 file extension."
-  (let* ((target (pcase target
-                   ('id '1)
-                   ('title '2)))
-         (files (if (listp files)
+  (let* ((files (if (listp files)
                     files
                   (list files)))
          (return
           (mapcar
            (lambda (file)
-             (string-match (concat "\\(?1:"
-                                   zk-id-regexp
-                                   "\\).\\(?2:.*?\\)\\."
-                                   zk-file-extension
-                                   ".*")
-                           file)
-             (replace-regexp-in-string zk-file-name-separator " "
-                                       (match-string target file)))
+             (when (string-match (zk-file-name-regexp) file)
+               (pcase target
+                 ('id    (match-string 1 file))
+                 ('title (replace-regexp-in-string
+                          (regexp-quote zk-file-name-separator)
+                          " "
+                          (match-string 2 file)))
+                 (_ (signal 'wrong-type-argument
+                            `((and symbolp
+                                   (or id title))
+                              ,target))))))
            files)))
     (if (eq 1 (length return))
         (car return)
