@@ -132,19 +132,6 @@ Set it so that it matches strings generated with
 `zk-id-format'."
   :type 'regexp)
 
-(defun zk-file-name-regexp ()
-  "Return the correct regexp matching zk file names.
-The regexp captures these groups:
-
-Group 1 is the zk ID.
-Group 2 is the title."
-  (concat "\\(?1:" zk-id-regexp "\\)"
-          "."
-          "\\(?2:.*?\\)"
-          "\\."
-          zk-file-extension
-          ".*"))
-
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
   "The regular expression used to search for tags."
   :type 'regexp)
@@ -308,6 +295,29 @@ otherwise just match against `zk-file-name-regexp'."
 (defun zk--de-separator (string)
   "Substitute `zk-file-name-separator' with spaces in STRING."
   (replace-regexp-in-string zk-file-name-separator " " string))
+
+(defun zk-file-name-regexp ()
+  "Return the correct regexp matching zk file names.
+The regexp captures these groups:
+
+Group 1 is the zk ID.
+Group 2 is the title."
+  (concat "\\(?1:" zk-id-regexp "\\)"
+          "."
+          "\\(?2:.*?\\)"
+          "\\."
+          zk-file-extension
+          ".*"))
+
+(defun zk--file-name-id (file)
+  "Return the ID of the given FILE.
+This relies on match data from `zk-file-name-regexp`."
+  (match-string-no-properties 1 file))
+
+(defun zk--file-name-title (file)
+  "Return the title of the given FILE.
+This relies on match data from `zk-file-name-regexp`"
+  (match-string-no-properties 2 file))
 
 (defun zk--generate-id ()
   "Generate and return a zk ID.
