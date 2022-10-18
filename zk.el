@@ -132,6 +132,19 @@ Set it so that it matches strings generated with
 `zk-id-format'."
   :type 'regexp)
 
+(defun zk-file-name-regexp ()
+  "Return the correct regexp matching zk file names.
+The regexp captures these groups:
+
+Group 1 is the zk ID.
+Group 2 is the title."
+  (concat "\\(?1:" zk-id-regexp "\\)"
+          "."
+          "\\(?2:.*?\\)"
+          "\\."
+          zk-file-extension
+          ".*"))
+
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
   "The regular expression used to search for tags."
   :type 'regexp)
@@ -292,35 +305,6 @@ otherwise just match against `zk-file-name-regexp'."
              (save-match-data
                (file-in-directory-p file zk-directory))))))
 
-(defun zk--de-separator (string)
-  "Substitute `zk-file-name-separator' with spaces in STRING."
-  (replace-regexp-in-string zk-file-name-separator " " string))
-
-(defun zk-file-name-regexp ()
-  "Return the correct regexp matching zk file names.
-The regexp captures these groups:
-
-Group 1 is the zk ID.
-Group 2 is the title."
-  (concat "\\(?1:" zk-id-regexp "\\)"
-          "."
-          "\\(?2:.*?\\)"
-          "\\."
-          zk-file-extension
-          ".*"))
-
-(defun zk--file-name-id (file)
-  "Return the ID of the given FILE.
-This relies on match data from `zk-file-name-regexp`."
-  (match-string-no-properties 1 file))
-
-(defun zk--file-name-title (file)
-  "Return the title of the given FILE.
-This relies on match data from `zk-file-name-regexp`"
-  (replace-regexp-in-string zk-file-name-separator
-                            " "
-                            (match-string-no-properties 2 file)))
-
 (defun zk--generate-id ()
   "Generate and return a zk ID.
 The ID is created using `zk-id-time-string-format'."
@@ -452,7 +436,7 @@ supplied. Can take a PROMPT argument."
   (if transform
       (progn
         (string-match (zk-file-name-regexp) file)
-        (zk--file-name-title file))
+        (match-string 2 file))
     "zk"))
 
 (defun zk--id-at-point ()
@@ -468,8 +452,9 @@ supplied. Can take a PROMPT argument."
    (lambda (file)
      (when (string= (file-name-extension file) zk-file-extension)
        (string-match (zk-file-name-regexp) file)
-       `(,(zk--file-name-id file)
-         ,(zk--file-name-title file)
+       `(,(match-string 1 file)
+         ,(replace-regexp-in-string zk-file-name-separator " "
+                                    (match-string 2 file))
          ,file)))
    (zk--directory-files t)))
 
@@ -520,8 +505,11 @@ file extension."
            (lambda (file)
              (when (string-match (zk-file-name-regexp) file)
                (pcase target
-                 ('id    (zk--file-name-id file))
-                 ('title (zk--file-name-title file))
+                 ('id    (match-string 1 file))
+                 ('title (replace-regexp-in-string
+                          (regexp-quote zk-file-name-separator)
+                          " "
+                          (match-string 2 file)))
                  (_ (signal 'wrong-type-argument
                             `((and symbolp
                                    (or id title))
@@ -822,8 +810,9 @@ FILES must be a list of filepaths. If nil, all files in
     (dolist (file list)
       (progn
         (string-match (zk-file-name-regexp) file)
-        (let ((id (zk--file-name-id file))
-              (title (zk--file-name-title file)))
+        (let ((id (match-string 1 file))
+              (title (replace-regexp-in-string zk-file-name-separator " "
+                                               (match-string 2 file))))
           (when id
             (push (format-spec format
                                `((?i . ,id)(?t . ,title)))
@@ -1029,7 +1018,7 @@ Backlinks and Links-in-Note are grouped separately."
   (if transform
       (progn
         (string-match (zk-file-name-regexp) file)
-        (zk--file-name-id file))
+        (match-string 2 file))
     (cond
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
      ((eq 'link (get-text-property 0 'type file)) "Links-in-Note"))))
