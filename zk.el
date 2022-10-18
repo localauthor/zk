@@ -139,8 +139,8 @@ The regexp captures these groups:
 Group 1 is the zk ID.
 Group 2 is the title."
   (concat "\\(?1:" zk-id-regexp "\\)"
-          (regexp-quote zk-file-name-separator)
-          "\\(?2:[^.]*?\\)"
+          "."
+          "\\(?2:.*?\\)"
           "\\."
           zk-file-extension
           ".*"))
