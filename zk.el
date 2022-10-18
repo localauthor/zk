@@ -487,7 +487,7 @@ in an internal loop."
                          (lambda (x)
                            (cadr (assoc x zk-alist)))
                          ids)))))))
-    (if (eq 1 (length return))
+    (if (null (cdr return))
         (car return)
       return)))
 
@@ -497,27 +497,23 @@ Takes a single file-path, as a string, or a list of file-paths.
 A note's title is understood to be the portion of its filename
 following the zk ID, in the format `zk-id-regexp', and preceding the
 file extension."
-  (let* ((files (if (listp files)
-                    files
-                  (list files)))
-         (return
-          (mapcar
-           (lambda (file)
-             (when (string-match (zk-file-name-regexp) file)
-               (pcase target
-                 ('id    (match-string 1 file))
-                 ('title (replace-regexp-in-string
-                          (regexp-quote zk-file-name-separator)
-                          " "
-                          (match-string 2 file)))
-                 (_ (signal 'wrong-type-argument
-                            `((and symbolp
-                                   (or id title))
-                              ,target))))))
-           files)))
-    (if (eq 1 (length return))
-        (car return)
-      return)))
+  (let ((result
+         (mapcar (lambda (file)
+                   (when (string-match (zk-file-name-regexp) file)
+                     (pcase target
+                       ('id    (match-string 1 file))
+                       ('title (replace-regexp-in-string
+                                (regexp-quote zk-file-name-separator)
+                                " "
+                                (match-string 2 file)))
+                       (_ (signal 'wrong-type-argument
+                                  `((or 'id 'title) ,target))))))
+                 (if (listp files)
+                     files
+                   (list files)))))
+    (if (null (cdr result))
+        (car result)
+      result)))
 
 ;;; Buttons
 
@@ -738,7 +734,7 @@ Optionally call a custom function by setting the variable
             (push (match-string-no-properties 1) id-list))))
     (cond ((null id-list)
            (error "No zk-links in note"))
-          ((eq 1 (length id-list))
+          ((null (cdr id-list))
            (list (zk--parse-id 'file-path id-list)))
           (t
            (zk--parse-id 'file-path (delete-dups id-list))))))
