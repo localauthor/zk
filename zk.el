@@ -452,7 +452,7 @@ supplied. Can take a PROMPT argument."
   (if transform
       (progn
         (string-match (zk-file-name-regexp) file)
-        (match-string 2 file))
+        (zk--file-name-title file))
     "zk"))
 
 (defun zk--id-at-point ()
@@ -468,8 +468,8 @@ supplied. Can take a PROMPT argument."
    (lambda (file)
      (when (string= (file-name-extension file) zk-file-extension)
        (string-match (zk-file-name-regexp) file)
-       `(,(match-string 1 file)
-         ,(zk--de-separator (match-string 2 file))
+       `(,(zk--file-name-id file)
+         ,(zk--file-name-title file)
          ,file)))
    (zk--directory-files t)))
 
@@ -520,8 +520,8 @@ file extension."
            (lambda (file)
              (when (string-match (zk-file-name-regexp) file)
                (pcase target
-                 ('id    (match-string 1 file))
-                 ('title (zk--de-separator (match-string 2 file)))
+                 ('id    (zk--file-name-id file))
+                 ('title (zk--file-name-title file))
                  (_ (signal 'wrong-type-argument
                             `((and symbolp
                                    (or id title))
@@ -822,8 +822,8 @@ FILES must be a list of filepaths. If nil, all files in
     (dolist (file list)
       (progn
         (string-match (zk-file-name-regexp) file)
-        (let ((id (match-string 1 file))
-              (title (zk--de-separator (match-string 2 file))))
+        (let ((id (zk--file-name-id file))
+              (title (zk--file-name-title file)))
           (when id
             (push (format-spec format
                                `((?i . ,id)(?t . ,title)))
@@ -1029,7 +1029,7 @@ Backlinks and Links-in-Note are grouped separately."
   (if transform
       (progn
         (string-match (zk-file-name-regexp) file)
-        (match-string 2 file))
+        (zk--file-name-id file))
     (cond
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
      ((eq 'link (get-text-property 0 'type file)) "Links-in-Note"))))

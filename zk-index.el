@@ -262,9 +262,9 @@ FILES must be a list of filepaths. If nil, all files in
       (progn
         (string-match (zk-file-name-regexp) file)
         (let ((id (if zk-index-invisible-ids
-                      (propertize (match-string 1 file) 'invisible t)
-                    (match-string 1 file)))
-              (title (zk--de-separator (match-string 2 file))))
+                      (propertize (zk--file-name-id file) 'invisible t)
+                    (zk--file-name-id file)))
+              (title (zk--file-name-title file)))
           (when id
             (push (format-spec format
                                `((?i . ,id)(?t . ,title)))
