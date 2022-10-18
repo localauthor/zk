@@ -132,19 +132,6 @@ Set it so that it matches strings generated with
 `zk-id-format'."
   :type 'regexp)
 
-(defun zk-file-name-regexp ()
-  "Return the correct regexp matching zk file names.
-The regexp captures these groups:
-
-Group 1 is the zk ID.
-Group 2 is the title."
-  (concat "\\(?1:" zk-id-regexp "\\)"
-          "."
-          "\\(?2:.*?\\)"
-          "\\."
-          zk-file-extension
-          ".*"))
-
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
   "The regular expression used to search for tags."
   :type 'regexp)
@@ -203,11 +190,6 @@ Must take a single STRING argument."
 Used in conjunction with `format', the string `%s' will be
 replaced by a note's ID."
   :type 'string)
-
-(defun zk-link-regexp ()
-  "Return the correct regexp for zk links.
-The value is based on `zk-link-format' and `zk-id-regexp'."
-  (format (regexp-quote zk-link-format) zk-id-regexp))
 
 (defcustom zk-link-and-title t
   "Should `zk-insert-link' insert both link and title?
@@ -288,6 +270,24 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
     (set-keymap-parent zk-file-map embark-file-map)))
 
 ;;; Low-Level Functions
+
+(defun zk-file-name-regexp ()
+  "Return the correct regexp matching zk file names.
+The regexp captures these groups:
+
+Group 1 is the zk ID.
+Group 2 is the title."
+  (concat "\\(?1:" zk-id-regexp "\\)"
+          "."
+          "\\(?2:.*?\\)"
+          "\\."
+          zk-file-extension
+          ".*"))
+
+(defun zk-link-regexp ()
+  "Return the correct regexp for zk links.
+The value is based on `zk-link-format' and `zk-id-regexp'."
+  (format (regexp-quote zk-link-format) zk-id-regexp))
 
 (defun zk-file-p (&optional file strict)
   "Return t if FILE is a zk-file.
