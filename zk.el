@@ -317,7 +317,9 @@ This relies on match data from `zk-file-name-regexp`."
 (defun zk--file-name-title (file)
   "Return the title of the given FILE.
 This relies on match data from `zk-file-name-regexp`"
-  (match-string-no-properties 2 file))
+  (replace-regexp-in-string zk-file-name-separator
+                            " "
+                            (match-string-no-properties 2 file)))
 
 (defun zk--generate-id ()
   "Generate and return a zk ID.
