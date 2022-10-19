@@ -338,7 +338,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   "Sort FILES, with option FORMAT-FN and SORT-FN."
   (let* ((sort-fn (or sort-fn
                       'zk-index--sort-modified))
-         (files (if (eq 1 (length files))
+         (files (if (zk--singleton-p files)
                     files
                   (nreverse (funcall sort-fn files)))))
     (funcall #'zk-index--format files format-fn)))
@@ -937,8 +937,7 @@ at point."
     (error "Please set `zk-index-desktop-directory' first"))
   (let ((inhibit-read-only t)
         (buffer) (items))
-    (cond ((and files
-                (null (cdr files)))     ; 1 element in files
+    (cond ((zk--singleton-p files)
            (unless
                (ignore-errors
                  (setq items (car (funcall zk-index-format-function files))))
