@@ -452,9 +452,9 @@ supplied. Can take a PROMPT argument."
    (lambda (file)
      (when (string= (file-name-extension file) zk-file-extension)
        (string-match (zk-file-name-regexp) file)
-       `(,(match-string 1 file)
+       `(,(match-string-no-properties 1 file)
          ,(replace-regexp-in-string zk-file-name-separator " "
-                                    (match-string 2 file))
+                                    (match-string-no-properties 2 file))
          ,file)))
    (zk--directory-files t)))
 
