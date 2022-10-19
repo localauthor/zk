@@ -487,7 +487,8 @@ in an internal loop."
                          (lambda (x)
                            (cadr (assoc x zk-alist)))
                          ids)))))))
-    (if (eq 1 (length return))
+    (if (and (listp return)
+             (null (cdr return)))
         (car return)
       return)))
 

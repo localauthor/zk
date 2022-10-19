@@ -937,22 +937,22 @@ at point."
     (error "Please set `zk-index-desktop-directory' first"))
   (let ((inhibit-read-only t)
         (buffer) (items))
-    (cond ((eq 1 (length files))
+    (cond ((and files
+                (null (cdr files)))     ; 1 element in files
            (unless
                (ignore-errors
                  (setq items (car (funcall zk-index-format-function files))))
              (setq items
-                   (car
-                    (funcall
-                     zk-index-format-function
-                     (list (zk--parse-id 'file-path files)))))))
-          ((and files
-                (< 1 (length files)))
+               (car
+                (funcall
+                 zk-index-format-function
+                 (list (zk--parse-id 'file-path files)))))))
+          (files                        ; > 1 elements in files
            (setq items
-                 (mapconcat
-                  #'identity
-                  (funcall zk-index-format-function files) "\n")))
-          ((eq major-mode 'zk-index-mode)
+             (mapconcat
+                 #'identity
+               (funcall zk-index-format-function files) "\n")))
+          ((eq major-mode 'zk-index-mode) ; no elements in files
            (setq items (if (use-region-p)
                            (buffer-substring
                             (save-excursion
@@ -964,12 +964,14 @@ at point."
                          (buffer-substring
                           (line-beginning-position)
                           (line-end-position)))))
-          ((zk-file-p)
+          ((zk-file-p)                  ; no elements in files
            (setq items
-                 (car
-                  (funcall
-                   zk-index-format-function
-                   (list (zk--parse-id 'file-path (zk--current-id))))))))
+             (car
+              (funcall
+               zk-index-format-function
+               (list (zk--parse-id 'file-path (zk--current-id)))))))
+          (t
+           (user-error "Don't know how to send this to desktop")))
     (if (and zk-index-desktop-current
              (buffer-live-p (get-buffer zk-index-desktop-current)))
         (setq buffer zk-index-desktop-current)
