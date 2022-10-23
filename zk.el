@@ -213,9 +213,10 @@ will be replaced by its ID."
   :type 'string)
 
 (defcustom zk-default-backlink nil
-  "When non-nil, should be a single zk ID.
+  "Default backlink for new notes when there is no immediate parent note.
 See `zk-new-note' for details."
-  :type 'string)
+  :type '(choice (string :tag "zk ID")
+                 (const :tag "None" nil)))
 
 (defcustom zk-current-notes-function nil
   "User-defined function for listing currently open notes.
