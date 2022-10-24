@@ -389,13 +389,12 @@ return list of files not matching the regexp."
   (split-string
    (shell-command-to-string
     (concat (if extended "egrep" "grep")
-            (if invert " -L" " -l")
-            " -ir --include \\*."
-            zk-file-extension
-            " -e "
-            (shell-quote-argument str)
-            " "
-            zk-directory
+            (if invert " --lines-without-match" " --lines-with-matches")
+            " --recursive"
+            " --ignore-case"
+            " --include \\*." zk-file-extension
+            " --regexp=" (shell-quote-argument str)
+            " " zk-directory
             " 2>/dev/null"))
    "\n" t))
 
