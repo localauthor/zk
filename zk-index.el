@@ -280,30 +280,21 @@ FILES must be a list of filepaths. If nil, all files in
 (defun zk-index (&optional files format-fn sort-fn buf-name)
   "Open ZK-Index, with optional FILES, FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive)
-  (setq zk-index-last-format-function format-fn)
-  (setq zk-index-last-sort-function sort-fn)
-  (let ((inhibit-message nil)
-        (inhibit-read-only t)
-        (buf-name (or buf-name
-                      zk-index-buffer-name))
-        (list (or files
-                  (zk--directory-files t))))
-    (if (not (get-buffer buf-name))
-        (progn
-          (when zk-default-backlink
-            (unless (zk-file-p)
-              (zk-find-file-by-id zk-default-backlink)))
-          (generate-new-buffer buf-name)
-          (with-current-buffer buf-name
-            (setq default-directory (expand-file-name zk-directory))
-            (zk-index-mode)
-            (zk-index--sort list format-fn sort-fn)
-            (setq truncate-lines t)
-            (goto-char (point-min)))
-          (pop-to-buffer buf-name
-                         '(display-buffer-at-bottom)))
-      (when files
-        (zk-index-refresh files format-fn sort-fn buf-name))
+  (let ((inhibit-read-only t)
+        (buf-name (or buf-name zk-index-buffer-name))
+        (files (or files (zk--directory-files t))))
+    ;; On the first run, open `zk-default-backlink' if it's set
+    ;; and we are not already editing a zk file.
+    (when (and zk-default-backlink
+               (not (get-buffer buf-name))
+               (not (zk-file-p (buffer-file-name))))
+      (zk-find-file-by-id zk-default-backlink))
+    (if (not files)
+        (message "There are no zk files to display")
+      (with-current-buffer (get-buffer-create buf-name)
+        (setq default-directory (expand-file-name zk-directory))
+        (zk-index-mode))
+      (zk-index-refresh files format-fn sort-fn buf-name)
       (pop-to-buffer buf-name
                      '(display-buffer-at-bottom)))))
 
