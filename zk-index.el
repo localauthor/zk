@@ -1002,11 +1002,9 @@ at point."
   "Switch to ZK-Index buffer."
   (interactive)
   (let ((buffer zk-index-buffer-name))
-    (unless (get-buffer buffer)
-      (progn
-        (generate-new-buffer buffer)
-        (zk-index-refresh)))
-    (switch-to-buffer buffer)))
+    (if (get-buffer buffer)
+        (switch-to-buffer buffer)
+      (zk-index))))
 
 ;;;###autoload
 (defun zk-index-switch-to-desktop ()
