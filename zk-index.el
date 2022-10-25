@@ -507,8 +507,9 @@ items listed first.")
         (files (zk-index--current-file-list)))
     (unless (stringp files)
       (zk-index-refresh files
-                        nil
-                        zk-index-last-sort-function)
+                        zk-index-format-function
+                        zk-index-last-sort-function
+                        zk-index-buffer-name)
       (setq mode-name mode))))
 
 (defun zk-index-query-mode-line (query-command string)
