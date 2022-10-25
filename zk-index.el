@@ -63,11 +63,11 @@
 
 (defcustom zk-index-format "%t [[%i]]"
   "Default format for candidates in the index."
-    :type 'string)
+  :type 'string)
 
 (defcustom zk-index-prefix "-> "
   "String to prepend to note names in ZK-Index."
-    :type 'string)
+  :type 'string)
 
 (defcustom zk-index-auto-scroll t
   "Enable automatically showing note at point in ZK-Index."
@@ -380,7 +380,7 @@ FORMAT-FN, SORT-FN, AND BUF-NAME should always be provided."
               (re-search-forward id)
               (replace-match
                (propertize id 'invisible t)))
-              (goto-char (match-end 0))))))))
+            (goto-char (match-end 0))))))))
 
 ;;;; Utilities
 
@@ -411,8 +411,7 @@ FORMAT-FN, SORT-FN, AND BUF-NAME should always be provided."
   "Action taken when `zk-index' button is pressed."
   (let* ((id (zk-index--button-at-point-p))
          (file (zk--parse-id 'file-path id))
-         (buffer
-          (find-file-noselect file)))
+         (buffer (find-file-noselect file)))
     (funcall zk-index-button-display-function file buffer)))
 
 (defun zk-index-help-echo (win _obj pos)
@@ -542,11 +541,11 @@ with query term STRING."
                                 (split-string (symbol-name (car query)) "-")))
                               ": \""
                               (cdr query))))
-                         ;; Put the last query type at the end
-                         (sort (remq nil formatted)
-                               (lambda (a _b)
-                                 (not (equal (car a) query-command))))
-                         "\" | ")
+                ;; Put the last query type at the end
+                (sort (remq nil formatted)
+                      (lambda (a _b)
+                        (not (equal (car a) query-command))))
+                "\" | ")
               "\"]"))))
 
 (defun zk-index--set-mode-line (string)
@@ -674,8 +673,8 @@ with query term STRING."
   (interactive)
   (beginning-of-line)
   (let* ((id (zk-index--button-at-point-p))
-        (kill (unless (get-file-buffer (zk--parse-id 'file-path id))
-                t)))
+         (kill (unless (get-file-buffer (zk--parse-id 'file-path id))
+                 t)))
     (push-button nil t)
     (setq-local zk-index-view--kill kill)
     (zk-index-view-mode)))
@@ -992,8 +991,8 @@ at point."
 (defun zk-index-desktop-add-toggle ()
   "Set `zk-index-desktop-add-pos' interactively."
   (interactive)
-   (let ((choice (read-char "Choice: \[a\]ppend; \[p\]repend; at-\[P\]oint")))
-     (pcase choice
+  (let ((choice (read-char "Choice: \[a\]ppend; \[p\]repend; at-\[P\]oint")))
+    (pcase choice
       ('?a (setq zk-index-desktop-add-pos 'append))
       ('?p (setq zk-index-desktop-add-pos 'prepend))
       ('?P (setq zk-index-desktop-add-pos 'at-point)))))
@@ -1125,16 +1124,16 @@ With prefix-argument, raise ZK-Desktop in other frame."
                 (zk-index--button-at-point-p (region-beginning))
                 (not (zk-index--button-at-point-p (region-end))))
            (kill-region (save-excursion
-                            (goto-char (region-beginning))
-                            (line-beginning-position))
-                          (region-end)))
+                          (goto-char (region-beginning))
+                          (line-beginning-position))
+                        (region-end)))
           ((and (use-region-p)
                 (not (zk-index--button-at-point-p (region-beginning)))
                 (zk-index--button-at-point-p (region-end)))
            (kill-region (region-beginning)
-                          (save-excursion
-                            (goto-char (region-end))
-                            (line-end-position))))
+                        (save-excursion
+                          (goto-char (region-end))
+                          (line-end-position))))
           ((and (use-region-p)
                 (zk-index--button-at-point-p (region-beginning))
                 (zk-index--button-at-point-p (region-end)))
@@ -1147,7 +1146,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
               (line-end-position))))
           ((use-region-p)
            (kill-region (region-beginning)
-                          (region-end))))))
+                        (region-end))))))
 
 (defun zk-index-desktop-yank ()
   "Wrapper around `yank' for `zk-index-desktop-mode'."
