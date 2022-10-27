@@ -389,7 +389,7 @@ return list of files not matching the regexp."
   (split-string
    (shell-command-to-string
     (concat (if extended "egrep" "grep")
-            (if invert " --lines-without-match" " --lines-with-matches")
+            (if invert " --files-without-match" " --files-with-matches")
             " --recursive"
             " --ignore-case"
             " --include \\*." zk-file-extension
