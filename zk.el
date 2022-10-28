@@ -827,7 +827,8 @@ FILES must be a list of filepaths. If nil, all files in
 When added to `completion-at-point-functions', typing two
 brackets \"[[\" initiates completion."
   (let ((case-fold-search t)
-        (origin (point)))
+        (origin (point))
+        (candidates (zk--format-candidates)))
     (save-excursion
       (when (and (re-search-backward "\\[\\["
                                      (line-beginning-position)
@@ -838,7 +839,7 @@ brackets \"[[\" initiates completion."
               origin
               (completion-table-dynamic
                (lambda (_)
-                 (zk--format-candidates)))
+                 candidates))
               :exit-function
               (lambda (str _status)
                 (delete-char (- -2 (length str)))
