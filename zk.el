@@ -758,6 +758,12 @@ Optionally call a custom function by setting the variable
 
 ;;; Insert Link
 
+(defun zk--format-spec (format id title)
+  "Format ID and TITLE based on the `format-spec' FORMAT.
+The sequence `%t' will be replaced by the TITLE and `%i' will be
+replaced by ID."
+  (format-spec format `((?i . ,id) (?t . ,title))))
+
 ;;;###autoload
 (defun zk-insert-link (id &optional title)
   "Insert link to note with ID and optional TITLE.
@@ -788,8 +794,7 @@ for additional configurations."
 
 (defun zk--insert-link-and-title (id title)
   "Insert zk ID and TITLE according to `zk-link-and-title-format'."
-  (insert (format-spec zk-link-and-title-format
-                       `((?i . ,id)(?t . ,title))))
+  (insert (zk--format-spec zk-link-and-title-format id title))
   (when zk-enable-link-buttons
     (zk-make-button-before-point)))
 
@@ -798,28 +803,22 @@ for additional configurations."
 (defun zk--format-candidates (&optional files format)
   "Return a list of FILES as formatted candidates, following FORMAT.
 
-FORMAT must be a `format-spec' template, wherein `%i' is replaced
-by the ID and `%t' by the title. It can be a string, such as \"%t
-[[%i]]\", or a variable whose value is a string. If nil,
+See `zk--format-spec' for details about FORMAT. If nil,
 `zk-completion-at-point-format' will be used by default.
 
-FILES must be a list of filepaths. If nil, all files in
-`zk-directory' will be returned as formatted candidates."
+FILES must be a list of filepaths. If nil, all files in `zk-directory'
+will be returned as formatted candidates."
   (let* ((format (or format
                      zk-completion-at-point-format))
          (list (or files
                    (zk--directory-files)))
          (output))
     (dolist (file list)
-      (progn
-        (string-match (zk-file-name-regexp) file)
+      (when (string-match (zk-file-name-regexp) file)
         (let ((id (match-string 1 file))
               (title (replace-regexp-in-string zk-file-name-separator " "
                                                (match-string 2 file))))
-          (when id
-            (push (format-spec format
-                               `((?i . ,id)(?t . ,title)))
-                  output)))))
+          (push (zk--format-spec format id title) output))))
     output))
 
 (defun zk-completion-at-point ()
@@ -862,12 +861,10 @@ brackets \"[[\" initiates completion."
                     (zk--parse-file 'id arg))
                    (t (zk--id-at-point))))
          (title (zk--parse-id 'title id)))
-    (if id
-        (progn
-          (kill-new (format-spec zk-link-and-title-format
-                                 `((?i . ,id)(?t . ,title))))
-          (message "Link and title copied: %s" title))
-      (error "No valid zk-id"))))
+    (if (null id)
+        (error "No valid zk-id")
+      (kill-new (zk--format-spec zk-link-and-title-format id title))
+      (message "Link and title copied: %s" title))))
 
 
 
