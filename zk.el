@@ -289,6 +289,11 @@ Group 2 is the title."
 The value is based on `zk-link-format' and `zk-id-regexp'."
   (format (regexp-quote zk-link-format) zk-id-regexp))
 
+(defun zk--file-id (file)
+  "Return the ID of the given zk FILE."
+  (when (string-match (zk-file-name-regexp) file)
+    (match-string-no-properties 1 file)))
+
 (defun zk-file-p (&optional file strict)
   "Return t if FILE is a zk-file.
 If FILE is not given, get it from variable `buffer-file-name'.
@@ -300,7 +305,7 @@ otherwise just match against `zk-file-name-regexp'."
                     (t
                      (signal 'wrong-type-argument '(file))))))
     (and file
-         (string-match (zk-file-name-regexp) file)
+         (zk--file-id file)
          (or (not strict)
              (save-match-data
                (file-in-directory-p file zk-directory))))))
@@ -335,11 +340,10 @@ called in an internal loop."
     (member str all-ids)))
 
 (defun zk--current-id ()
-  "Return id of current note."
-  (unless (zk-file-p)
-    (user-error "Not a zk file"))
-  (string-match zk-id-regexp buffer-file-name)
-  (match-string 0 buffer-file-name))
+  "Return the ID of zk note in current buffer."
+  (or (zk--file-id buffer-file-name)
+      (user-error "Not a zk file")))
+(make-obsolete 'zk--current-id 'zk--file-id "0.5")
 
 (defun zk--directory-files (&optional full regexp)
   "Return list of zk-files in `zk-directory'.
