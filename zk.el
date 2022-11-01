@@ -172,6 +172,12 @@ Must take a single STRING argument."
 See `zk-current-notes' for details."
   :type 'function)
 
+(defcustom zk-format-function nil
+  "User-defined function for formatting zk file information.
+The function should accept three variables: FORMAT-SPEC, ID, and
+TITLE. See `zk-format' for details."
+  :type 'function)
+
 ;; Format variables
 
 (defcustom zk-link-format "[[%s]]"
@@ -183,15 +189,15 @@ replaced by a note's ID."
 (defcustom zk-link-and-title-format "%t [[%i]]"
   "Format for link and title when inserted to together.
 
-The string `%t' will be replaced by the note's title and `%i'
-will be replaced by its ID."
+By default (when `zk-format-function' is nil), the string `%t' will be
+replaced by the note's title and `%i' will be replaced by its ID."
   :type 'string)
 
 (defcustom zk-completion-at-point-format "[[%i]] %t"
   "Format for completion table used by `zk-completion-at-point'.
 
-The string `%t' will be replaced by the note's title and `%i'
-will be replaced by its ID."
+By default (when `zk-format-function' is nil), the string `%t' will be
+replaced by the note's title and `%i' will be replaced by its ID."
   :type 'string)
 
 ;; Link variables
@@ -774,9 +780,11 @@ Optionally call a custom function by setting the variable
 
 (defun zk--format (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
-The sequence `%t' will be replaced by the TITLE and `%i' will be
-replaced by ID."
-  (format-spec format `((?i . ,id) (?t . ,title))))
+If `zk-format-function' is set, call that function. Otherwise, replace
+the sequence `%t' with the TITLE and `%i' with the ID."
+  (if (functionp zk-format-function)
+      (funcall zk-format-function format id title)
+    (format-spec format `((?i . ,id) (?t . ,title)))))
 
 ;;;###autoload
 (defun zk-insert-link (id &optional title)
