@@ -244,7 +244,7 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
 (defun zk-index--format-candidates (&optional files format)
   "Return a list of FILES as formatted candidates, following FORMAT.
 
-See `zk--format-spec' for details about FORMAT. If nil,
+See `zk--format' for details about FORMAT. If nil,
 `zk-completion-at-point-format' will be used by default.
 
 FILES must be a list of filepaths. If nil, all files in
@@ -265,7 +265,7 @@ FILES must be a list of filepaths. If nil, all files in
                       zk-file-name-separator
                       " "
                       (match-string 2 file))))
-          (push (zk--format-spec format id title) output))))
+          (push (zk--format format id title) output))))
     output))
 
 ;;; Main Stack

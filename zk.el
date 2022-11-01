@@ -758,7 +758,7 @@ Optionally call a custom function by setting the variable
 
 ;;; Insert Link
 
-(defun zk--format-spec (format id title)
+(defun zk--format (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
 The sequence `%t' will be replaced by the TITLE and `%i' will be
 replaced by ID."
@@ -794,7 +794,7 @@ for additional configurations."
 
 (defun zk--insert-link-and-title (id title)
   "Insert zk ID and TITLE according to `zk-link-and-title-format'."
-  (insert (zk--format-spec zk-link-and-title-format id title))
+  (insert (zk--format zk-link-and-title-format id title))
   (when zk-enable-link-buttons
     (zk-make-button-before-point)))
 
@@ -803,7 +803,7 @@ for additional configurations."
 (defun zk--format-candidates (&optional files format)
   "Return a list of FILES as formatted candidates, following FORMAT.
 
-See `zk--format-spec' for details about FORMAT. If nil,
+See `zk--format' for details about FORMAT. If nil,
 `zk-completion-at-point-format' will be used by default.
 
 FILES must be a list of filepaths. If nil, all files in `zk-directory'
@@ -818,7 +818,7 @@ will be returned as formatted candidates."
         (let ((id (match-string 1 file))
               (title (replace-regexp-in-string zk-file-name-separator " "
                                                (match-string 2 file))))
-          (push (zk--format-spec format id title) output))))
+          (push (zk--format format id title) output))))
     output))
 
 (defun zk-completion-at-point ()
@@ -863,7 +863,7 @@ brackets \"[[\" initiates completion."
          (title (zk--parse-id 'title id)))
     (if (null id)
         (error "No valid zk-id")
-      (kill-new (zk--format-spec zk-link-and-title-format id title))
+      (kill-new (zk--format zk-link-and-title-format id title))
       (message "Link and title copied: %s" title))))
 
 
