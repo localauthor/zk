@@ -77,6 +77,8 @@
   :group 'files
   :prefix "zk-")
 
+;; Fundamental variables
+
 (defcustom zk-directory nil
   "Main zk directory."
   :type 'string)
@@ -112,12 +114,6 @@ for example, the file-name will be in the form
 rendered with spaces."
   :type 'string)
 
-(defcustom zk-enable-link-buttons t
-  "When non-nil, valid zk-id links will be clickable buttons.
-Allows `zk-make-link-buttons' to be added to `find-file-hook', so
-buttons will be automatically created when a note is opened."
-  :type 'boolean)
-
 (defcustom zk-id-time-string-format "%Y%m%d%H%M"
   "Format for new zk IDs.
 For supported options, please consult `format-time-string'.
@@ -136,6 +132,8 @@ Set it so that it matches strings generated with
   "The regular expression used to search for tags."
   :type 'regexp)
 
+;; Function variables
+
 (defcustom zk-new-note-header-function #'zk-new-note-header
   "Function called by `zk-new-note' to insert header in a new note.
 A user-defined function should use `insert' to insert a string or
@@ -143,22 +141,6 @@ strings. The arguments NEW-ID, TITLE, and ORIG-ID can be used to
 those corresponding values from `zk-new-note' available for
 insertion. See `zk-new-note-header' for an example."
   :type 'function)
-
-(defcustom zk-new-note-link-insert 'ask
-  "Should `zk-new-note' insert link to new note at point?
-
-Options:
-1. t - Always insert a link
-2. `zk - Insert link only inside an existing note
-3. `ask - Ask user, yes or no
-4. nil - Never insert a link
-
-Calling `zk-new-note' with a prefix-argument inserts a link
-regardless of how `zk-new-note-link-insert' is set."
-  :type '(choice (const :tag "Always" t)
-                 (const :tag "Ask" ask)
-                 (const :tag "Only in zk notes" zk)
-                 (const :tag "Never" nil)))
 
 (defcustom zk-select-file-function #'zk--select-file
   "Function for performing completing read.
@@ -185,11 +167,50 @@ Must take a single STRING argument."
  'zk-tag-search-function' should be used instead"
                         "0.5")
 
+(defcustom zk-current-notes-function nil
+  "User-defined function for listing currently open notes.
+See `zk-current-notes' for details."
+  :type 'function)
+
+;; Format variables
+
 (defcustom zk-link-format "[[%s]]"
   "Format for inserted links.
 Used in conjunction with `format', the string `%s' will be
 replaced by a note's ID."
   :type 'string)
+
+(defcustom zk-link-and-title-format "%t [[%i]]"
+  "Format for link and title when inserted to together.
+
+The string `%t' will be replaced by the note's title and `%i'
+will be replaced by its ID."
+  :type 'string)
+
+(defcustom zk-completion-at-point-format "[[%i]] %t"
+  "Format for completion table used by `zk-completion-at-point'.
+
+The string `%t' will be replaced by the note's title and `%i'
+will be replaced by its ID."
+  :type 'string)
+
+;; Link variables
+
+(defcustom zk-new-note-link-insert 'ask
+  "Should `zk-new-note' insert link to new note at point?
+
+Options:
+1. t - Always insert a link
+2. `zk - Insert link only inside an existing note
+3. `ask - Ask user, yes or no
+4. nil - Never insert a link
+
+Calling `zk-new-note' with a prefix-argument inserts a link
+regardless of how `zk-new-note-link-insert' is set."
+  :type '(choice (const :tag "Always" t)
+                 (const :tag "Ask" ask)
+                 (const :tag "Only in zk notes" zk)
+                 (const :tag "Never" nil)))
 
 (defcustom zk-link-and-title t
   "Should `zk-insert-link' insert both link and title?
@@ -205,28 +226,15 @@ by setting the variable `zk-link-and-title-format'."
                  (const :tag "Ask" ask)
                  (const :tag "Never" nil)))
 
-(defcustom zk-link-and-title-format "%t [[%i]]"
-  "Format for link and title when inserted to together.
-
-The string `%t' will be replaced by the note's title and `%i'
-will be replaced by its ID."
-  :type 'string)
+(defcustom zk-enable-link-buttons t
+  "When non-nil, valid zk-id links will be clickable buttons.
+Allows `zk-make-link-buttons' to be added to `find-file-hook', so
+buttons will be automatically created when a note is opened."
+  :type 'boolean)
 
 (defcustom zk-default-backlink nil
   "When non-nil, should be a single zk ID.
 See `zk-new-note' for details."
-  :type 'string)
-
-(defcustom zk-current-notes-function nil
-  "User-defined function for listing currently open notes.
-See `zk-current-notes' for details."
-  :type 'function)
-
-(defcustom zk-completion-at-point-format "[[%i]] %t"
-  "Format for completion table used by `zk-completion-at-point'.
-
-The string `%t' will be replaced by the note's title and `%i'
-will be replaced by its ID."
   :type 'string)
 
 (defvar zk-file-history nil)
