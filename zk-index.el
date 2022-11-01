@@ -969,7 +969,7 @@ at point."
                  (car
                   (funcall
                    zk-index-format-function
-                   (list (zk--parse-id 'file-path (zk--current-id))))))))
+                   (list buffer-file-name))))))
     (if (and zk-index-desktop-current
              (buffer-live-p (get-buffer zk-index-desktop-current)))
         (setq buffer zk-index-desktop-current)
