@@ -592,7 +592,7 @@ Optional TITLE argument."
   (interactive)
   (let* ((pref-arg current-prefix-arg)
          (new-id (zk--generate-id))
-         (orig-id (ignore-errors (zk--current-id)))
+         (orig-id (zk--file-id buffer-file-name))
          (text (when (use-region-p)
                  (buffer-substring
                   (region-beginning)
@@ -655,7 +655,7 @@ header title in buffer. If yes, file name changed to header
 title."
   (interactive)
   (read-only-mode -1)
-  (let* ((id (zk--current-id))
+  (let* ((id (zk--file-id buffer-file-name))
          (file-title (zk--parse-id 'title id))
          (header-title (progn
                          (save-excursion
@@ -768,7 +768,8 @@ Optionally call a custom function by setting the variable
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable `zk-link-and-title'
 for additional configurations."
-  (interactive (list (zk--parse-file 'id (funcall zk-select-file-function "Insert link: "))))
+  (interactive
+   (list (zk--file-id (funcall zk-select-file-function "Insert link: "))))
   (let* ((pref-arg current-prefix-arg)
          (title (or title
                     (zk--parse-id 'title id))))
@@ -885,7 +886,7 @@ brackets \"[[\" initiates completion."
 (defun zk-backlinks ()
   "Select from list of all notes that link to the current note."
   (interactive)
-  (let* ((id (zk--current-id))
+  (let* ((id (zk--file-id buffer-file-name))
          (files (zk--backlinks-list id)))
     (if files
         (find-file (funcall zk-select-file-function "Backlinks: " files))
@@ -998,7 +999,7 @@ Backlinks and Links-in-Note are grouped separately."
   (interactive)
   (unless (zk-file-p)
     (user-error "Not a zk file"))
-  (let* ((id (ignore-errors (zk--current-id)))
+  (let* ((id (zk--file-id buffer-file-name))
          (backlinks (ignore-errors (zk--backlinks-list id)))
          (links-in-note (ignore-errors (zk--links-in-note-list)))
          (resources))
