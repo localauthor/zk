@@ -338,7 +338,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   "Sort FILES, with option FORMAT-FN and SORT-FN."
   (let* ((sort-fn (or sort-fn
                       'zk-index--sort-modified))
-         (files (if (eq 1 (length files))
+         (files (if (zk--singleton-p files)
                     files
                   (nreverse (funcall sort-fn files)))))
     (funcall #'zk-index--format files format-fn)))
@@ -937,22 +937,21 @@ at point."
     (error "Please set `zk-index-desktop-directory' first"))
   (let ((inhibit-read-only t)
         (buffer) (items))
-    (cond ((eq 1 (length files))
+    (cond ((zk--singleton-p files)
            (unless
                (ignore-errors
                  (setq items (car (funcall zk-index-format-function files))))
              (setq items
-                   (car
-                    (funcall
-                     zk-index-format-function
-                     (list (zk--parse-id 'file-path files)))))))
-          ((and files
-                (< 1 (length files)))
+               (car
+                (funcall
+                 zk-index-format-function
+                 (list (zk--parse-id 'file-path files)))))))
+          (files                        ; > 1 elements in files
            (setq items
-                 (mapconcat
-                  #'identity
-                  (funcall zk-index-format-function files) "\n")))
-          ((eq major-mode 'zk-index-mode)
+             (mapconcat
+                 #'identity
+               (funcall zk-index-format-function files) "\n")))
+          ((eq major-mode 'zk-index-mode) ; no elements in files
            (setq items (if (use-region-p)
                            (buffer-substring
                             (save-excursion
@@ -964,12 +963,14 @@ at point."
                          (buffer-substring
                           (line-beginning-position)
                           (line-end-position)))))
-          ((zk-file-p)
+          ((zk-file-p)                  ; no elements in files
            (setq items
-                 (car
-                  (funcall
-                   zk-index-format-function
-                   (list buffer-file-name))))))
+             (car
+              (funcall
+               zk-index-format-function
+               (list buffer-file-name)))))
+          (t
+           (user-error "Don't know how to send this to desktop")))
     (if (and zk-index-desktop-current
              (buffer-live-p (get-buffer zk-index-desktop-current)))
         (setq buffer zk-index-desktop-current)
