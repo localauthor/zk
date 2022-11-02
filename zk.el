@@ -271,7 +271,7 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
 
 ;;; Low-Level Functions
 
-(define-inline zk--singleton-p (list)
+(defun zk--singleton-p (list)
   "Return non-NIL if LIST is not null, is a list, and has a single element."
   (and (not (null list))
        (listp list)
