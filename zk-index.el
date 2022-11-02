@@ -968,7 +968,7 @@ at point."
              (car
               (funcall
                zk-index-format-function
-               (list (zk--parse-id 'file-path (zk--current-id)))))))
+               (list buffer-file-name)))))
           (t
            (user-error "Don't know how to send this to desktop")))
     (if (and zk-index-desktop-current

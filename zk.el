@@ -295,6 +295,11 @@ Group 2 is the title."
 The value is based on `zk-link-format' and `zk-id-regexp'."
   (format (regexp-quote zk-link-format) zk-id-regexp))
 
+(defun zk--file-id (file)
+  "Return the ID of the given zk FILE."
+  (when (string-match (zk-file-name-regexp) file)
+    (match-string-no-properties 1 file)))
+
 (defun zk-file-p (&optional file strict)
   "Return t if FILE is a zk-file.
 If FILE is not given, get it from variable `buffer-file-name'.
@@ -306,7 +311,7 @@ otherwise just match against `zk-file-name-regexp'."
                     (t
                      (signal 'wrong-type-argument '(file))))))
     (and file
-         (string-match (zk-file-name-regexp) file)
+         (zk--file-id file)
          (or (not strict)
              (save-match-data
                (file-in-directory-p file zk-directory))))))
@@ -341,11 +346,10 @@ called in an internal loop."
     (member str all-ids)))
 
 (defun zk--current-id ()
-  "Return id of current note."
-  (unless (zk-file-p)
-    (user-error "Not a zk file"))
-  (string-match zk-id-regexp buffer-file-name)
-  (match-string 0 buffer-file-name))
+  "Return the ID of zk note in current buffer."
+  (or (zk--file-id buffer-file-name)
+      (user-error "Not a zk file")))
+(make-obsolete 'zk--current-id 'zk--file-id "0.5")
 
 (defun zk--directory-files (&optional full regexp)
   "Return list of zk-files in `zk-directory'.
@@ -388,18 +392,21 @@ file-paths."
              (buffer-file-name x)))
          (buffer-list))))
 
-(defun zk--grep-file-list (str)
-  "Return a list of files containing regexp STR."
-  (let* ((files (shell-command-to-string (concat
-                                          "grep -lir --include \\*."
-                                          zk-file-extension
-                                          " -e "
-                                          (shell-quote-argument
-                                           str)
-                                          " "
-                                          zk-directory
-                                          " 2>/dev/null"))))
-    (split-string files "\n" t)))
+(defun zk--grep-file-list (str &optional extended invert)
+  "Return a list of files containing regexp STR.
+If EXTENDED is non-nil, use egrep. If INVERT is non-nil,
+return list of files not matching the regexp."
+  (split-string
+   (shell-command-to-string
+    (concat (if extended "egrep" "grep")
+            (if invert " --files-without-match" " --files-with-matches")
+            " --recursive"
+            " --ignore-case"
+            " --include \\*." zk-file-extension
+            " --regexp=" (shell-quote-argument str)
+            " " zk-directory
+            " 2>/dev/null"))
+   "\n" t))
 
 (defun zk--grep-id-list (str)
   "Return a list of IDs for files containing STR."
@@ -587,7 +594,7 @@ Optional TITLE argument."
   (interactive)
   (let* ((pref-arg current-prefix-arg)
          (new-id (zk--generate-id))
-         (orig-id (ignore-errors (zk--current-id)))
+         (orig-id (zk--file-id buffer-file-name))
          (text (when (use-region-p)
                  (buffer-substring
                   (region-beginning)
@@ -650,7 +657,7 @@ header title in buffer. If yes, file name changed to header
 title."
   (interactive)
   (read-only-mode -1)
-  (let* ((id (zk--current-id))
+  (let* ((id (zk--file-id buffer-file-name))
          (file-title (zk--parse-id 'title id))
          (header-title (progn
                          (save-excursion
@@ -763,7 +770,8 @@ Optionally call a custom function by setting the variable
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable `zk-link-and-title'
 for additional configurations."
-  (interactive (list (zk--parse-file 'id (funcall zk-select-file-function "Insert link: "))))
+  (interactive
+   (list (zk--file-id (funcall zk-select-file-function "Insert link: "))))
   (let* ((pref-arg current-prefix-arg)
          (title (or title
                     (zk--parse-id 'title id))))
@@ -826,7 +834,8 @@ FILES must be a list of filepaths. If nil, all files in
 When added to `completion-at-point-functions', typing two
 brackets \"[[\" initiates completion."
   (let ((case-fold-search t)
-        (origin (point)))
+        (origin (point))
+        (candidates (zk--format-candidates)))
     (save-excursion
       (when (and (re-search-backward "\\[\\["
                                      (line-beginning-position)
@@ -837,7 +846,7 @@ brackets \"[[\" initiates completion."
               origin
               (completion-table-dynamic
                (lambda (_)
-                 (zk--format-candidates)))
+                 candidates))
               :exit-function
               (lambda (str _status)
                 (delete-char (- -2 (length str)))
@@ -879,7 +888,7 @@ brackets \"[[\" initiates completion."
 (defun zk-backlinks ()
   "Select from list of all notes that link to the current note."
   (interactive)
-  (let* ((id (zk--current-id))
+  (let* ((id (zk--file-id buffer-file-name))
          (files (zk--backlinks-list id)))
     (if files
         (find-file (funcall zk-select-file-function "Backlinks: " files))
@@ -992,7 +1001,7 @@ Backlinks and Links-in-Note are grouped separately."
   (interactive)
   (unless (zk-file-p)
     (user-error "Not a zk file"))
-  (let* ((id (ignore-errors (zk--current-id)))
+  (let* ((id (zk--file-id buffer-file-name))
          (backlinks (ignore-errors (zk--backlinks-list id)))
          (links-in-note (ignore-errors (zk--links-in-note-list)))
          (resources))
