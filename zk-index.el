@@ -865,8 +865,8 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
       (save-excursion
         ;; replace titles
         (goto-char (point-min))
-        (let ((ids (zk--id-list))
-              (zk-alist (zk--alist)))
+        (let* ((zk-alist (zk--alist))
+               (ids (zk--id-list nil zk-alist)))
           (while (re-search-forward zk-id-regexp nil t)
             (let* ((beg (line-beginning-position))
                    (end (line-end-position))
