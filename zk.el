@@ -594,7 +594,7 @@ Optional TITLE argument."
   (interactive)
   (let* ((pref-arg current-prefix-arg)
          (new-id (zk--generate-id))
-         (orig-id (zk--file-id buffer-file-name))
+         (orig-id (ignore-errors (zk--file-id buffer-file-name)))
          (text (when (use-region-p)
                  (buffer-substring
                   (region-beginning)
