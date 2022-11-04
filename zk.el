@@ -175,7 +175,7 @@ See `zk-current-notes' for details."
 (defcustom zk-format-function nil
   "User-defined function for formatting zk file information.
 The function should accept three variables: FORMAT-SPEC, ID, and
-TITLE. See `zk-format' for details."
+TITLE. See `zk--format' for details."
   :type 'function)
 
 ;; Format variables
@@ -287,7 +287,7 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
 
 (defun zk--singleton-p (list)
   "Return non-NIL if LIST is not null, is a list, and has a single element."
-  (and (not (null list))
+  (and list
        (listp list)
        (null (cdr list))))
 
