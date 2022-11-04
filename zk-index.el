@@ -1,11 +1,11 @@
-;;; zk-index.el --- Index and Desktop for zk   -*- lexical-binding: t; -*-
+;;; zk-index.el --- Index for zk   -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022  Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 25, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.7
+;; Version: 0.8
 ;; Homepage: https://github.com/localauthor/zk
 
 ;; Package-Requires: ((emacs "27.1")(zk "0.3"))
@@ -25,13 +25,8 @@
 
 ;;; Commentary:
 
-;; Two interfaces for zk:
-
 ;; ZK-Index: A sortable, searchable, narrowable, semi-persistent selection of
 ;; notes, in the form of clickable links.
-
-;; ZK-Desktop: A place (or places) for collecting, grouping, arranging, and
-;; saving curated selections of notes (also in the form of clickable links).
 
 ;; To enable integration with Embark, include '(zk-index-setup-embark)' in
 ;; your init config.
@@ -44,7 +39,7 @@
 ;;; Custom Variables
 
 (defgroup zk-index nil
-  "Index and Desktop interfaces for zk."
+  "Index interface for zk."
   :group 'text
   :group 'files
   :prefix "zk-index")
@@ -85,42 +80,6 @@ See the default function `zk-index-button-display-action' for an
 example."
   :type 'function)
 
-(defcustom zk-index-desktop-directory nil
-  "Directory for saved ZK-Desktops."
-  :type 'directory)
-
-(defcustom zk-index-desktop-basename "*ZK-Desktop:"
-  "Basename for ZK-Desktops.
-The names of all ZK-Desktops should begin with this string."
-  :type 'string)
-
-(defcustom zk-index-desktop-prefix ""
-  "String to prepend to note names in ZK-Desktop."
-  :type 'string)
-
-(defcustom zk-index-desktop-major-mode nil
-  "Name of major-mode for ZK-Desktop buffers.
-The value should be a symbol that is a major mode command.
-If nil, buffers will be in `fundamental-mode'."
-  :type 'function)
-
-(defcustom zk-index-desktop-add-pos 'append
-  "Behavior for placement of notes in ZK-Desktop via `zk-index-send-to-desktop'.
-
-Options:
-1. `append - Place notes at end of current ZK-Desktop
-2. `prepend - Place notes at beginning of current ZK-Desktop
-3. `at-point - Place notes at current point of current ZK-Desktop
-
-To quickly change this setting, call `zk-index-desktop-add-toggle'."
-  :type '(choice (const :tag "Append" append)
-                 (const :tag "Prepend" prepend)
-                 (const :tag "At point" at-point)))
-
-(defface zk-index-desktop-button
-  '((t :inherit default))
-  "Face used for buttons in `zk-index-desktop-mode'.")
-
 ;;; ZK-Index Major Mode Settings
 
 (defvar zk-index-mode-line-orig nil
@@ -158,43 +117,6 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
   (setq-local show-paren-mode nil)
   (setq cursor-type nil))
 
-;;; ZK-Desktop Minor Mode Settings
-
-(defvar zk-index-desktop-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-<up>") #'zk-index-move-line-up)
-    (define-key map (kbd "C-<down>") #'zk-index-move-line-down)
-    (define-key map [remap delete-char] #'zk-index-desktop-delete-char)
-    (define-key map [remap delete-backward-char] #'zk-index-desktop-delete-backward-char)
-    (define-key map [remap kill-region] #'zk-index-desktop-kill-region)
-    (define-key map [remap yank] #'zk-index-desktop-yank)
-    map)
-  "Keymap for ZK-Desktop buffers.")
-
-(define-minor-mode zk-index-desktop-mode
-  "Minor mode for `zk-index-desktop'."
-  :init-value nil
-  :keymap zk-index-desktop-map
-  (zk-index-desktop-make-buttons)
-  (when-let ((mode zk-index-desktop-major-mode))
-    (funcall mode))
-  ;;(setq truncate-lines t)
-  (setq-local zk-index-desktop-mode t))
-
-(defvar zk-index-desktop-button-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-<up>") #'zk-index-move-line-up)
-    (define-key map (kbd "C-<down>") #'zk-index-move-line-down)
-    (define-key map [remap kill-line] #'zk-index-desktop-kill-line)
-    (define-key map [remap delete-char] #'zk-index-desktop-delete-char)
-    (define-key map [remap kill-region] #'zk-index-desktop-kill-region)
-    (define-key map (kbd "v") #'zk-index-view-note)
-    (define-key map (kbd "n") #'zk-index-next-line)
-    (define-key map (kbd "p") #'zk-index-previous-line)
-    (define-key map [remap self-insert-command] 'ignore)
-    (set-keymap-parent map button-map)
-    map)
-  "Keymap for ZK-Desktop buttons.")
 
 ;;; Declarations
 
@@ -202,7 +124,6 @@ To quickly change this setting, call `zk-index-desktop-add-toggle'."
 (defvar zk-index-last-format-function nil)
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-query-terms nil)
-(defvar zk-index-desktop-current nil)
 (defvar zk-search-history)
 
 (declare-function zk-file-p zk)
@@ -387,9 +308,10 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index-button-display-action (file buffer)
   "Function to display FILE or BUFFER on button press in Index and Desktop."
-  (if (and zk-index-desktop-directory
-	       (file-in-directory-p zk-index-desktop-directory
-				                default-directory))
+  ;; TODO check that zk-desktop is loaded
+  (if (and zk-desktop-directory
+	   (file-in-directory-p zk-desktop-directory
+				default-directory))
       ;; display action for ZK-Desktop
       (progn
         (if (one-window-p)
@@ -697,7 +619,7 @@ Takes an option POS position argument."
                     (button-at (point)))))
     (when (and button
                (or (eq (button-type button) 'zk-index)
-                   (eq (button-type button) 'zk-index-desktop)))
+                   (eq (button-type button) 'zk-desktop)))
       (save-excursion
         (re-search-forward zk-id-regexp)
         (match-string-no-properties 1)))))
@@ -779,228 +701,6 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
             (zk-index-view-note)))
       (forward-button -1))))
 
-
-;;; ZK-Desktop
-;; index's more flexible, savable cousin; a place to collect and order notes
-;; in the form of links
-
-;;;###autoload
-(defun zk-index-desktop ()
-  "Open ZK-Desktop."
-  (interactive)
-  (let ((buffer (if (and zk-index-desktop-current
-                         (buffer-live-p (get-buffer zk-index-desktop-current)))
-                    zk-index-desktop-current
-                  (zk-index-desktop-select)))
-        (choice (unless (eq (current-buffer) zk-index-desktop-current)
-                  (read-char "Choice: \[s\]witch or \[p\]op-up?"))))
-    (pcase choice
-      ('?s (switch-to-buffer buffer))
-      ('?p (pop-to-buffer buffer
-                          '(display-buffer-at-bottom)))
-      (_ nil))))
-
-
-;;;###autoload
-(defun zk-index-desktop-select ()
-  "Select a ZK-Desktop to work with."
-  (interactive)
-  (unless zk-index-desktop-directory
-    (error "Please set `zk-index-desktop-directory' first"))
-  (let* ((last-command last-command)
-         (desktop
-          (completing-read "Select or Create ZK-Desktop: "
-                           (directory-files
-                            zk-index-desktop-directory
-                            nil
-                            (concat
-                             zk-index-desktop-basename
-                             ".*"))
-                           nil nil nil nil
-                           (concat zk-index-desktop-basename " ")))
-         (file (concat zk-index-desktop-directory "/" desktop)))
-    (if (file-exists-p (expand-file-name file))
-        (setq zk-index-desktop-current
-              (find-file-noselect file))
-      (progn
-        (generate-new-buffer desktop)
-        (setq zk-index-desktop-current desktop)))
-    (with-current-buffer zk-index-desktop-current
-      (setq require-final-newline 'visit-save)
-      (unless (bound-and-true-p truncate-lines)
-        (toggle-truncate-lines))
-      (set-visited-file-name file t t)
-      (zk-index-desktop-mode)
-      (save-buffer))
-    (if (and (not (eq last-command 'zk-index-desktop))
-             (y-or-n-p (format "Visit %s? " zk-index-desktop-current)))
-        (switch-to-buffer zk-index-desktop-current)
-      (message "Desktop set to: %s" zk-index-desktop-current)))
-  zk-index-desktop-current)
-
-(eval-and-compile
-  (define-button-type 'zk-index-desktop
-    'read-only t
-    'front-sticky t
-    'rear-sticky t
-    'keymap zk-index-desktop-button-map
-    'action 'zk-index-button-action
-    'help-echo 'zk-index-help-echo
-    'face 'zk-index-desktop-button
-    'cursor-face 'highlight))
-
-;;;###autoload
-(defun zk-index-desktop-make-buttons ()
-  "Re-make buttons in ZK-Desktop."
-  (interactive)
-  (when (and (string-match-p zk-index-desktop-basename (buffer-name))
-             (file-in-directory-p default-directory zk-index-desktop-directory))
-    (let ((inhibit-read-only t))
-      (save-excursion
-        ;; replace titles
-        (goto-char (point-min))
-        (let* ((zk-alist (zk--alist))
-               (ids (zk--id-list nil zk-alist)))
-          (while (re-search-forward zk-id-regexp nil t)
-            (let* ((beg (line-beginning-position))
-                   (end (line-end-position))
-                   (id  (progn
-                          (save-match-data
-                            (beginning-of-line)
-                            (when (re-search-forward "\\[\\[" end t)
-                              (replace-match ""))
-                            (when (re-search-forward "]]" end t)
-                              (replace-match "")))
-                          (match-string-no-properties 1)))
-                   (title (buffer-substring-no-properties beg (match-beginning 0)))
-                   (new-title (when (member id ids)
-                                (concat zk-index-desktop-prefix
-                                        (zk--parse-id 'title id zk-alist) " "))))
-              (beginning-of-line)
-              (if new-title
-                  (unless (string= title new-title)
-                    (progn
-                      (search-forward title end)
-                      (replace-match new-title)))
-                (progn
-                  (search-forward title end)
-                  (replace-match (propertize title 'face 'error))))
-              (end-of-line)))
-          ;; make buttons
-          (goto-char (point-min))
-          (while (re-search-forward zk-id-regexp nil t)
-            (let* ((beg (line-beginning-position))
-                   (end (line-end-position))
-                   (id (match-string-no-properties 1)))
-              (if (member id ids)
-                  (progn
-                    (make-text-button beg end 'type 'zk-index-desktop)
-                    (when zk-index-invisible-ids
-                      (beginning-of-line)
-                      ;; find zk-links and plain zk-ids
-                      (if (re-search-forward (zk-link-regexp) (line-end-position) t)
-                          (replace-match
-                           (propertize (match-string 0) 'invisible t) nil t)
-                        (progn
-                          (re-search-forward id)
-                          (replace-match
-                           (propertize id
-                                       'read-only t
-                                       'front-sticky t
-                                       'rear-nonsticky t))
-                          ;; enable invisibility in org-mode
-                          (overlay-put
-                           (make-overlay (match-beginning 0) (match-end 0))
-                           'invisible t))))
-                    (add-text-properties beg (+ beg 1)
-                                         '(front-sticky nil)))
-                (end-of-line)
-                (overlay-put (make-overlay (point) (point))
-                             'before-string
-                             (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
-            (end-of-line)))))))
-
-;;;###autoload
-(defun zk-index-send-to-desktop (&optional files)
-  "Send notes from ZK-Index to ZK-Desktop.
-In ZK-Index, works on note at point or notes in active region.
-Also works on FILES or group of files in minibuffer, and on zk-id
-at point."
-  (interactive)
-  (unless zk-index-desktop-directory
-    (error "Please set `zk-index-desktop-directory' first"))
-  (let ((inhibit-read-only t)
-        (buffer) (items))
-    (cond ((zk--singleton-p files)
-           (unless
-               (ignore-errors
-                 (setq items (car (funcall zk-index-format-function files))))
-             (setq items
-                   (car
-                    (funcall
-                     zk-index-format-function
-                     (list (zk--parse-id 'file-path files)))))))
-          (files                        ; > 1 elements in files
-           (setq items
-                 (mapconcat
-                  #'identity
-                  (funcall zk-index-format-function files) "\n")))
-          ((eq major-mode 'zk-index-mode) ; no elements in files
-           (setq items (if (use-region-p)
-                           (buffer-substring
-                            (save-excursion
-                              (goto-char (region-beginning))
-                              (line-beginning-position))
-                            (save-excursion
-                              (goto-char (region-end))
-                              (line-end-position)))
-                         (buffer-substring
-                          (line-beginning-position)
-                          (line-end-position)))))
-          ((zk-file-p)                  ; no elements in files
-           (setq items
-                 (car
-                  (funcall
-                   zk-index-format-function
-                   (list buffer-file-name)))))
-          (t
-           (user-error "Don't know how to send this to desktop")))
-    (if (and zk-index-desktop-current
-             (buffer-live-p (get-buffer zk-index-desktop-current)))
-        (setq buffer zk-index-desktop-current)
-      (setq buffer (zk-index-desktop-select)))
-    (unless (get-buffer buffer)
-      (generate-new-buffer buffer))
-    (with-current-buffer buffer
-      (setq require-final-newline 'visit-save)
-      (pcase zk-index-desktop-add-pos
-        ('append (progn
-                   (goto-char (point-max))
-                   (beginning-of-line)
-                   (when (looking-at-p ".")
-                     (end-of-line)
-                     (newline))))
-        ('prepend (progn
-                    (goto-char (point-min))))
-        ('at-point (goto-char (point))))
-      (insert items "\n")
-      (beginning-of-line)
-      (unless (bound-and-true-p truncate-lines)
-        (toggle-truncate-lines))
-      (zk-index-desktop-mode))
-    (if (eq major-mode 'zk-index-mode)
-        (message "Sent to %s - press D to switch" buffer)
-      (message "Sent to %s" buffer))))
-
-(defun zk-index-desktop-add-toggle ()
-  "Set `zk-index-desktop-add-pos' interactively."
-  (interactive)
-   (let ((choice (read-char "Choice: \[a\]ppend; \[p\]repend; at-\[P\]oint")))
-     (pcase choice
-      ('?a (setq zk-index-desktop-add-pos 'append))
-      ('?p (setq zk-index-desktop-add-pos 'prepend))
-      ('?P (setq zk-index-desktop-add-pos 'at-point)))))
-
 ;;;###autoload
 (defun zk-index-switch-to-index ()
   "Switch to ZK-Index buffer."
@@ -1012,158 +712,6 @@ at point."
         (zk-index-refresh)))
     (switch-to-buffer buffer)))
 
-;;;###autoload
-(defun zk-index-switch-to-desktop ()
-  "Switch to ZK-Desktop.
-With prefix-argument, raise ZK-Desktop in other frame."
-  (interactive)
-  (unless (and zk-index-desktop-current
-               (buffer-live-p (get-buffer zk-index-desktop-current)))
-    (zk-index-desktop-select))
-  (let ((buffer zk-index-desktop-current))
-    (if current-prefix-arg
-        (if (get-buffer-window buffer 'visible)
-            (display-buffer-pop-up-frame
-             buffer
-             ;; not general
-             '((pop-up-frame-parameters . ((top . 80)
-                                           (left . 850)
-                                           (width . 80)
-                                           (height . 35)))))
-          (switch-to-buffer-other-frame buffer))
-      (switch-to-buffer buffer))))
-
-;;; ZK-Desktop Keymap Commands
-
-(defun zk-index-move-line-down ()
-  "Move line at point down in ZK-Desktop buffer."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (forward-line 1)
-    (transpose-lines 1)
-    (forward-line -1)
-    (when zk-index-invisible-ids
-      (zk-index-desktop-make-buttons))))
-
-(defun zk-index-move-line-up ()
-  "Move line at point up in ZK-Desktop buffer."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (transpose-lines 1)
-    (forward-line -2)
-    (when zk-index-invisible-ids
-      (zk-index-desktop-make-buttons))))
-
-(defun zk-index-desktop-delete-region-maybe ()
-  "Maybe delete region in `zk-index-desktop-mode'."
-  (cond ((and (not (use-region-p))
-              (zk-index--button-at-point-p))
-         (delete-region (line-beginning-position)
-                        (line-end-position)))
-        ((and (use-region-p)
-              (zk-index--button-at-point-p (region-beginning))
-              (not (zk-index--button-at-point-p (region-end))))
-         (delete-region (save-excursion
-                          (goto-char (region-beginning))
-                          (line-beginning-position))
-                        (region-end))
-         t)
-        ((and (use-region-p)
-              (not (zk-index--button-at-point-p (region-beginning)))
-              (zk-index--button-at-point-p (region-end)))
-         (delete-region (region-beginning)
-                        (save-excursion
-                          (goto-char (region-end))
-                          (line-end-position)))
-         t)
-        ((and (use-region-p)
-              (zk-index--button-at-point-p (region-beginning))
-              (zk-index--button-at-point-p (region-end)))
-         (delete-region
-          (save-excursion
-            (goto-char (region-beginning))
-            (line-beginning-position))
-          (save-excursion
-            (goto-char (region-end))
-            (line-end-position)))
-         t)
-        ((use-region-p)
-         (delete-region (region-beginning)
-                        (region-end))
-         t)))
-
-(defun zk-index-desktop-delete-char ()
-  "Wrapper around `delete-char' for `zk-index-desktop-mode'."
-  (interactive)
-  (unless (and (and (looking-back zk-id-regexp
-                                  (line-beginning-position))
-                    (looking-at "$"))
-               (save-excursion
-                 (beginning-of-line)
-                 (zk-index--button-at-point-p)))
-    (let ((inhibit-read-only t))
-      (unless (zk-index-desktop-delete-region-maybe)
-        (funcall #'delete-char (or current-prefix-arg 1))))))
-
-(defun zk-index-desktop-delete-backward-char ()
-  "Wrapper around `delete-backward-char' for `zk-index-desktop-mode'."
-  (interactive)
-  (unless (and (looking-back zk-id-regexp
-                             (line-beginning-position))
-               (save-excursion
-                 (beginning-of-line)
-                 (zk-index--button-at-point-p)))
-    (let ((inhibit-read-only t))
-      (unless (zk-index-desktop-delete-region-maybe)
-        (funcall #'delete-char (or current-prefix-arg -1))))))
-
-(defun zk-index-desktop-kill-line ()
-  "Kill line in `zk-index-desktop-mode'."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (if (not (zk-index--button-at-point-p))
-        (kill-line)
-      (kill-region (line-beginning-position)
-                   (line-end-position)))))
-
-(defun zk-index-desktop-kill-region ()
-  "Wrapper around `kill-region' for `zk-index-desktop-mode'."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (cond ((and (use-region-p)
-                (zk-index--button-at-point-p (region-beginning))
-                (not (zk-index--button-at-point-p (region-end))))
-           (kill-region (save-excursion
-                            (goto-char (region-beginning))
-                            (line-beginning-position))
-                          (region-end)))
-          ((and (use-region-p)
-                (not (zk-index--button-at-point-p (region-beginning)))
-                (zk-index--button-at-point-p (region-end)))
-           (kill-region (region-beginning)
-                          (save-excursion
-                            (goto-char (region-end))
-                            (line-end-position))))
-          ((and (use-region-p)
-                (zk-index--button-at-point-p (region-beginning))
-                (zk-index--button-at-point-p (region-end)))
-           (kill-region
-            (save-excursion
-              (goto-char (region-beginning))
-              (line-beginning-position))
-            (save-excursion
-              (goto-char (region-end))
-              (line-end-position))))
-          ((use-region-p)
-           (kill-region (region-beginning)
-                          (region-end))))))
-
-(defun zk-index-desktop-yank ()
-  "Wrapper around `yank' for `zk-index-desktop-mode'."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (yank)
-    (zk-index-desktop-make-buttons)))
 
 (provide 'zk-index)
 
