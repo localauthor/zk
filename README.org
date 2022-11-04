@@ -430,7 +430,7 @@ interfaces for working with notes in your zk-directory.
 
 For a video demonstration, see: https://youtu.be/7qNT87dphiA
 
-** Setup
+** ZK-Index
 
 This package is available on [[https://melpa.org/#/zk-index][MELPA]]. 
 
@@ -440,12 +440,8 @@ Sample setup with =use-package=:
 (use-package zk-index
   :after zk
   :config
-  (zk-index-setup-embark)
-  :custom
-  (zk-index-desktop-directory zk-directory))
+  (zk-index-setup-embark))
 #+end_src
-
-** ZK-Index
 
 The function =zk-index= pops up a buffer listing of all note titles, each of
 which is a clickable button. Clicking a title will pop the note into the above
@@ -462,7 +458,6 @@ The ZK-Index buffer is in a major mode with a dedicated keymap:
     (define-key map (kbd "o") #'other-window)
     (define-key map (kbd "f") #'zk-index-focus)
     (define-key map (kbd "s") #'zk-index-search)
-    (define-key map (kbd "d") #'zk-index-send-to-desktop)
     (define-key map (kbd "D") #'zk-index-switch-to-desktop)
     (define-key map (kbd "c") #'zk-index-current-notes)
     (define-key map (kbd "i") #'zk-index-refresh)
@@ -531,7 +526,12 @@ directory for saved desktops. A convenient and unobtrusive option is to
 simply use the =zk-directory= itself:
 
 #+begin_src emacs-lisp
-(setq zk-index-desktop-directory zk-directory)
+(use-package zk-desktop
+  :after zk-index
+  :config
+  (zk-desktop-setup-embark)
+  :custom
+  (zk-desktop-directory zk-directory))
 #+end_src
 
 Think of =zk-desktop= as allowing you to achieve something like pulling
@@ -548,7 +548,7 @@ rearranged, grouped, and commented on in-line.
 
 It is possible to have several desktops at once, each an individual file, and
 each corresponding to a different project. Use the function
-=zk-index-desktop-select= to switch from working with one desktop to working
+=zk-desktop-select= to switch from working with one desktop to working
 with another.
 
 *** Working with notes on a desktop
@@ -558,18 +558,18 @@ can appear more than once, and the user can type on the desktop just like in
 a normal buffer --- for example, to create headings or simply to type notes.
 
 A zk-desktop buffers open in =fundamental-mode= by default, but this can be
-changed by setting the variable =zk-index-desktop-major-mode= to the symbol
+changed by setting the variable =zk-desktop-major-mode= to the symbol
 for a major mode. Consider setting this to =text-mode=, =outline-mode=, or
 =org-mode=.
 
 #+begin_src emacs-lisp
-(setq zk-index-desktop-major-mode 'outline-mode)
+(setq zk-desktop-major-mode 'outline-mode)
 #+end_src
 
 *** Adding notes to a desktop
 
 Each method of adding notes to the currently active desktop is accomplished
-via the same function: =zk-index-send-to-desktop=.
+via the same function: =zk-desktop-send-to-desktop=.
 
 When this function is called in the =zk-index= buffer itself, the note at
 point is sent to the desktop. If several notes are selected in the index, all
@@ -579,13 +579,12 @@ allow for sending a lot of relevant notes to a desktop at once.
 
 ** Embark Integration for ZK-Index and ZK-Desktop
 
-To enable integration with Embark, include =(zk-index-setup-embark)= in your
-init config.
+To enable integration with Embark, include =(zk-index-setup-embark)= and =(zk-desktop-setup-embark)= in your init config.
 
 This setup allows all index and desktop items to be recognized as zk-id
 Embark targets, making available all Embark actions in the =zk-id-map=.
 
-This also adds =zk-index-send-to-deskop= to =zk-id-map= and =zk-file-map=, to
+The latter adds =zk-desktop-send-to-deskop= to =zk-id-map= and =zk-file-map=, to
 facilitate sending files to desktop from the minibuffer or via =embark-act=
 in the zk-index buffer.
 
