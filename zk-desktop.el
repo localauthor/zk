@@ -281,7 +281,6 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
 In ZK-Index, works on note at point or notes in active region.
 Also works on FILES or group of files in minibuffer, and on zk-id
 at point."
-  ;; TODO check that zk-desktop is loaded
   (interactive)
   (unless zk-desktop-directory
     (error "Please set `zk-desktop-directory' first"))
@@ -320,7 +319,7 @@ at point."
                    zk-index-format-function
                    (list buffer-file-name)))))
           (t
-           (user-error "Don't know how to send this to desktop")))
+           (user-error "No item to send to desktop")))
     (if (and zk-desktop-current
              (buffer-live-p (get-buffer zk-desktop-current)))
         (setq buffer zk-desktop-current)
