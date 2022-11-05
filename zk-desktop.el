@@ -122,20 +122,21 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
   ;;(setq truncate-lines t)
   (setq-local zk-desktop-mode t))
 
-(defvar zk-desktop-button-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-<up>") #'zk-desktop-move-line-up)
-    (define-key map (kbd "C-<down>") #'zk-desktop-move-line-down)
-    (define-key map [remap kill-line] #'zk-desktop-kill-line)
-    (define-key map [remap delete-char] #'zk-desktop-delete-char)
-    (define-key map [remap kill-region] #'zk-desktop-kill-region)
-    (define-key map (kbd "v") #'zk-index-view-note)
-    (define-key map (kbd "n") #'zk-index-next-line)
-    (define-key map (kbd "p") #'zk-index-previous-line)
-    (define-key map [remap self-insert-command] 'ignore)
-    (set-keymap-parent map button-map)
-    map)
-  "Keymap for ZK-Desktop buttons.")
+(eval-and-compile
+  (defvar zk-desktop-button-map
+    (let ((map (make-sparse-keymap)))
+      (define-key map (kbd "C-<up>") #'zk-desktop-move-line-up)
+      (define-key map (kbd "C-<down>") #'zk-desktop-move-line-down)
+      (define-key map [remap kill-line] #'zk-desktop-kill-line)
+      (define-key map [remap delete-char] #'zk-desktop-delete-char)
+      (define-key map [remap kill-region] #'zk-desktop-kill-region)
+      (define-key map (kbd "v") #'zk-index-view-note)
+      (define-key map (kbd "n") #'zk-index-next-line)
+      (define-key map (kbd "p") #'zk-index-previous-line)
+      (define-key map [remap self-insert-command] 'ignore)
+      (set-keymap-parent map button-map)
+      map)
+    "Keymap for ZK-Desktop buttons."))
 
 ;;; ZK-Desktop
 
