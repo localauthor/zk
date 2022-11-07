@@ -172,7 +172,7 @@ Must take a single STRING argument."
 See `zk-current-notes' for details."
   :type 'function)
 
-(defcustom zk-format-function #'zk--format-function
+(defcustom zk-format-function #'zk--format-default
   "User-defined function for formatting zk file information.
 The function should accept three variables: FORMAT-SPEC, ID, and
 TITLE. See `zk--format' for details."
@@ -778,7 +778,7 @@ Optionally call a custom function by setting the variable
 
 ;;; Insert Link
 
-(defun zk--format-function (format id title)
+(defun zk--format-default (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
 This is the default function set in `zk-format-function' and used by
 `zk--format' therwise, replace the sequence `%t' with the TITLE and
@@ -788,7 +788,7 @@ This is the default function set in `zk-format-function' and used by
 (defmacro zk--format (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
 This macro merely calls the function set in `zk-format-function',
-which defaults to `zk--format-function'."
+which defaults to `zk--format-default'."
   `(funcall zk-format-function ,format ,id ,title))
 
 ;;;###autoload
