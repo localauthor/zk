@@ -138,6 +138,8 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
       map)
     "Keymap for ZK-Desktop buttons."))
 
+(define-key zk-index-view-mode-map (kbd "d") #'zk-desktop-send-to-desktop)
+
 ;;; ZK-Desktop
 
 ;;;###autoload
