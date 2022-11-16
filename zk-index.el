@@ -162,9 +162,7 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
 See `zk--format' for details about FORMAT. If nil, `zk-index-format'
 will be used by default. FILES must be a list of filepaths. If nil,
 all files in `zk-directory' will be returned as formatted candidates."
-  (let* ((format (or format
-                     (and zk-index-invisible-ids "%t %i")
-                     zk-index-format))
+  (let* ((format (or format zk-index-format))
          (list (or files
                    (zk--directory-files)))
          (output))
