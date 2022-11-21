@@ -56,7 +56,7 @@
   "If non-nil, IDs will not be visible in the index."
   :type 'boolean)
 
-(defcustom zk-index-format "%t [[%i]]"
+(defcustom zk-index-format "%t %i"
   "Default format for candidates in the index."
   :type 'string)
 
