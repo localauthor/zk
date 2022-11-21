@@ -56,9 +56,9 @@
   "If non-nil, IDs will not be visible in the index."
   :type 'boolean)
 
-(defcustom zk-index-format "%t [[%i]]"
+(defcustom zk-index-format "%t %i"
   "Default format for candidates in the index."
-    :type 'string)
+  :type 'string)
 
 (defcustom zk-index-prefix "-> "
   "String to prepend to note names in ZK-Index."
@@ -159,16 +159,10 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
 
 (defun zk-index--format-candidates (&optional files format)
   "Return a list of FILES as formatted candidates, following FORMAT.
-
-See `zk--format' for details about FORMAT. If nil,
-`zk-completion-at-point-format' will be used by default.
-
-FILES must be a list of filepaths. If nil, all files in
-`zk-directory' will be returned as formatted candidates."
-  (let* ((zk-index-format (if zk-index-invisible-ids "%t %i"
-                            zk-index-format))
-         (format (or format
-                     zk-index-format))
+See `zk--format' for details about FORMAT. If nil, `zk-index-format'
+will be used by default. FILES must be a list of filepaths. If nil,
+all files in `zk-directory' will be returned as formatted candidates."
+  (let* ((format (or format zk-index-format))
          (list (or files
                    (zk--directory-files)))
          (output))
