@@ -314,6 +314,11 @@ The value is based on `zk-link-format' and `zk-id-regexp'."
   (when (string-match (zk-file-name-regexp) file)
     (match-string-no-properties 1 file)))
 
+(defun zk--file-title (file)
+  "Return the TITLE of the given zk FILE."
+  (when (string-match (zk-file-name-regexp) file)
+    (match-string-no-properties 2 file)))
+
 (defun zk-file-p (&optional file strict)
   "Return t if FILE is a zk-file.
 If FILE is not given, get it from variable `buffer-file-name'.
@@ -661,6 +666,34 @@ Optionally use ORIG-ID for backlink."
       (zk--insert-link-and-title orig-id (zk--parse-id 'title orig-id))
       (newline)))
   (insert "===\n\n"))
+
+;;;###autoload
+(defun zk-insert-header (id title)
+  "Insert header into current note buffer.
+ID and TITLE are prompted for with default values derived
+from current `buffer-file-name'.
+
+This command is useful for migrating pre-existing note files
+which do not have a zk header but already have a zk-compatible
+file name."
+  (interactive
+   (list
+    (read-string "Enter ID: " (zk--file-id buffer-file-name))
+    (read-string "Enter Title: " (zk--file-title buffer-file-name))))
+  (save-excursion
+    (goto-char (point-min))
+    (zk-new-note-header title id)))
+
+;;;###autoload
+(defun zk-insert-header-and-rename (id title)
+  "Same as `zk-insert-header' but also renames the note
+afterwards."
+  (interactive
+   (list
+    (read-string "Enter ID: " (zk--file-id buffer-file-name))
+    (read-string "Enter Title: " (zk--file-title buffer-file-name))))
+  (zk-insert-header id title)
+  (zk-rename-note))
 
 ;;;###autoload
 (defun zk-rename-note ()

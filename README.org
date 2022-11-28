@@ -13,6 +13,7 @@
     - [[#link-hint.el][Support for link-hint.el]]
   - [[#list-backlinks][List Backlinks]]
   - [[#smart-new-note-creation][Smart New-Note Creation]]
+  - [[#migration-utilities][Migration Utilities]]
   - [[#insert-links][Insert Links]]
   - [[#search][Search]]
     - [[#alternative-search-functions-using-consult-grep][Alternative Search Functions, using Consult-Grep]]
@@ -315,6 +316,20 @@ Zettelkasten implementation and it persists here by custom only. It would be
 trivial to alter this function to behave perhaps more sensibly, for example
 by using the selected region in its entirety as the body and prompting for a
 title. For now, though, custom prevails.
+
+** Migration Utilities
+
+*** Insert Header
+
+Calling the =zk-insert-header= command inserts a header by means of
+=zk-new-note-header-function= based on the file name of the current buffer
+into the current buffer.
+
+This is useful if you migrated existing files into your =zk-directory= and
+renamed them to the zk file name scheme.
+
+You can change the suggested ID and title. Use the command
+=zk-insert-header-and-rename= to rename the file name of the note afterwards.
 
 ** Insert Links
 
