@@ -262,6 +262,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index--insert (candidates)
   "Insert CANDIDATES into ZK-Index."
   (when (eq major-mode 'zk-index-mode)
+    (garbage-collect)
     (dolist (file candidates)
       (insert (concat zk-index-prefix file "\n")))
     (goto-char (point-min))
@@ -291,7 +292,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
               (re-search-forward id)
               (replace-match
                (propertize id 'invisible t)))
-              (goto-char (match-end 0))))))))
+            (goto-char (match-end 0))))))))
 
 ;;;; Utilities
 
@@ -341,7 +342,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (with-current-buffer (or buf-name
                            zk-index-buffer-name)
     (if (< (count-lines (point-min) (point-max))
-           (length (zk--id-list)))
+           (length (zk--directory-files)))
         t nil)))
 
 ;;; Index Search and Focus Functions
