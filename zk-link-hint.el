@@ -85,7 +85,7 @@ Only search the range between just after the point and BOUND."
                 (buffer (current-buffer))
                 (new-buffer))
             (if (re-search-forward zk-id-regexp (line-end-position))
-                (zk-follow-link-at-point (match-string-no-properties 0))
+                (zk-follow-link-at-point (zk--match-string-id))
               (push-button))
             (setq new-buffer
                   (current-buffer))

@@ -105,7 +105,7 @@ Takes WIN, OBJ, and POS arguments."
      "%s"
      (zk--parse-id
       'title
-      (match-string 0)))))
+      (zk--match-string-id)))))
 
 (provide 'zk-org-link)
 

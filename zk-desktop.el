@@ -229,7 +229,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
                               (replace-match ""))
                             (when (re-search-forward "]]" end t)
                               (replace-match "")))
-                          (match-string-no-properties 1)))
+                          (zk--match-string-id)))
                    (title (buffer-substring-no-properties beg (match-beginning 0)))
                    (new-title (when (member id ids)
                                 (concat zk-desktop-prefix
@@ -249,7 +249,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
           (while (re-search-forward zk-id-regexp nil t)
             (let* ((beg (line-beginning-position))
                    (end (line-end-position))
-                   (id (match-string-no-properties 1)))
+                   (id (zk--match-string-id)))
               (if (member id ids)
                   (progn
                     (make-text-button beg end 'type 'zk-desktop)
@@ -258,7 +258,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
                       ;; find zk-links and plain zk-ids
                       (if (re-search-forward (zk-link-regexp) (line-end-position) t)
                           (replace-match
-                           (propertize (match-string 0) 'invisible t) nil t)
+                           (propertize (zk--match-string-id) 'invisible t) nil t)
                         (progn
                           (re-search-forward id)
                           (replace-match

@@ -152,7 +152,7 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
     (save-excursion
       (beginning-of-line)
       (re-search-forward zk-id-regexp (line-end-position)))
-    (let ((zk-id (match-string-no-properties 1)))
+    (let ((zk-id (zk--match-string-id)))
       `(zk-id ,zk-id . ,(cons (line-beginning-position) (line-end-position))))))
 
 ;;; Formatting
@@ -169,12 +169,12 @@ all files in `zk-directory' will be returned as formatted candidates."
     (dolist (file list)
       (when (string-match (zk-file-name-regexp) file)
         (let ((id (if zk-index-invisible-ids
-                      (propertize (match-string 1 file) 'invisible t)
-                    (match-string 1 file)))
+                      (propertize (zk--match-id file) 'invisible t)
+                    (zk--match-string-id file)))
               (title (replace-regexp-in-string
                       zk-file-name-separator
                       " "
-                      (match-string 2 file))))
+                      (zk--match-string-title file))))
           (push (zk--format format id title) output))))
     output))
 
@@ -280,7 +280,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
       (while (re-search-forward zk-id-regexp nil t)
         (let* ((beg (line-beginning-position))
                (end (line-end-position))
-               (id (match-string-no-properties 1)))
+               (id (zk--match-string-id)))
           (when (member id ids)
             (beginning-of-line)
             (make-text-button beg end
@@ -333,8 +333,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (with-selected-window win
     (let ((id (save-excursion
                 (goto-char pos)
-                (re-search-forward zk-id-regexp (line-end-position) t)
-                (match-string-no-properties 0))))
+                (when (re-search-forward zk-id-regexp (line-end-position) t)
+                  (zk--match-string-id)))))
       (format "%s" (zk--parse-id 'title id)))))
 
 (defun zk-index-narrowed-p (buf-name)
@@ -483,7 +483,7 @@ with query term STRING."
         (goto-char (point-min))
         (save-match-data
           (while (re-search-forward zk-id-regexp nil t)
-            (push (match-string-no-properties 0) ids)))
+            (push (zk--match-string-id) ids)))
         ids))))
 
 ;;; Index Sort Functions
@@ -611,8 +611,8 @@ Takes an option POS position argument."
                (or (eq (button-type button) 'zk-index)
                    (eq (button-type button) 'zk-desktop)))
       (save-excursion
-        (re-search-forward zk-id-regexp)
-        (match-string-no-properties 1)))))
+        (when (re-search-forward zk-id-regexp)
+          (zk--match-string-id))))))
 
 (defun zk-index-insert-link (&optional id)
   "Insert zk-link in `other-window' for button ID at point."

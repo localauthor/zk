@@ -122,10 +122,10 @@ If you change this value, set `zk-id-regexp' so that
 the zk IDs can be found."
   :type 'string)
 
-(defcustom zk-id-regexp "\\([0-9]\\{12\\}\\)"
+(defcustom zk-id-regexp "\\(?1:[0-9]\\{12\\}\\)"
   "The regular expression used to search for zk IDs.
-Set it so that it matches strings generated with
-`zk-id-format'."
+Set it so that it matches strings generated with `zk-id-format',
+and explicitly capture the zk ID as numbered group 1."
   :type 'regexp)
 
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
@@ -268,7 +268,7 @@ See `zk-new-note' for details."
 (defun zk-embark-target-zk-id-at-point ()
   "Target zk-id at point."
   (when (thing-at-point-looking-at zk-id-regexp)
-    (let ((zk-id (match-string-no-properties 0)))
+    (let ((zk-id (zk--match-string-id)))
       `(zk-id ,zk-id . ,(bounds-of-thing-at-point 'symbol)))))
 
 ;;;###autoload
@@ -295,24 +295,38 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
   "Return the correct regexp matching zk file names.
 The regexp captures these groups:
 
-Group 1 is the zk ID.
+Group 1 is the zk ID (defined in `zk-id-regexp').
 Group 2 is the title."
-  (concat "\\(?1:" zk-id-regexp "\\)"
+  (concat zk-id-regexp
           "."
           "\\(?2:.*?\\)"
           "\\."
           zk-file-extension
           ".*"))
 
+(define-inline zk--match-string-id (&optional string)
+  "Accessor for the ID part of the given STRING name.
+This should only be called with active match data from matching
+against `zk-id-regexp', `zk-link-regexp', or `zk-file-name-regexp'."
+  (inline-quote (match-string-no-properties 1 ,string)))
+
+(define-inline zk--match-string-title (&optional string)
+  "Accessor for the title part of the given STRING name.
+This should only be called with active match data from matching
+against `zk-id-regexp', `zk-link-regexp', or `zk-file-name-regexp'."
+  (inline-quote (match-string-no-properties 2 ,string)))
+
 (defun zk-link-regexp ()
   "Return the correct regexp for zk links.
-The value is based on `zk-link-format' and `zk-id-regexp'."
+The value is based on `zk-link-format' and `zk-id-regexp'.
+
+Group 1 is the zk ID (defined in `zk-id-regexp')."
   (format (regexp-quote zk-link-format) zk-id-regexp))
 
 (defun zk--file-id (file)
   "Return the ID of the given zk FILE."
   (when (string-match (zk-file-name-regexp) file)
-    (match-string-no-properties 1 file)))
+    (zk--match-string-id file)))
 
 (defun zk-file-p (&optional file strict)
   "Return t if FILE is a zk-file.
@@ -460,18 +474,16 @@ supplied. Can take a PROMPT argument."
 
 (defun zk--group-function (file transform)
   "TRANSFORM completion candidate FILE to note title."
-  (if transform
-      (progn
-        (string-match (zk-file-name-regexp) file)
-        (match-string 2 file))
+  (if (and transform
+           (string-match (zk-file-name-regexp) file))
+      (zk--match-string-title file)
     "zk"))
 
 (defun zk--id-at-point ()
   "Return ID at point."
-  (cond ((thing-at-point-looking-at zk-id-regexp)
-         (match-string-no-properties 0))
-        ((thing-at-point-looking-at (zk-link-regexp))
-         (match-string-no-properties 1))))
+  (when (or (thing-at-point-looking-at zk-id-regexp)
+            (thing-at-point-looking-at (zk-link-regexp)))
+    (zk--match-string-id)))
 
 (defun zk--alist ()
   "Return an alist ID, title, and file-path triples."
@@ -479,9 +491,9 @@ supplied. Can take a PROMPT argument."
    (lambda (file)
      (when (string= (file-name-extension file) zk-file-extension)
        (string-match (zk-file-name-regexp) file)
-       `(,(match-string-no-properties 1 file)
+       `(,(zk--match-string-id file)
          ,(replace-regexp-in-string zk-file-name-separator " "
-                                    (match-string-no-properties 2 file))
+                                    (zk--match-string-title file))
          ,file)))
    (zk--directory-files t)))
 
@@ -528,11 +540,11 @@ file extension."
          (mapcar (lambda (file)
                    (when (string-match (zk-file-name-regexp) file)
                      (pcase target
-                       ('id    (match-string 1 file))
+                       ('id    (zk--match-string-id file))
                        ('title (replace-regexp-in-string
                                 (regexp-quote zk-file-name-separator)
                                 " "
-                                (match-string 2 file)))
+                                (zk--match-string-title file)))
                        (_ (signal 'wrong-type-argument
                                   `((or 'id 'title) ,target))))))
                  (if (listp files)
@@ -573,7 +585,7 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
         (while (re-search-forward (zk-link-regexp) nil t)
           (let ((beg (match-beginning 1))
                 (end (match-end 1))
-                (id (match-string-no-properties 1)))
+                (id (zk--match-string-id)))
             (when (member id ids)
               (make-button beg end 'type 'zk-link))))))))
 
@@ -581,9 +593,10 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
   "Find `zk-link-regexp' before point and make it a zk-link button."
   (interactive)
   (save-excursion
-    (re-search-backward (zk-link-regexp) (line-beginning-position))
-    (make-button (match-beginning 1) (match-end 1)
-                 'type 'zk-link)))
+    (if (re-search-backward (zk-link-regexp) (line-beginning-position))
+        (make-button (match-beginning 1) (match-end 1)
+                     'type 'zk-link)
+      (error "Cannot find zk-link to make a button"))))
 
 ;;; Note Functions
 
@@ -757,8 +770,8 @@ Optionally call a custom function by setting the variable
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward (zk-link-regexp) nil t)
-        (if (member (match-string-no-properties 1) zk-ids)
-            (push (match-string-no-properties 1) id-list))))
+        (when (member (zk--match-string-id) zk-ids)
+          (push (zk--match-string-id) id-list))))
     (cond ((zk--singleton-p id-list)
            (list (zk--parse-id 'file-path id-list)))
           (id-list
@@ -843,9 +856,9 @@ will be returned as formatted candidates."
          (output))
     (dolist (file list)
       (when (string-match (zk-file-name-regexp) file)
-        (let ((id (match-string 1 file))
+        (let ((id (zk--match-string-id file))
               (title (replace-regexp-in-string zk-file-name-separator " "
-                                               (match-string 2 file))))
+                                               (zk--match-string-title file))))
           (push (zk--format format id title) output))))
     output))
 
@@ -961,9 +974,9 @@ Select TAG, with completion, from list of all tags in zk notes."
                                           zk-directory " 2>/dev/null")))
          (list (split-string files "\n" t))
          (ids (mapcar
-               (lambda (x)
-                 (string-match zk-id-regexp x)
-                 (match-string 0 x))
+               (lambda (file)
+                 (when (string-match zk-id-regexp file)
+                   (zk--match-string-id file)))
                list)))
     (delete-dups ids)))
 
@@ -971,12 +984,12 @@ Select TAG, with completion, from list of all tags in zk notes."
   "Return list of all links with no corresponding note."
   (let* ((all-link-ids (zk--grep-link-id-list))
          (all-ids (zk--id-list)))
-    (delete-dups (remq nil (mapcar
-                            (lambda (x)
-                              (string-match zk-id-regexp x)
-                              (when (not (member (match-string-no-properties 0 x) all-ids))
-                                x))
-                            all-link-ids)))))
+    (delete-dups
+     (remq nil (mapcar
+                (lambda (id)
+                  (unless (member id all-ids)
+                    id))
+                all-link-ids)))))
 
 ;;;###autoload
 (defun zk-grep-dead-links ()
@@ -1044,10 +1057,9 @@ Backlinks and Links-in-Note are grouped separately."
 
 (defun zk--network-group-function (file transform)
   "Group FILE by type and TRANSFORM."
-  (if transform
-      (progn
-        (string-match (zk-file-name-regexp) file)
-        (match-string 2 file))
+  (if (and transform
+           (string-match (zk-file-name-regexp) file))
+      (zk--match-string-title file)
     (cond
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
      ((eq 'link (get-text-property 0 'type file)) "Links-in-Note"))))
