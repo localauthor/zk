@@ -135,24 +135,24 @@ name of this function."
 
 ;;; Consult Select File with Preview
 
-(defun zk-consult-select-file (&optional prompt list)
+(defun zk-consult-select-file (&optional prompt list group sort)
   "Wrapper around `consult--read' to select a zk-file.
 Offers candidates from 'zk--directory-files', or from LIST when
 supplied. Can take a PROMPT argument."
   (let* ((files (if list list
                   (zk--directory-files t)))
          (prompt (if prompt prompt
-                 "Select File: ")))
-     (consult--read
-      files
-      :prompt prompt
-      :sort t
-      :require-match t
-      :group 'zk--group-function
-      :category 'zk-file
-      :state (consult--file-preview)
-      :preview-key (zk-consult--preview-functions)
-      :history 'zk-history)))
+                   "Select File: ")))
+    (consult--read
+     files
+     :prompt prompt
+     :sort (or sort t)
+     :require-match t
+     :group (or group 'zk--group-function)
+     :category 'zk-file
+     :state (consult--file-preview)
+     :preview-key (zk-consult--preview-functions)
+     :history 'zk-history)))
 
 (defun zk-consult--preview-functions ()
   (when (member this-command zk-consult-preview-functions)
