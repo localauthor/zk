@@ -441,19 +441,22 @@ return list of files not matching the regexp."
          (list (split-string files "\n" t)))
     (delete-dups list)))
 
-(defun zk--select-file (&optional prompt list)
+(defun zk--select-file (&optional prompt list group sort)
   "Wrapper around `completing-read' to select zk-file.
 Offers candidates from `zk--directory-files', or from LIST when
 supplied. Can take a PROMPT argument."
   (let* ((files (or list
-                    (zk--directory-files t))))
+                    (zk--directory-files t)))
+         (group (or group 'zk--group-function))
+         (sort (or sort nil)))
     (completing-read
      (or prompt
          "Select File: ")
      (lambda (string predicate action)
        (if (eq action 'metadata)
            `(metadata
-             (group-function . zk--group-function)
+             (group-function . ,group)
+             (display-sort-function . ,sort)
              (category . zk-file))
          (complete-with-action action files string predicate)))
      nil t nil 'zk-file-history)))
@@ -721,7 +724,7 @@ title."
   (let ((files (zk--grep-file-list str)))
     (if files
         (find-file (funcall zk-select-file-function
-                    (format "Files containing \"%s\": " str) files))
+                            (format "Files containing \"%s\": " str) files))
       (user-error "No results for \"%s\"" str))))
 
 ;;;###autoload
@@ -734,8 +737,8 @@ Optionally call a custom function by setting the variable
       (funcall zk-current-notes-function)
     (find-file
      (funcall zk-select-file-function
-      "Current Notes:"
-      (zk--current-notes-list)))))
+              "Current Notes:"
+              (zk--current-notes-list)))))
 
 ;;; Follow Links
 
@@ -985,9 +988,9 @@ Select TAG, with completion, from list of all tags in zk notes."
   (let* ((dead-link-ids (zk--dead-link-id-list)))
     (if dead-link-ids
         (funcall zk-search-function (mapconcat
-                                   #'identity
-                                   dead-link-ids
-                                   "\\|"))
+                                     #'identity
+                                     dead-link-ids
+                                     "\\|"))
       (user-error "No dead links found"))))
 
 (defun zk--unlinked-notes-list ()
