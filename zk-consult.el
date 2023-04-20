@@ -146,7 +146,7 @@ supplied. Can take a PROMPT argument."
     (consult--read
      files
      :prompt prompt
-     :sort (or sort t)
+     :sort (if sort nil t)
      :require-match t
      :group (or group 'zk--group-function)
      :category 'zk-file
