@@ -1033,16 +1033,11 @@ Backlinks and Links-in-Note are grouped separately."
           (dolist (file links-in-note)
             ;; abbreviate-file-name allows a file to be in both groups
             (push (propertize (abbreviate-file-name file) 'type 'link) resources))
-          (find-file
-           (completing-read
-            "Links: "
-            (lambda (string predicate action)
-              (if (eq action 'metadata)
-                  `(metadata
-                    (group-function . zk--network-group-function)
-                    (display-sort-function . zk--network-sort-function)
-                    (category . zk-file))
-                (complete-with-action action resources string predicate))))))
+          (find-file (funcall zk-select-file-function
+                              "Links: "
+                              resources
+                              'zk--network-group-function
+                              'zk--network-sort-function)))
       (user-error "No links found"))))
 
 (defun zk--network-group-function (file transform)
