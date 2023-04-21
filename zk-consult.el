@@ -7,7 +7,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.2
 ;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "27.1") (consult "0.14"))
+;; Package-Requires: ((emacs "27.1") (zk "0.4") (consult "0.14"))
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -28,9 +28,9 @@
 ;; This package offers several integrations of Consult with zk:
 
 
-;; 1. Two functions as alternatives to the default 'zk-grep' functions:
-;; 'zk-consult-grep' and 'zk-consult-grep-tag-search'. Instead of displaying
-;; search results in a 'grep' buffer, these functions display search results
+;; 1. Two functions as alternatives to the default `zk-grep' functions:
+;; `zk-consult-grep' and `zk-consult-grep-tag-search'. Instead of displaying
+;; search results in a `grep' buffer, these functions display search results
 ;; using Consult.
 
 ;;   To use these alternative functions, set one or both of the following variables:
@@ -38,15 +38,15 @@
 ;;   (setq zk-tag-grep-function 'zk-consult-grep-tag-search)
 
 
-;; 2. Two ways of accessing a list of currently open notes via 'consult-buffer':
-;; first through 'consult-buffer' itself, accessible via narrowing with the
-;; 'z' key; second, as alternative to the command 'zk-current-notes', such
+;; 2. Two ways of accessing a list of currently open notes via `consult-buffer':
+;; first through `consult-buffer' itself, accessible via narrowing with the
+;; 'z' key; second, as alternative to the command `zk-current-notes', such
 ;; that it brings up the Consult buffer source directly.
 
-;;   To add the zk Consult buffer source to 'consult-buffer-sources', evaluate:
-;;   (add-to-list 'consult-buffer-sources 'zk-consult-source 'append)
+;;   To add the zk Consult buffer source to `consult-buffer-sources', evaluate:
+;;   (add-to-list `consult-buffer-sources 'zk-consult-source 'append)
 
-;;   To set the alternative 'zk-current-note' function, evaluate:
+;;   To set the alternative `zk-current-note' function, evaluate:
 ;;   (setq zk-current-notes-function 'zk-consult-current-notes)
 
 
@@ -57,10 +57,10 @@
 
 ;;   NOTE: The list of functions for which previews will be shown can be
 ;;   customized by amending the functions listed in the variable
-;;   'zk-consult-preview-functions'.
+;;   `zk-consult-preview-functions'.
 
 
-;; To load this package, put 'zk-consult.el' into your load path, load Consult,
+;; To load this package, put `zk-consult.el' into your load path, load Consult,
 ;; and evaluate the following:
 
 ;; (with-eval-after-load 'consult
@@ -90,7 +90,7 @@
 ;;; Consult-Grep Functions
 
 (defun zk-consult-grep (&optional initial)
-  "Search 'zk-directory' with 'consult-grep'.
+  "Search `zk-directory' with `consult-grep'.
 With option for INITIAL input when called non-interactively."
   (interactive)
   (let ((consult--grep-history zk-search-history))
@@ -99,7 +99,7 @@ With option for INITIAL input when called non-interactively."
     (consult-grep zk-directory))))
 
 (defun zk-consult-grep-tag-search (tag)
-  "Search for TAG in 'zk-directory' using 'consult-grep'.
+  "Search for TAG in `zk-directory' using `consult-grep'.
 Select TAG, with completion, from list of all tags in zk notes."
   (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
   (consult-grep zk-directory tag))
@@ -124,8 +124,8 @@ Select TAG, with completion, from list of all tags in zk notes."
                          (buffer-list))))))
 
 (defun zk-consult-current-notes ()
-  "Select a currently open note using 'consult-buffer'.
-To use, set the variable 'zk-current-notes-function' to the
+  "Select a currently open note using `consult-buffer'.
+To use, set the variable `zk-current-notes-function' to the
 name of this function."
   (minibuffer-with-setup-hook
       '(lambda ()
@@ -137,7 +137,7 @@ name of this function."
 
 (defun zk-consult-select-file (&optional prompt list group sort)
   "Wrapper around `consult--read' to select a zk-file.
-Offers candidates from 'zk--directory-files', or from LIST when
+Offers candidates from `zk--directory-files', or from LIST when
 supplied. Can take a PROMPT argument."
   (let* ((files (if list list
                   (zk--directory-files t)))
@@ -155,6 +155,7 @@ supplied. Can take a PROMPT argument."
      :history 'zk-history)))
 
 (defun zk-consult--preview-functions ()
+  "Set `consult-preview-key' for specified functions."
   (when (member this-command zk-consult-preview-functions)
     consult-preview-key))
 
