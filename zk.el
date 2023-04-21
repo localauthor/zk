@@ -1028,16 +1028,16 @@ Backlinks and Links-in-Note are grouped separately."
          (resources))
     (if (or backlinks links-in-note)
         (progn
-          (dolist (file backlinks)
-            (push (propertize file 'type 'backlink) resources))
           (dolist (file links-in-note)
             ;; abbreviate-file-name allows a file to be in both groups
             (push (propertize (abbreviate-file-name file) 'type 'link) resources))
+          (dolist (file backlinks)
+            (push (propertize file 'type 'backlink) resources))
           (find-file (funcall zk-select-file-function
                               "Links: "
                               resources
                               'zk--network-group-function
-                              'zk--network-sort-function)))
+                              'identity)))
       (user-error "No links found"))))
 
 (defun zk--network-group-function (file transform)
@@ -1050,12 +1050,12 @@ Backlinks and Links-in-Note are grouped separately."
      ((eq 'backlink (get-text-property 0 'type file)) "Backlinks")
      ((eq 'link (get-text-property 0 'type file)) "Links-in-Note"))))
 
-(defun zk--network-sort-function (list)
-  "Sort LIST of links so Backlinks group is first."
-  (sort list
-        (lambda (a _b)
-          (when (eq 'backlink (get-text-property 0 'type a))
-              t))))
+;; (defun zk--network-sort-function (list)
+;;   "Sort LIST of links so Backlinks group is first."
+;;   (sort list
+;;         (lambda (a _b)
+;;           (when (eq 'backlink (get-text-property 0 'type a))
+;;               t))))
 
 (provide 'zk)
 
