@@ -279,7 +279,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
             (end-of-line)))))))
 
 ;;;###autoload
-(defun zk-desktop-send-to-desktop (&optional files)
+(defun zk-desktop-send-to-desktop (&optional arg)
   "Send notes from ZK-Index to ZK-Desktop.
 In ZK-Index, works on note at point or notes in active region.
 Also works on FILES or group of files in minibuffer, and on zk-id
@@ -289,40 +289,42 @@ at point."
     (error "Please set `zk-desktop-directory' first"))
   (let ((inhibit-read-only t)
         (buffer) (items))
-    (cond ((zk--singleton-p files)
-           (unless
-               (ignore-errors
-                 (setq items (car (funcall zk-index-format-function files))))
-             (setq items
-                   (car
-                    (funcall
-                     zk-index-format-function
-                     (list (zk--parse-id 'file-path files)))))))
-          (files                        ; > 1 elements in files
-           (setq items
-                 (mapconcat
-                  #'identity
-                  (funcall zk-index-format-function files) "\n")))
-          ((eq major-mode 'zk-index-mode) ; no elements in files
-           (setq items (if (use-region-p)
-                           (buffer-substring
-                            (save-excursion
-                              (goto-char (region-beginning))
-                              (line-beginning-position))
-                            (save-excursion
-                              (goto-char (region-end))
-                              (line-end-position)))
-                         (buffer-substring
-                          (line-beginning-position)
-                          (line-end-position)))))
-          ((zk-file-p)                  ; no elements in files
-           (setq items
-                 (car
-                  (funcall
-                   zk-index-format-function
-                   (list buffer-file-name)))))
-          (t
-           (user-error "No item to send to desktop")))
+    (cond
+     ((and arg (zk-file-p (car-safe arg))) ; files
+      (setq items
+            (mapconcat
+             #'identity
+             (funcall zk-index-format-function arg) "\n")))
+     (arg ; not files, therefore ids
+      (setq items
+            (if (zk--singleton-p arg) ; single id
+                (car (funcall zk-index-format-function
+                              (list (zk--parse-id 'file-path arg))))
+              (mapconcat
+               #'identity
+               (funcall zk-index-format-function
+                        (zk--parse-id 'file-path arg))
+               "\n"))))
+     ((eq major-mode 'zk-index-mode) ; no elements in arg
+      (setq items (if (use-region-p)
+                      (buffer-substring
+                       (save-excursion
+                         (goto-char (region-beginning))
+                         (line-beginning-position))
+                       (save-excursion
+                         (goto-char (region-end))
+                         (line-end-position)))
+                    (buffer-substring
+                     (line-beginning-position)
+                     (line-end-position)))))
+     ((zk-file-p)                  ; no elements in arg
+      (setq items
+            (car
+             (funcall
+              zk-index-format-function
+              (list buffer-file-name)))))
+     (t
+      (user-error "No item to send to desktop")))
     (if (and zk-desktop-current
              (buffer-live-p (get-buffer zk-desktop-current)))
         (setq buffer zk-desktop-current)
