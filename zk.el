@@ -341,18 +341,20 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--id-list (&optional str zk-alist)
   "Return a list of zk IDs for notes in `zk-directory'.
-Optional search for regexp STR in note title, case-insenstive.
-Takes an optional ZK-ALIST, for efficiency if `zk--id-list' is
-called in an internal loop."
-  (let ((zk-alist (or zk-alist (zk--alist)))
-        (case-fold-search t)
-        (ids))
-    (dolist (item zk-alist)
-      (if str
-          (when (string-match str (cadr item))
-            (push (car item) ids))
-        (push (car item) ids)))
-    ids))
+Optional search for STR in note title, case-insenstive. Takes an
+optional ZK-ALIST, for efficiency if `zk--id-list' is called in
+an internal loop."
+  (if str
+      (let ((zk-alist (or zk-alist (zk--alist)))
+            (case-fold-search t)
+            (ids))
+        (dolist (item zk-alist)
+          (if str
+              (when (string-match str (cadr item))
+                (push (car item) ids))
+            (push (car item) ids)))
+        ids)
+    (zk--parse-file 'id (zk--directory-files t))))
 
 (defun zk--id-unavailable-p (str)
   "Return t if provided string STR is already in use as an id."
@@ -496,7 +498,7 @@ optional ZK-ALIST, for efficiency if `zk--parse-id' is called
 in an internal loop."
   (let* ((zk-alist (or zk-alist
                        (zk--alist)))
-         (zk-id-list (zk--id-list nil zk-alist))
+         (zk-id-list (zk--id-list))
          (return
           (cond ((eq target 'file-path)
                  (cond ((stringp ids)
@@ -756,7 +758,7 @@ Optionally call a custom function by setting the variable
 (defun zk--links-in-note-list ()
   "Return list of zk files that are linked from the current buffer."
   (let* ((zk-alist (zk--alist))
-         (zk-ids (zk--id-list nil zk-alist))
+         (zk-ids (zk--id-list))
          id-list)
     (save-buffer)
     (save-excursion
@@ -886,7 +888,7 @@ brackets \"[[\" initiates completion."
   "Copy link and title for id or file ARG at point."
   (interactive (list (funcall zk-select-file-function "Copy link: ")))
   (let* ((zk-alist (zk--alist))
-         (zk-id-list (zk--id-list nil zk-alist))
+         (zk-id-list (zk--id-list))
          (id (cond ((member arg zk-id-list)
                     arg)
                    ((member (car arg) zk-id-list)
@@ -996,12 +998,10 @@ Select TAG, with completion, from list of all tags in zk notes."
                                      "\\|"))
       (user-error "No dead links found"))))
 
-(defun zk--unlinked-notes-list (&optional zk-alist)
-  "Return list of IDs for notes that no notes link to.
-Takes an optional ZK-ALIST."
-  (let* ((zk-alist (or zk-alist (zk--alist)))
-         (all-link-ids (zk--grep-link-id-list))
-         (all-ids (zk--id-list nil zk-alist)))
+(defun zk--unlinked-notes-list ()
+  "Return list of IDs for notes that no notes link to."
+  (let* ((all-link-ids (zk--grep-link-id-list))
+         (all-ids (zk--id-list)))
     (remq nil (mapcar
                (lambda (x)
                  (when (not (member x all-link-ids))
@@ -1012,9 +1012,8 @@ Takes an optional ZK-ALIST."
 (defun zk-unlinked-notes ()
   "Find unlinked notes."
   (interactive)
-  (let* ((zk-alist (zk--alist))
-         (ids (zk--unlinked-notes-list zk-alist))
-         (notes (zk--parse-id 'file-path ids zk-alist)))
+  (let* ((ids (zk--unlinked-notes-list))
+         (notes (zk--parse-id 'file-path ids)))
     (if notes
         (find-file (funcall zk-select-file-function "Unlinked notes: " notes))
       (user-error "No unlinked notes found"))))

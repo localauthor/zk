@@ -218,7 +218,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
         ;; replace titles
         (goto-char (point-min))
         (let* ((zk-alist (zk--alist))
-               (ids (zk--id-list nil zk-alist)))
+               (ids (zk--id-list)))
           (while (re-search-forward zk-id-regexp nil t)
             (let* ((beg (line-beginning-position))
                    (end (line-end-position))
