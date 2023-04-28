@@ -334,7 +334,7 @@ otherwise just match against `zk-file-name-regexp'."
   "Generate and return a zk ID.
 The ID is created using `zk-id-time-string-format'."
   (let ((id (format-time-string zk-id-time-string-format)))
-    (while (zk--id-unavailable-p id)
+    (while (zk-id-p id)
       (setq id (1+ (string-to-number id)))
       (setq id (number-to-string id)))
     id))
@@ -356,10 +356,10 @@ an internal loop."
         ids)
     (zk--parse-file 'id (zk--directory-files t))))
 
-(defun zk--id-unavailable-p (str)
-  "Return t if provided string STR is already in use as an id."
-  (let ((all-ids (zk--id-list)))
-    (member str all-ids)))
+(defun zk-id-p (id)
+  "Return t if ID is already in use as a zk-id."
+  (when (member id (zk--id-list))
+    t))
 
 (defun zk--current-id ()
   "Return the ID of zk note in current buffer."
