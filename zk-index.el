@@ -107,7 +107,6 @@ example."
 (define-derived-mode zk-index-mode nil "ZK-Index"
   "Mode for `zk-index'.
 \\{zk-index-mode-map}"
-  (setq mode-name "ZK-Index")
   (setq zk-index-mode-line-orig mode-line-misc-info)
   (read-only-mode)
   (hl-line-mode)
@@ -118,6 +117,7 @@ example."
 
 ;;; Declarations
 
+(defvar zk-desktop-directory)
 (defvar zk-index-last-sort-function nil)
 (defvar zk-index-last-format-function nil)
 (defvar zk-index-query-mode-line nil)
@@ -264,7 +264,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (when (eq major-mode 'zk-index-mode)
     (garbage-collect)
     (dolist (file candidates)
-      (insert (concat zk-index-prefix file "\n")))
+      (insert zk-index-prefix file "\n"))
     (goto-char (point-min))
     (zk-index-make-buttons)
     (zk-index--set-mode-name (format " [%s]" (length candidates)))))
@@ -614,10 +614,10 @@ Takes an option POS position argument."
         (re-search-forward zk-id-regexp)
         (match-string-no-properties 1)))))
 
-(defun zk-index-insert-link (&optional arg)
+(defun zk-index-insert-link (&optional id)
   "Insert zk-link in `other-window' for button ID at point."
   (interactive)
-  (let ((id (or arg
+  (let ((id (or id
                 (zk-index--button-at-point-p))))
     (with-selected-window (other-window-for-scrolling)
       (zk-insert-link id)
