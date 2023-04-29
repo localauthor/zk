@@ -288,43 +288,28 @@ at point."
   (unless zk-desktop-directory
     (error "Please set `zk-desktop-directory' first"))
   (let ((inhibit-read-only t)
-        (buffer) (items))
-    (cond
-     ((and arg (zk-file-p (car-safe arg))) ; files
-      (setq items
-            (mapconcat
-             #'identity
-             (funcall zk-index-format-function arg) "\n")))
-     (arg ; not files, therefore ids
-      (setq items
-            (if (zk--singleton-p arg) ; single id
-                (car (funcall zk-index-format-function
-                              (list (zk--parse-id 'file-path arg))))
-              (mapconcat
-               #'identity
-               (funcall zk-index-format-function
-                        (zk--parse-id 'file-path arg))
-               "\n"))))
-     ((eq major-mode 'zk-index-mode) ; no elements in arg
-      (setq items (if (use-region-p)
-                      (buffer-substring
-                       (save-excursion
-                         (goto-char (region-beginning))
-                         (line-beginning-position))
-                       (save-excursion
-                         (goto-char (region-end))
-                         (line-end-position)))
-                    (buffer-substring
-                     (line-beginning-position)
-                     (line-end-position)))))
-     ((zk-file-p)                  ; no elements in arg
-      (setq items
-            (car
-             (funcall
-              zk-index-format-function
-              (list buffer-file-name)))))
-     (t
-      (user-error "No item to send to desktop")))
+        buffer
+        (items
+         (cond
+          (arg (zk--formatted-string arg zk-index-format))
+          ((eq major-mode 'zk-index-mode)
+           (if (use-region-p)
+               (buffer-substring
+                (save-excursion
+                  (goto-char (region-beginning))
+                  (line-beginning-position))
+                (save-excursion
+                  (goto-char (region-end))
+                  (line-end-position)))
+             (buffer-substring
+              (line-beginning-position)
+              (line-end-position))))
+          ((zk-file-p)
+           (car
+            (funcall
+             zk-index-format-function
+             (list buffer-file-name))))
+          (t (user-error "No item to send to desktop")))))
     (if (and zk-desktop-current
              (buffer-live-p (get-buffer zk-desktop-current)))
         (setq buffer zk-desktop-current)
