@@ -553,8 +553,8 @@ file extension."
 
 ;;; Formatting
 
-(defun zk--formatter (arg format)
-  "Return formatted list from ARG, according to FORMAT.
+(defun zk--processor (arg)
+  "Return list of files.
 ARG can be zk-file or zk-id as string or list, or single or multiple."
   (let* ((zk-alist (zk--alist))
          (files (cond
@@ -569,8 +569,14 @@ ARG can be zk-file or zk-id as string or list, or single or multiple."
                  (t
                   (if (zk-file-p (car arg))
                       arg
-                    (zk--parse-id 'file-path arg zk-alist)))))
-         items)
+                    (zk--parse-id 'file-path arg zk-alist))))))
+    files))
+
+(defun zk--formatter (arg format)
+  "Return formatted list from FILES, according to FORMAT.
+ARG can be zk-file or zk-id as string or list, or single or multiple."
+  (let ((files (zk--processor arg))
+        items)
     (dolist (file files)
       (when (string-match (zk-file-name-regexp) file)
         (let ((id (match-string 1 file))
