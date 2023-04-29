@@ -614,10 +614,10 @@ Takes an option POS position argument."
         (re-search-forward zk-id-regexp)
         (match-string-no-properties 1)))))
 
-(defun zk-index-insert-link (&optional id)
+(defun zk-index-insert-link (&optional arg)
   "Insert zk-link in `other-window' for button ID at point."
   (interactive)
-  (let ((id (or id
+  (let ((id (or arg
                 (zk-index--button-at-point-p))))
     (with-selected-window (other-window-for-scrolling)
       (zk-insert-link id)
