@@ -143,7 +143,8 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
     (add-to-list 'embark-multitarget-actions 'zk-copy-link-and-title)
     (add-to-list 'embark-multitarget-actions 'zk-follow-link-at-point)
     (add-to-list 'embark-target-finders 'zk-index-embark-target)
-    (add-to-list 'embark-exporters-alist '(zk-file . zk-index))
+    (add-to-list 'embark-exporters-alist '(zk-file . zk-index-embark-export))
+    (add-to-list 'embark-exporters-alist '(zk-id . zk-index-embark-export))
     (define-key zk-id-map (kbd "i") #'zk-index-insert-link)))
 
 (defun zk-index-embark-target ()
@@ -154,6 +155,12 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
       (re-search-forward zk-id-regexp (line-end-position)))
     (let ((zk-id (match-string-no-properties 1)))
       `(zk-id ,zk-id . ,(cons (line-beginning-position) (line-end-position))))))
+
+(defun zk-index-embark-export (arg)
+  "Embark exporter for `zk-id and `zk-file target types.
+For details of ARG see `zk--processor'."
+  (let ((files (zk--processor arg)))
+    (zk-index files)))
 
 ;;; Formatting
 
@@ -380,8 +387,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defvar zk-index-query-terms nil
   "Ordered list of current query terms.
-Takes form of (COMMAND . TERM), where COMMAND is 'ZK-INDEX-FOCUS
-or 'ZK-INDEX-SEARCH, and TERM is the query string. Recent
+Takes form of (COMMAND . TERM), where COMMAND is `ZK-INDEX-FOCUS
+or `ZK-INDEX-SEARCH, and TERM is the query string. Recent
 items listed first.")
 
 (defun zk-index-query-files ()
