@@ -588,7 +588,7 @@ ARG can be zk-file or zk-id as string or list, or single or multiple."
 (defun zk--formatted-string (arg format)
   "Format a multi-line string from items in ARG, following FORMAT."
   (let ((items (zk--formatter arg format)))
-    (mapconcat #'identity items "\n")))
+    (mapconcat #'identity items "\n\n")))
 
 (defun zk-format-id-and-title (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
