@@ -62,7 +62,12 @@
 
 (defcustom zk-index-prefix "-> "
   "String to prepend to note names in ZK-Index."
-    :type 'string)
+  :type 'string)
+
+(defcustom zk-index-help-echo-function 'zk-index-help-echo
+  "Default help-echo function for ZK-Index buttons.
+Set to nil to inhibit help-echo."
+  :type 'function)
 
 (defcustom zk-index-auto-scroll t
   "Enable automatically showing note at point in ZK-Index."
@@ -293,7 +298,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
             (make-text-button beg end
                               'type 'zk-index
                               'action 'zk-index-button-action
-                              'help-echo 'zk-index-help-echo)
+                              'help-echo zk-index-help-echo-function)
             (when zk-index-invisible-ids
               (beginning-of-line)
               (re-search-forward id)
@@ -338,11 +343,12 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-help-echo (win _obj pos)
   "Generate help-echo zk-index button in WIN at POS."
   (with-selected-window win
-    (let ((id (save-excursion
-                (goto-char pos)
-                (re-search-forward zk-id-regexp (line-end-position) t)
-                (match-string-no-properties 0))))
-      (format "%s" (zk--parse-id 'title id)))))
+    (goto-char pos)
+    (let* ((beg (+ (line-beginning-position)
+                   (length zk-index-prefix)))
+           (end (line-end-position))
+           (title (buffer-substring beg end)))
+      (format "%s" title))))
 
 (defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed in buffer BUF-NAME."
