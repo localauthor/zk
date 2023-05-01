@@ -572,10 +572,13 @@ ARG can be zk-file or zk-id as string or list, or single or multiple."
                     (zk--parse-id 'file-path arg zk-alist))))))
     files))
 
-(defun zk--formatter (arg format)
+(defun zk--formatter (arg format &optional no-proc)
   "Return formatted list from FILES, according to FORMAT.
-ARG can be zk-file or zk-id as string or list, or single or multiple."
-  (let ((files (zk--processor arg))
+ARG can be zk-file or zk-id as string or list, or single or multiple.
+When NO-PROC is non-nil, bypass `zk--processor'."
+  (let ((files (if no-proc
+                   arg
+                 (zk--processor arg)))
         items)
     (dolist (file files)
       (when (string-match (zk-file-name-regexp) file)
@@ -888,18 +891,17 @@ See `zk--format' for details about FORMAT. If nil,
 FILES must be a list of filepaths. If nil, all files in `zk-directory'
 will be returned as formatted candidates."
   (let* ((format (or format
-                     zk-completion-at-point-format))
-         (list (or files
-                   (zk--directory-files))))
-    (zk--formatter list format)))
+                     zk-completion-at-point-format)))
+    (if files
+        (zk--formatter files format)
+      (zk--formatter (zk--directory-files) format t))))
 
 (defun zk-completion-at-point ()
   "Completion-at-point function for zk-links.
 When added to `completion-at-point-functions', typing two
 brackets \"[[\" initiates completion."
   (let ((case-fold-search t)
-        (origin (point))
-        (candidates (zk--format-candidates)))
+        (origin (point)))
     (save-excursion
       (when (and (re-search-backward "\\[\\["
                                      (line-beginning-position)
@@ -910,7 +912,7 @@ brackets \"[[\" initiates completion."
               origin
               (completion-table-dynamic
                (lambda (_)
-                 candidates))
+                 (zk--format-candidates)))
               :exit-function
               (lambda (str _status)
                 (delete-char (- -2 (length str)))
