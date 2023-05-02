@@ -150,7 +150,7 @@ example."
     (add-to-list 'embark-exporters-alist '(zk-id . zk-index-narrow))
     (define-key zk-file-map (kbd "n")  #'zk-index-narrow)
     (define-key zk-id-map (kbd "n") #'zk-index-narrow)
-    (define-key zk-id-map (kbd "i") #'zk-index-insert-link)
+    (define-key zk-id-map (kbd "i") #'zk-index-insert-link)))
 
 (defun zk-index-embark-target ()
   "Target zk-id of button at point in ZK-Index."
