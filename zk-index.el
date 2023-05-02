@@ -7,7 +7,6 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.9
 ;; Homepage: https://github.com/localauthor/zk
-
 ;; Package-Requires: ((emacs "27.1")(zk "0.3"))
 
 ;; This program is free software; you can redistribute it and/or modify it
@@ -139,9 +138,7 @@ example."
 (defvar embark-exporters-alist)
 
 (defun zk-index-setup-embark ()
-  "Setup Embark integration for zk.
-Adds zk-id as an Embark target, and adds `zk-id-map' and
-`zk-file-map' to `embark-keymap-alist'."
+  "Setup Embark integration for `zk-index'."
   (with-eval-after-load 'embark
     (add-to-list 'embark-multitarget-actions 'zk-index)
     (add-to-list 'embark-multitarget-actions 'zk-copy-link-and-title)
@@ -152,7 +149,7 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
     (define-key zk-id-map (kbd "i") #'zk-index-insert-link)))
 
 (defun zk-index-embark-target ()
-  "Target zk-id of button at point in ZK-Index and ZK-Desktop."
+  "Target zk-id of button at point in ZK-Index."
   (when (zk-index--button-at-point-p)
     (save-excursion
       (beginning-of-line)
@@ -268,6 +265,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (eval-and-compile
   (define-button-type 'zk-index
     'follow-link t
+    'action 'zk-index-button-action
     'face 'default))
 
 (defun zk-index--insert (candidates)
@@ -296,7 +294,6 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
             (beginning-of-line)
             (make-text-button beg end
                               'type 'zk-index
-                              'action 'zk-index-button-action
                               'help-echo zk-index-help-echo-function)
             (when zk-index-invisible-ids
               (beginning-of-line)
@@ -325,7 +322,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
     (funcall zk-index-button-display-function file buffer)))
 
 (defun zk-index-help-echo (win _obj pos)
-  "Generate help-echo for zk-index button in WIN at POS."
+  "Generate help-echo for `zk-index' button in WIN at POS."
   (with-selected-window win
     (goto-char pos)
     (let* ((beg (+ (line-beginning-position)

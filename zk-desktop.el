@@ -7,8 +7,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
 ;; Homepage: https://github.com/localauthor/zk
-
-;; Package-Requires: ((emacs "25.1")(zk "0.3")(zk-index "0.8"))
+;; Package-Requires: ((emacs "27.1")(zk "0.6")(zk-index "0.9"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -221,7 +220,6 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
     'rear-sticky t
     'keymap zk-desktop-button-map
     'action 'zk-desktop-button-action
-    'help-echo zk-desktop-help-echo-function
     'face 'zk-desktop-button
     'cursor-face 'highlight))
 
@@ -270,7 +268,9 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
                    (id (match-string-no-properties 1)))
               (if (member id ids)
                   (progn
-                    (make-text-button beg end 'type 'zk-desktop)
+                    (make-text-button beg end
+                                      'type 'zk-desktop
+                                      'help-echo zk-desktop-help-echo-function)
                     (when zk-desktop-invisible-ids
                       (beginning-of-line)
                       ;; find zk-links and plain zk-ids
@@ -316,7 +316,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
     (funcall zk-desktop-button-display-function file buffer)))
 
 (defun zk-desktop-help-echo (win _obj pos)
-  "Generate help-echo for zk-desktop button in WIN at POS."
+  "Generate help-echo for `zk-desktop' button in WIN at POS."
   (save-excursion
     (with-selected-window win
       (goto-char pos)
@@ -332,8 +332,8 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
 (defun zk-desktop-send-to-desktop (&optional arg)
   "Send notes from ZK-Index to ZK-Desktop.
 In ZK-Index, works on note at point or notes in active region.
-Also works on FILES or group of files in minibuffer, and on zk-id
-at point."
+Also works on files or group of files in minibuffer, as ARG, and
+on zk-id at point."
   (interactive)
   (unless zk-desktop-directory
     (error "Please set `zk-desktop-directory' first"))
