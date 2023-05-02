@@ -500,11 +500,14 @@ supplied. Can take a PROMPT argument."
 Takes a single ID, as a string, or a list of IDs. Takes an
 optional ZK-ALIST, for efficiency if `zk--parse-id' is called
 in an internal loop."
-  (if (eq target 'file-path)
-      (cond ((stringp ids)
-             (car (zk--directory-files t ids)))
-            ((zk--singleton-p ids)
-             (car (zk--directory-files t (car ids)))))
+  (cond
+   ((and (eq target 'file-path)
+         (stringp ids))
+    (car (zk--directory-files t ids)))
+   ((and (eq target 'file-path)
+         (zk--singleton-p ids))
+    (car (zk--directory-files t (car ids))))
+   (t
     (let* ((zk-alist (or zk-alist
                          (zk--alist)))
            (zk-id-list (zk--id-list))
@@ -531,7 +534,7 @@ in an internal loop."
                            ids)))))))
       (if (zk--singleton-p return)
           (car return)
-        return))))
+        return)))))
 
 (defun zk--parse-file (target files)
   "Return TARGET, either `id or `title, from FILES.
