@@ -57,10 +57,27 @@ The names of all ZK-Desktops should begin with this string."
   "String to prepend to note names in ZK-Desktop."
   :type 'string)
 
+(defcustom zk-desktop-invisible-ids t
+  "If non-nil, IDs will not be visible in the index."
+  :type 'boolean)
+
 (defcustom zk-desktop-major-mode nil
   "Name of major-mode for ZK-Desktop buffers.
 The value should be a symbol that is a major mode command.
 If nil, buffers will be in `fundamental-mode'."
+  :type 'function)
+
+(defcustom zk-desktop-button-display-function 'zk-desktop-button-display-action
+  "Function called when buttons pressed in ZK-Desktop.
+The function is called by `zk-desktop-button-action'. A custom
+function must take two arguments, FILE and BUFFER respectively.
+See the default function `zk-desktop-button-display-action' for an
+example."
+  :type 'function)
+
+(defcustom zk-desktop-help-echo-function 'zk-desktop-help-echo
+  "Default help-echo function for ZK-Index buttons.
+Set to nil to inhibit help-echo."
   :type 'function)
 
 (defcustom zk-desktop-add-pos 'append
@@ -198,12 +215,13 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
 
 (eval-and-compile
   (define-button-type 'zk-desktop
+    'supertype 'zk-index
     'read-only t
     'front-sticky t
     'rear-sticky t
     'keymap zk-desktop-button-map
-    'action 'zk-index-button-action
-    'help-echo 'zk-index-help-echo
+    'action 'zk-desktop-button-action
+    'help-echo zk-desktop-help-echo-function
     'face 'zk-desktop-button
     'cursor-face 'highlight))
 
@@ -253,7 +271,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
               (if (member id ids)
                   (progn
                     (make-text-button beg end 'type 'zk-desktop)
-                    (when zk-index-invisible-ids
+                    (when zk-desktop-invisible-ids
                       (beginning-of-line)
                       ;; find zk-links and plain zk-ids
                       (if (re-search-forward (zk-link-regexp) (line-end-position) t)
@@ -277,6 +295,38 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
                              'before-string
                              (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
             (end-of-line)))))))
+
+;;; Utilities
+
+(defun zk-desktop-button-display-action (file buffer)
+  "Function to display FILE or BUFFER on button press in ZK-Desktop."
+  (if (one-window-p)
+      (pop-to-buffer buffer
+                     (display-buffer-in-direction
+                      buffer
+                      '((direction . bottom)
+                        (window-height . 0.5))))
+    (find-file-other-window file)))
+
+(defun zk-desktop-button-action (_)
+  "Action taken when `zk-desktop' button is pressed."
+  (let* ((id (zk-index--button-at-point-p))
+         (file (zk--parse-id 'file-path id))
+         (buffer (find-file-noselect file)))
+    (funcall zk-desktop-button-display-function file buffer)))
+
+(defun zk-desktop-help-echo (win _obj pos)
+  "Generate help-echo for zk-desktop button in WIN at POS."
+  (save-excursion
+    (with-selected-window win
+      (goto-char pos)
+      (let* ((beg (+ (line-beginning-position)
+                     (length zk-desktop-prefix)))
+             (end (line-end-position))
+             (title (buffer-substring beg end)))
+        (format "%s" title)))))
+
+;;; Commands
 
 ;;;###autoload
 (defun zk-desktop-send-to-desktop (&optional arg)
@@ -377,7 +427,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
     (forward-line 1)
     (transpose-lines 1)
     (forward-line -1)
-    (when zk-index-invisible-ids
+    (when zk-desktop-invisible-ids
       (zk-desktop-make-buttons))))
 
 (defun zk-desktop-move-line-up ()
@@ -386,7 +436,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (let ((inhibit-read-only t))
     (transpose-lines 1)
     (forward-line -2)
-    (when zk-index-invisible-ids
+    (when zk-desktop-invisible-ids
       (zk-desktop-make-buttons))))
 
 (defun zk-desktop-delete-region-maybe ()
