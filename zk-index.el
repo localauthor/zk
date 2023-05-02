@@ -321,8 +321,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   "Action taken when `zk-index' button is pressed."
   (let* ((id (zk-index--button-at-point-p))
          (file (zk--parse-id 'file-path id))
-         (buffer
-          (find-file-noselect file)))
+         (buffer (find-file-noselect file)))
     (funcall zk-index-button-display-function file buffer)))
 
 (defun zk-index-help-echo (win _obj pos)
@@ -586,9 +585,11 @@ with query term STRING."
   (interactive)
   (beginning-of-line)
   (let* ((id (zk-index--button-at-point-p))
-        (kill (unless (get-file-buffer (zk--parse-id 'file-path id))
-                t)))
-    (push-button nil t)
+         (file (zk--parse-id 'file-path id))
+         (kill (unless (get-file-buffer file)
+                 t))
+         (buffer (find-file-noselect file)))
+    (funcall zk-index-button-display-function file buffer)
     (setq-local zk-index-view--kill kill)
     (zk-index-view-mode)))
 
