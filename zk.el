@@ -361,7 +361,8 @@ an internal loop."
 
 (defun zk-id-p (id)
   "Return t if ID is already in use as a zk-id."
-  (when (member id (zk--id-list))
+  (when (and (listp (zk--id-list))
+             (member id (zk--id-list)))
     t))
 
 (defun zk--current-id ()
