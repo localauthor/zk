@@ -20,8 +20,8 @@
   - [[#list-current-notes][List Current Notes]]
 - [[#zk-index-and-zk-desktop][ZK-Index and ZK-Desktop]]
   - [[#setup-1][Setup]]
-  - [[zk-index][ZK-Index]]
-  - [[zk-desktop][ZK-Desktop]]
+  - [[#zk-index][ZK-Index]]
+  - [[#zk-desktop][ZK-Desktop]]
   - [[#embark-integration-for-zk-index-and-zk-desktop][Embark integration for ZK-Index and ZK-Desktop]]
 - [[#comparable-zettelkasten-like-implementations][Comparable Zettelkasten(-like) Implementations]]
 
@@ -459,8 +459,6 @@ The ZK-Index buffer is in a major mode with a dedicated keymap:
     (define-key map (kbd "f") #'zk-index-focus)
     (define-key map (kbd "s") #'zk-index-search)
     (define-key map (kbd "g") #'zk-index-query-refresh)
-    (define-key map (kbd "d") #'zk-desktop-send-to-desktop)
-    (define-key map (kbd "D") #'zk-desktop-switch-to-desktop)
     (define-key map (kbd "c") #'zk-index-current-notes)
     (define-key map (kbd "i") #'zk-index-refresh)
     (define-key map (kbd "S") #'zk-index-sort-size)
@@ -495,7 +493,7 @@ The focus feature is cumulative, so pressing =f= again and entering another
 string, say, "climate," will narrow down the index down further, to notes
 with the words "nature" and "climate" in the title.
 
-The key 's' (for 'search') for filters notes by matching a string in their
+The key =s= (for 'search') for filters notes by matching a string in their
 full text. So, pressing =s= and entering the string "nature" will produce an
 index of all notes that contain the word "nature" anywhere in the note
 itself.
@@ -505,7 +503,7 @@ The search feature is also cumulative.
 Moreover, focus and search can be combined: you can focus by title and then
 search by content, or the other way around.
 
-The key 'i' refreshes the index, canceling any filtering/narrowing, returning
+The key =i= refreshes the index, canceling any filtering/narrowing, returning
 all notes to the list.
 
 *** Sorting
@@ -533,7 +531,7 @@ simply use the =zk-directory= itself:
   :config
   (zk-desktop-setup-embark)
   :custom
-  (zk-desktop-directory zk-directory))
+  (zk-desktop-directory "path/to/zk-directory"))
 #+end_src
 
 Think of =zk-desktop= as allowing you to achieve something like pulling
