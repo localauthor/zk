@@ -590,7 +590,19 @@ The latter adds =zk-desktop-send-to-deskop= to =zk-id-map= and =zk-file-map=, to
 facilitate sending files to desktop from the minibuffer or via =embark-act=
 in the zk-index buffer.
 
-Finally, calling =embark-export= on zk-files in the minibuffer will open a *new* ZK-Index buffer listing those files.
+*** Embark-Select and Embark-Export
+
+Use =embark-select= to mark candidates, including zk-links, items in
+zk-index, and zk-files in the minibuffer. These selected items can then be
+acted on via =embark-act-all=. For example, =zk-copy-link-and-title= will add
+to the kill-ring a nicely formatted list of links to the selected notes.
+Similarly, =zk-insert-link= will insert a nicely formatted list of links into
+the appropriate buffer.
+
+When =zk-index= is loaded, calling =embark-export= on selected zk-files in
+the minibuffer or items in a zk-index export those items to a *new* ZK-Index
+buffer. Calling =zk-index-narrow= on selected items will narrow the primary
+ZK-Index buffer to those files.
 
 * Comparable Zettelkasten(-like) Implementations 
 

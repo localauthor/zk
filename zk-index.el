@@ -143,10 +143,14 @@ example."
     (add-to-list 'embark-multitarget-actions 'zk-index)
     (add-to-list 'embark-multitarget-actions 'zk-copy-link-and-title)
     (add-to-list 'embark-multitarget-actions 'zk-follow-link-at-point)
+    (add-to-list 'embark-multitarget-actions 'zk-index-insert-link)
+    (add-to-list 'embark-multitarget-actions 'zk-index-narrow)
     (add-to-list 'embark-target-finders 'zk-index-embark-target)
-    (add-to-list 'embark-exporters-alist '(zk-file . zk-index-embark-export))
-    (add-to-list 'embark-exporters-alist '(zk-id . zk-index-embark-export))
-    (define-key zk-id-map (kbd "i") #'zk-index-insert-link)))
+    (add-to-list 'embark-exporters-alist '(zk-file . zk-index-narrow))
+    (add-to-list 'embark-exporters-alist '(zk-id . zk-index-narrow))
+    (define-key zk-file-map (kbd "n")  #'zk-index-narrow)
+    (define-key zk-id-map (kbd "n") #'zk-index-narrow)
+    (define-key zk-id-map (kbd "i") #'zk-index-insert-link)
 
 (defun zk-index-embark-target ()
   "Target zk-id of button at point in ZK-Index."
@@ -157,11 +161,15 @@ example."
     (let ((zk-id (match-string-no-properties 1)))
       `(zk-id ,zk-id . ,(cons (line-beginning-position) (line-end-position))))))
 
-(defun zk-index-embark-export (arg)
-  "Embark exporter for `zk-id and `zk-file target types.
-For details of ARG see `zk--processor'."
+(defun zk-index-narrow (arg)
+  "Produce a ZK-Index narrowed to notes listed in ARG.
+For details of ARG see `zk--processor'. When called on items
+selected by `embark-select', narrows index to selected
+candidates. Alternatively, `embark-export' exports candidates to
+a new index."
   (let ((files (zk--processor arg)))
-    (zk-index files)))
+    (zk-index files)
+    (zk-index--reset-mode-line)))
 
 ;;; Formatting
 
@@ -609,14 +617,14 @@ Takes an option POS position argument."
         (re-search-forward zk-id-regexp)
         (match-string-no-properties 1)))))
 
-(defun zk-index-insert-link (&optional id)
+(defun zk-index-insert-link (id)
   "Insert zk-link in `other-window' for button ID at point."
-  (interactive)
-  (let ((id (or id
-                (zk-index--button-at-point-p))))
-    (with-selected-window (other-window-for-scrolling)
-      (zk-insert-link id)
-      (newline))))
+  ;; FIX how to make interactive, but also embarkable?
+  ;; NOTE only useful useful from zk-index, not from links
+  (if (derived-mode-p 'zk-index-mode)
+      (with-selected-window (other-window-for-scrolling)
+        (zk-insert-link id))
+    (zk-insert-link id)))
 
 (defvar-local zk-index-view--cursor nil)
 
