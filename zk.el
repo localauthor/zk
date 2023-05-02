@@ -499,33 +499,38 @@ supplied. Can take a PROMPT argument."
 Takes a single ID, as a string, or a list of IDs. Takes an
 optional ZK-ALIST, for efficiency if `zk--parse-id' is called
 in an internal loop."
-  (let* ((zk-alist (or zk-alist
-                       (zk--alist)))
-         (zk-id-list (zk--id-list))
-         (return
-          (cond ((eq target 'file-path)
-                 (cond ((stringp ids)
-                        (if (member ids zk-id-list)
-                            (cddr (assoc ids zk-alist))
-                          (user-error "No file associated with %s" ids)))
-                       ((listp ids)
-                        (mapcar
-                         (lambda (x)
-                           (caddr (assoc x zk-alist)))
-                         ids))))
-                ((eq target 'title)
-                 (cond ((stringp ids)
-                        (if (member ids zk-id-list)
-                            (cadr (assoc ids zk-alist))
-                          (user-error "No file associated with %s" ids)))
-                       ((listp ids)
-                        (mapcar
-                         (lambda (x)
-                           (cadr (assoc x zk-alist)))
-                         ids)))))))
-    (if (zk--singleton-p return)
-        (car return)
-      return)))
+  (if (eq target 'file-path)
+      (cond ((stringp ids)
+             (car (zk--directory-files t ids)))
+            ((zk--singleton-p ids)
+             (car (zk--directory-files t (car ids)))))
+    (let* ((zk-alist (or zk-alist
+                         (zk--alist)))
+           (zk-id-list (zk--id-list))
+           (return
+            (cond ((eq target 'file-path)
+                   (cond ((stringp ids)
+                          (if (member ids zk-id-list)
+                              (cddr (assoc ids zk-alist))
+                            (user-error "No file associated with %s" ids)))
+                         ((listp ids)
+                          (mapcar
+                           (lambda (x)
+                             (caddr (assoc x zk-alist)))
+                           ids))))
+                  ((eq target 'title)
+                   (cond ((stringp ids)
+                          (if (member ids zk-id-list)
+                              (cadr (assoc ids zk-alist))
+                            (user-error "No file associated with %s" ids)))
+                         ((listp ids)
+                          (mapcar
+                           (lambda (x)
+                             (cadr (assoc x zk-alist)))
+                           ids)))))))
+      (if (zk--singleton-p return)
+          (car return)
+        return))))
 
 (defun zk--parse-file (target files)
   "Return TARGET, either `id or `title, from FILES.
@@ -555,7 +560,7 @@ file extension."
 
 (defun zk--processor (arg)
   "Return list of files.
-ARG can be zk-file or zk-id as string or list, or single or multiple."
+ARG can be zk-file or zk-id as string or list, single or multiple."
   (let* ((zk-alist (zk--alist))
          (files (cond
                  ((stringp arg)
