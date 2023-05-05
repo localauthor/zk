@@ -617,14 +617,17 @@ Takes an option POS position argument."
         (re-search-forward zk-id-regexp)
         (match-string-no-properties 1)))))
 
-(defun zk-index-insert-link (id)
+(defun zk-index-insert-link (&optional id)
   "Insert zk-link in `other-window' for button ID at point."
-  ;; FIX how to make interactive, but also embarkable?
-  ;; NOTE only useful useful from zk-index, not from links
-  (if (derived-mode-p 'zk-index-mode)
-      (with-selected-window (other-window-for-scrolling)
-        (zk-insert-link id))
-    (zk-insert-link id)))
+  (interactive (list (or (zk--id-at-point)
+                         (zk-index--button-at-point-p))))
+  (cond ((derived-mode-p 'zk-index-mode)
+         (with-selected-window (other-window-for-scrolling)
+           (zk-insert-link id)))
+        ((zk--id-at-point)
+         (user-error "Move point off zk-id before inserting"))
+        (t
+         (zk-insert-link id))))
 
 (defvar-local zk-index-view--cursor nil)
 

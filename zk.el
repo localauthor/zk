@@ -861,18 +861,20 @@ link and title are inserted. See variable `zk-link-and-title'
 for additional configurations. Optional TITLE."
   (interactive
    (list (list (funcall zk-select-file-function "Insert link: "))))
-  (let* ((pref current-prefix-arg))
-    (cond
-     ((or (and (not pref) (eq 't zk-link-and-title))
-          (and pref (not zk-link-and-title)))
-      (zk--insert-link-and-title arg title))
-     ((and (not pref) (eq 'ask zk-link-and-title))
-      (if (y-or-n-p "Include title? ")
-          (zk--insert-link-and-title arg title)
-        (zk--insert-link arg)))
-     ((or t
-          (and pref (eq 't zk-link-and-title)))
-      (zk--insert-link arg)))))
+  (if (zk--id-at-point)
+      (user-error "Move point off zk-id before inserting")
+    (let* ((pref current-prefix-arg))
+      (cond
+       ((or (and (not pref) (eq 't zk-link-and-title))
+            (and pref (not zk-link-and-title)))
+        (zk--insert-link-and-title arg title))
+       ((and (not pref) (eq 'ask zk-link-and-title))
+        (if (y-or-n-p "Include title? ")
+            (zk--insert-link-and-title arg title)
+          (zk--insert-link arg)))
+       ((or t
+            (and pref (eq 't zk-link-and-title)))
+        (zk--insert-link arg))))))
 
 (defun zk--insert-link-and-title (arg &optional title)
   "Insert link from ARG according to `zk-link-and-title-format'.
