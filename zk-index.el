@@ -279,36 +279,23 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index--insert (candidates)
   "Insert CANDIDATES into ZK-Index."
   (when (eq major-mode 'zk-index-mode)
-    (garbage-collect)
-    (dolist (file candidates)
-      (insert zk-index-prefix file "\n"))
-    (goto-char (point-min))
-    (zk-index-make-buttons)
-    (zk-index--set-mode-name (format " [%s]" (length candidates)))))
-
-;;;###autoload
-(defun zk-index-make-buttons ()
-  "Make buttons in ZK-Index."
-  (interactive)
-  (let ((inhibit-read-only t)
-        (ids (zk--id-list)))
     (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward zk-id-regexp nil t)
-        (let* ((beg (line-beginning-position))
-               (end (line-end-position))
-               (id (match-string-no-properties 1)))
-          (when (member id ids)
-            (beginning-of-line)
-            (make-text-button beg end
-                              'type 'zk-index
-                              'help-echo zk-index-help-echo-function)
-            (when zk-index-invisible-ids
-              (beginning-of-line)
-              (re-search-forward id)
-              (replace-match
-               (propertize id 'invisible t)))
-            (goto-char (match-end 0))))))))
+      (dolist (file candidates)
+        (insert zk-index-prefix file "\n"))
+      (zk-index--make-buttons)
+      (zk-index--set-mode-name (format " [%s]" (length candidates))))))
+
+(defun zk-index--make-buttons ()
+  "Make buttons in ZK-Index buffer."
+  (goto-char (point-min))
+  (while (re-search-forward zk-id-regexp nil t)
+    (let* ((beg (line-beginning-position))
+           (end (line-end-position)))
+      (beginning-of-line)
+      (make-text-button beg end
+                        'type 'zk-index
+                        'help-echo zk-index-help-echo-function)
+      (end-of-line))))
 
 ;;; Utilities
 
