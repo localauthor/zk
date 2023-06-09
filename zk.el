@@ -1021,7 +1021,7 @@ Select TAG, with completion, from list of all tags in zk notes."
   "Find unlinked notes."
   (interactive)
   (let* ((ids (zk--unlinked-notes-list))
-         (notes (zk--parse-id 'file-path ids)))
+         (notes (mapcar (lambda (id) (zk--parse-id 'file-path id)) ids)))
     (if notes
         (find-file (funcall zk-select-file-function "Unlinked notes: " notes))
       (user-error "No unlinked notes found"))))
