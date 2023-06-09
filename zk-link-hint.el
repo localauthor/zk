@@ -1,6 +1,6 @@
 ;;; zk-link-hint.el --- Link-Hint integration for zk  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022 Grant Rosson
+;; Copyright (C) 2022-2023 Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 4, 2022
