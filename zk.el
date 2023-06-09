@@ -445,7 +445,7 @@ return list of files not matching the regexp."
                                            zk-tag-regexp)
                                           " "
                                           zk-directory " 2>/dev/null")))
-         (list (split-string files "\n" t)))
+         (list (split-string files "\n" t "\s")))
     (delete-dups list)))
 
 (defun zk--select-file (&optional prompt list group sort)
@@ -985,14 +985,14 @@ Opens search results in a grep buffer."
   "Open grep buffer containing results of search for TAG.
 Select TAG, with completion, from list of all tags in zk notes.
 Defaults to `zk-grep'."
-  (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
+  (interactive (list (completing-read "Find tag: " (zk--grep-tag-list))))
   (funcall zk-tag-search-function tag))
 
 ;;;###autoload
 (defun zk-tag-insert (tag)
   "Insert TAG at point.
 Select TAG, with completion, from list of all tags in zk notes."
-  (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
+  (interactive (list (completing-read "Insert tag: " (zk--grep-tag-list))))
   (insert tag))
 
 ;;; Find Dead Links and Unlinked Notes

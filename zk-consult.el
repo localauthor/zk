@@ -94,14 +94,14 @@
 With option for INITIAL input when called non-interactively."
   (interactive)
   (let ((consult--grep-history zk-search-history))
-  (if initial
-      (consult-grep zk-directory (format "%s" initial))
-    (consult-grep zk-directory))))
+    (if initial
+        (consult-grep zk-directory (format "%s" initial))
+      (consult-grep zk-directory))))
 
 (defun zk-consult-grep-tag-search (tag)
   "Search for TAG in `zk-directory' using `consult-grep'.
 Select TAG, with completion, from list of all tags in zk notes."
-  (interactive (list (completing-read "Tag: " (zk--grep-tag-list))))
+  (interactive (list (completing-read "Find tag: " (zk--grep-tag-list))))
   (consult-grep zk-directory tag))
 
 ;;; Current Notes Consult Source
