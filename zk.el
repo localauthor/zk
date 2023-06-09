@@ -755,6 +755,8 @@ title."
                             (point)
                             (line-end-position)))))
          (new-title))
+    (unless id
+      (user-error "Not a zk file."))
     (if (not (string= file-title header-title))
         (if (y-or-n-p (format "Change from \"%s\" to \"%s\"? " file-title header-title))
             (setq new-title header-title)
