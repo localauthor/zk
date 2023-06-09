@@ -423,7 +423,7 @@ return list of files not matching the regexp."
             (if invert " --files-without-match" " --files-with-matches")
             " --recursive"
             " --ignore-case"
-            " --include \\*." zk-file-extension
+            " --include=\\*." zk-file-extension
             " --regexp=" (shell-quote-argument str)
             " " zk-directory
             " 2>/dev/null"))
