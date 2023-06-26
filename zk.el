@@ -347,7 +347,7 @@ The ID is created using `zk-id-time-string-format'."
 Optional search for STR in note title, case-insenstive. Takes an
 optional ZK-ALIST, for efficiency if `zk--id-list' is called in
 an internal loop."
-  (if str
+  (if (or str zk-alist)
       (let ((zk-alist (or zk-alist (zk--alist)))
             (case-fold-search t)
             (ids))
