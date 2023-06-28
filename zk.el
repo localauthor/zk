@@ -801,27 +801,25 @@ Optionally call a custom function by setting the variable
 (defun zk--links-in-note-list ()
   "Return list of zk files that are linked from the current buffer."
   (let* ((zk-alist (zk--alist))
-         (zk-ids (zk--id-list))
+         (zk-ids (zk--id-list nil zk-alist))
          id-list)
     (save-buffer)
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward (zk-link-regexp) nil t)
-        (if (member (match-string-no-properties 1) zk-ids)
-            (push (match-string-no-properties 1) id-list))))
-    (cond ((zk--singleton-p id-list)
-           (list (zk--parse-id 'file-path id-list zk-alist)))
-          (id-list
-           (zk--parse-id 'file-path (delete-dups id-list) zk-alist))
-          (t
-           (error "No zk-links in note")))))
-
+        (when (member (match-string-no-properties 1) zk-ids)
+          (push (match-string-no-properties 1) id-list))))
+    (if id-list
+        (mapcar (lambda (id)
+                  (zk--parse-id 'file-path id zk-alist))
+                (delete-dups id-list))
+      (error "No zk-links in note"))))
 
 ;;;###autoload
 (defun zk-links-in-note ()
   "Select from list of notes linked to in the current note."
   (interactive)
-  (let* ((files (zk--links-in-note-list)))
+  (let* ((files (ignore-errors (zk--links-in-note-list))))
     (if files
         (find-file (funcall zk-select-file-function "Links: " files))
       (user-error "No links found"))))
