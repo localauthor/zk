@@ -500,7 +500,7 @@ supplied. Can take a PROMPT argument."
 Takes a single ID, as a string. Takes an optional ZK-ALIST, for
 efficiency if `zk--parse-id' is called in an internal loop."
   (let* ((zk-alist (or zk-alist (zk--alist)))
-         (zk-id-list (zk--id-list)))
+         (zk-id-list (zk--id-list nil zk-alist)))
     (unless (member id zk-id-list)
       (user-error "No file associated with %s" id))
     (cond ((eq target 'file-path)
