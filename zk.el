@@ -495,46 +495,19 @@ supplied. Can take a PROMPT argument."
          ,file)))
    (zk--directory-files t)))
 
-(defun zk--parse-id (target ids &optional zk-alist)
-  "Return TARGET, either `file-path or `title, from files with IDS.
-Takes a single ID, as a string, or a list of IDs. Takes an
-optional ZK-ALIST, for efficiency if `zk--parse-id' is called
-in an internal loop."
-  (cond
-   ((and (eq target 'file-path)
-         (stringp ids))
-    (car (zk--directory-files t ids)))
-   ((and (eq target 'file-path)
-         (zk--singleton-p ids))
-    (car (zk--directory-files t (car ids))))
-   (t
-    (let* ((zk-alist (or zk-alist
-                         (zk--alist)))
-           (zk-id-list (zk--id-list))
-           (return
-            (cond ((eq target 'file-path)
-                   (cond ((stringp ids)
-                          (if (member ids zk-id-list)
-                              (cddr (assoc ids zk-alist))
-                            (user-error "No file associated with %s" ids)))
-                         ((listp ids)
-                          (mapcar
-                           (lambda (x)
-                             (caddr (assoc x zk-alist)))
-                           ids))))
-                  ((eq target 'title)
-                   (cond ((stringp ids)
-                          (if (member ids zk-id-list)
-                              (cadr (assoc ids zk-alist))
-                            (user-error "No file associated with %s" ids)))
-                         ((listp ids)
-                          (mapcar
-                           (lambda (x)
-                             (cadr (assoc x zk-alist)))
-                           ids)))))))
-      (if (zk--singleton-p return)
-          (car return)
-        return)))))
+(defun zk--parse-id (target id &optional zk-alist)
+  "Return TARGET, either `file-path or `title, from file with ID.
+Takes a single ID, as a string. Takes an optional ZK-ALIST, for
+efficiency if `zk--parse-id' is called in an internal loop."
+  (let* ((zk-alist (or zk-alist (zk--alist)))
+         (zk-id-list (zk--id-list)))
+    (unless (member id zk-id-list)
+      (user-error "No file associated with %s" id))
+    (cond ((eq target 'file-path)
+           (caddr (assoc id zk-alist)))
+          ((eq target 'title)
+           (cadr (assoc id zk-alist)))
+          (t (error "Invalid target: %s" target)))))
 
 (defun zk--parse-file (target files)
   "Return TARGET, either `id or `title, from FILES.
