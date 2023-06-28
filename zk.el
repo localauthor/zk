@@ -536,23 +536,20 @@ file extension."
 ;;; Formatting
 
 (defun zk--processor (arg)
-  "Return list of files.
-ARG can be zk-file or zk-id as string or list, single or multiple."
+  "Process ARG into a list of zk-files.
+ARG can be a string (zk-file or zk-id) or a list of such strings."
   (let* ((zk-alist (zk--alist))
-         (files (cond
-                 ((stringp arg)
-                  (if (zk-file-p arg)
-                      (list arg)
-                    (list (zk--parse-id 'file-path arg zk-alist))))
-                 ((zk--singleton-p arg)
-                  (if (zk-file-p (car arg))
-                      arg
-                    (list (zk--parse-id 'file-path (car arg) zk-alist))))
-                 (t
-                  (if (zk-file-p (car arg))
-                      arg
-                    (zk--parse-id 'file-path arg zk-alist))))))
-    files))
+         (process-single-arg
+          (lambda (single-arg)
+            (if (zk-file-p single-arg)
+                single-arg
+              (zk--parse-id 'file-path single-arg zk-alist)))))
+    (cond ((stringp arg)                ; Single zk-file or zk-id as string
+           (list (funcall process-single-arg arg)))
+          ((listp arg)                  ; List of zk-files or zk-ids
+           (mapcar process-single-arg arg))
+          (t
+           (signal 'wrong-type-argument (list 'list-or-string-p arg))))))
 
 (defun zk--formatter (arg format &optional no-proc)
   "Return formatted list from FILES, according to FORMAT.
