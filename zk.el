@@ -317,6 +317,27 @@ The value is based on `zk-link-format' and `zk-id-regexp'."
   (when (string-match (zk-file-name-regexp) file)
     (match-string-no-properties 1 file)))
 
+(defun zk--id-file (id)
+  "Return the full file path for the existing zk note with ID.
+Use wildcards to match files against the ID, signalling an error if
+there are multiple matches (so ID is not unique). If there are no
+matches, return nil."
+  (let* ((wild-base-name (format "%s*.%s" id zk-file-extension))
+         (matches (file-expand-wildcards
+                   (concat (file-name-as-directory zk-directory)
+                           (when (functionp zk-subdirectory-function)
+                             (file-name-as-directory
+                              (funcall zk-subdirectory-function id)))
+                           wild-base-name))))
+    (cond ((zk--singleton-p matches)
+           (expand-file-name (car matches)))
+          ((null matches)
+           nil)
+          (t
+           (error "There are multiple (%d) files with ID %s"
+                  (length matches)
+                  id)))))
+
 (defun zk-file-p (&optional file strict)
   "Return t if FILE is a zk-file.
 If FILE is not given, get it from variable `buffer-file-name'.
