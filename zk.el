@@ -519,15 +519,16 @@ supplied. Can take a PROMPT argument."
 (defun zk--parse-id (target id &optional zk-alist)
   "Return TARGET, either `file-path or `title, from file with ID.
 Takes a single ID, as a string. Takes an optional ZK-ALIST, for
-efficiency if `zk--parse-id' is called in an internal loop."
-  (let* ((zk-alist (or zk-alist (zk--alist)))
-         (zk-id-list (zk--id-list nil zk-alist)))
-    (unless (member id zk-id-list)
-      (user-error "No file associated with %s" id))
+backward compatibility, but ignores it in favor of checking against
+the file system directly via `zk--id-file'."
+  (let ((file (zk--id-file id)))
     (cond ((eq target 'file-path)
-           (caddr (assoc id zk-alist)))
+           file)
           ((eq target 'title)
-           (cadr (assoc id zk-alist)))
+           (if (string-match (zk-file-name-regexp) (file-name-nondirectory file))
+               (match-string 2 (file-name-nondirectory file))
+             (error "Cannot figure out title for file with ID %s: %s"
+                    id (file-name-nondirectory file))))
           (t (error "Invalid target: %s" target)))))
 
 (defun zk--parse-file (target files)
