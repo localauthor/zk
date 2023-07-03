@@ -186,10 +186,11 @@ See `zk-format-id-and-title' for an example."
 
 ;; Format variables
 
-(defcustom zk-link-format "[[%s]]"
+(defcustom zk-link-format "[[%i]]"
   "Format for inserted links.
-Used in conjunction with `format', the string `%s' will be
-replaced by a note's ID."
+
+See `zk-format-id-and-title' for what the default control
+sequences mean."
   :type 'string)
 
 (defcustom zk-link-and-title-format "%t [[%i]]"
@@ -623,11 +624,9 @@ that `zk-format-function' is set to."
   (format-spec format `((?i . ,id) (?t . ,title))))
 
 (defun zk--format (format id title)
-  "Format ID and TITLE based on the `format-spec' FORMAT."
-  (if (eq format zk-link-format)
-      (format zk-link-format id)
-    (funcall zk-format-function format id title)))
-
+  "Format ID and TITLE based on the `format-spec' FORMAT.
+This is a wrapper around `zk-format-function', which see."
+  (funcall zk-format-function format id title))
 
 ;;; Buttons
 
