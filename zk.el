@@ -117,16 +117,21 @@ rendered with spaces."
 
 (defcustom zk-id-time-string-format "%Y%m%d%H%M"
   "Format for new zk IDs.
-For supported options, please consult `format-time-string'.
-Note: the regexp to find zk IDs is set separately.
-If you change this value, set `zk-id-regexp' so that
-the zk IDs can be found."
+For supported options,  consult `format-time-string'.
+
+Note: The regexp to find zk IDs is set separately. If you change
+this value, set `zk-id-regexp' so that the zk IDs can be found."
   :type 'string)
 
 (defcustom zk-id-regexp "\\([0-9]\\{12\\}\\)"
   "The regular expression used to search for zk IDs.
 Set it so that it matches strings generated with
-`zk-id-format'."
+`zk-id-time-string-format'."
+  :type 'regexp)
+
+(defcustom zk-title-regexp ".*?"
+  "The regular expression used to match the zk note's title.
+This is only relevant if `zk-link-format' includes the title."
   :type 'regexp)
 
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
@@ -154,7 +159,7 @@ Must take a single STRING argument."
   :type 'function)
 
 (make-obsolete-variable 'zk-grep-function "The use of the
-  'zk-grep-function' variable is deprecated.
+ 'zk-grep-function' variable is deprecated.
  'zk-search-function' should be used instead"
                         "0.5")
 
@@ -302,15 +307,18 @@ Group 1 is the zk ID.
 Group 2 is the title."
   (concat "\\(?1:" zk-id-regexp "\\)"
           "."
-          "\\(?2:.*?\\)"
+          "\\(?2:" zk-title-regexp "\\)"
           "\\."
           zk-file-extension
           ".*"))
 
 (defun zk-link-regexp ()
-  "Return the correct regexp for zk links.
-The value is based on `zk-link-format' and `zk-id-regexp'."
-  (format (regexp-quote zk-link-format) zk-id-regexp))
+  "Return the correct regexp matching zk links.
+The value is based on `zk-link-format', `zk-id-regexp', and
+`zk-title-regexp'."
+  (zk--format (regexp-quote zk-link-format)
+              zk-id-regexp
+              zk-title-regexp))
 
 (defun zk--file-id (file)
   "Return the ID of the given zk FILE."
