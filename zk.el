@@ -312,13 +312,14 @@ Group 2 is the title."
           zk-file-extension
           ".*"))
 
-(defun zk-link-regexp ()
+(defun zk-link-regexp (&optional id title)
   "Return the correct regexp matching zk links.
-The value is based on `zk-link-format', `zk-id-regexp', and
-`zk-title-regexp'."
+If ID and/or TITLE are given, use those, generating a regexp that
+specifically matches them. Othewrise use `zk-id-regexp' and
+`zk-title-regexp', respectively."
   (zk--format (regexp-quote zk-link-format)
-              zk-id-regexp
-              zk-title-regexp))
+              (or id zk-id-regexp)
+              (or title zk-title-regexp)))
 
 (defun zk--file-id (file)
   "Return the ID of the given zk FILE."
@@ -956,7 +957,7 @@ brackets \"[[\" initiates completion."
 
 (defun zk--backlinks-list (id)
   "Return list of notes that link to note with ID."
-  (zk--grep-file-list (regexp-quote (format zk-link-format id))))
+  (zk--grep-file-list (zk-link-regexp id)))
 
 ;;;###autoload
 (defun zk-backlinks ()
