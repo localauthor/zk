@@ -314,12 +314,16 @@ Group 2 is the title."
 
 (defun zk-link-regexp (&optional id title)
   "Return the correct regexp matching zk links.
-If ID and/or TITLE are given, use those, generating a regexp that
-specifically matches them. Othewrise use `zk-id-regexp' and
-`zk-title-regexp', respectively."
+If ID and/or TITLE are given, use those, generating a regexp
+that specifically matches them. Othewrise use `zk-id-regexp'
+and `zk-title-regexp', respectively.
+The regexp captures these groups:
+
+Group 1 is the zk ID.
+Group 2 is the title."
   (zk--format (regexp-quote zk-link-format)
-              (or id zk-id-regexp)
-              (or title zk-title-regexp)))
+              (concat "\\(?1:" (or id zk-id-regexp) "\\)")
+              (concat "\\(?2:" (or title zk-title-regexp) "\\)")))
 
 (defun zk--file-id (file)
   "Return the ID of the given zk FILE."
