@@ -183,7 +183,7 @@ all files in `zk-directory' will be returned as formatted candidates."
                    (zk--directory-files)))
          (output))
     (dolist (file list)
-      (when (string-match (zk-file-name-regexp) file)
+      (when (and file (string-match (zk-file-name-regexp) file))
         (let ((id (if zk-index-invisible-ids
                       (propertize (match-string 1 file) 'invisible t)
                     (match-string 1 file)))
@@ -526,8 +526,7 @@ with query term STRING."
   "Return list files in current index."
   (let* ((ids (zk-index--current-id-list (buffer-name)))
          (files (zk--parse-id 'file-path ids)))
-    (when files
-      files)))
+    files))
 
 (defun zk-index--sort-created (list)
   "Sort LIST for latest created."
@@ -559,8 +558,10 @@ with query term STRING."
   "Sort LIST for latest modification."
   (sort list
         (lambda (a b)
-          (> (file-attribute-size (file-attributes a))
-             (file-attribute-size (file-attributes b))))))
+          ;; `>' signals an error if it's passed a nil, but `file-attributes'
+          ;; can return nil the file does not exist (or when passed a nil).
+          (> (or (file-attribute-size (file-attributes a)) -1)
+             (or (file-attribute-size (file-attributes b)) -1)))))
 
 ;;; ZK-Index Keymap Commands
 
