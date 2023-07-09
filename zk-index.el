@@ -252,7 +252,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
       (unless (zk-index-narrowed-p buf-name)
         (progn
           (zk-index--reset-mode-line)
-          (forward-line line))))))
+          (goto-line line))))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
   "Sort FILES, with option FORMAT-FN and SORT-FN."
