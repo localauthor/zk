@@ -117,21 +117,16 @@ rendered with spaces."
 
 (defcustom zk-id-time-string-format "%Y%m%d%H%M"
   "Format for new zk IDs.
-For supported options,  consult `format-time-string'.
-
-Note: The regexp to find zk IDs is set separately. If you change
-this value, set `zk-id-regexp' so that the zk IDs can be found."
+For supported options, please consult `format-time-string'.
+Note: the regexp to find zk IDs is set separately.
+If you change this value, set `zk-id-regexp' so that
+the zk IDs can be found."
   :type 'string)
 
 (defcustom zk-id-regexp "\\([0-9]\\{12\\}\\)"
   "The regular expression used to search for zk IDs.
 Set it so that it matches strings generated with
-`zk-id-time-string-format'."
-  :type 'regexp)
-
-(defcustom zk-title-regexp ".*?"
-  "The regular expression used to match the zk note's title.
-This is only relevant if `zk-link-format' includes the title."
+`zk-id-format'."
   :type 'regexp)
 
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
@@ -159,7 +154,7 @@ Must take a single STRING argument."
   :type 'function)
 
 (make-obsolete-variable 'zk-grep-function "The use of the
- 'zk-grep-function' variable is deprecated.
+  'zk-grep-function' variable is deprecated.
  'zk-search-function' should be used instead"
                         "0.5")
 
@@ -180,31 +175,30 @@ See `zk-current-notes' for details."
 
 (defcustom zk-format-function #'zk-format-id-and-title
   "Function for formatting zk file information.
-It should accept three variables: FORMAT-SPEC, ID, and TITLE.
-See `zk-format-id-and-title' for an example."
+It should accept three variables: FORMAT-SPEC, ID, and TITLE. See
+`zk--format' for details."
   :type 'function)
 
 ;; Format variables
 
-(defcustom zk-link-format "[[%i]]"
+(defcustom zk-link-format "[[%s]]"
   "Format for inserted links.
-
-See `zk-format-id-and-title' for what the default control
-sequences mean."
+Used in conjunction with `format', the string `%s' will be
+replaced by a note's ID."
   :type 'string)
 
 (defcustom zk-link-and-title-format "%t [[%i]]"
   "Format for link and title when inserted to together.
 
-See `zk-format-id-and-title' for what the default control
-sequences mean."
+By default (when `zk-format-function' is nil), the string `%t' will be
+replaced by the note's title and `%i' will be replaced by its ID."
   :type 'string)
 
 (defcustom zk-completion-at-point-format "[[%i]] %t"
   "Format for completion table used by `zk-completion-at-point'.
 
-See `zk-format-id-and-title' for what the default control
-sequences mean."
+By default (when `zk-format-function' is nil), the string `%t' will be
+replaced by the note's title and `%i' will be replaced by its ID."
   :type 'string)
 
 ;; Link variables
@@ -308,23 +302,15 @@ Group 1 is the zk ID.
 Group 2 is the title."
   (concat "\\(?1:" zk-id-regexp "\\)"
           "."
-          "\\(?2:" zk-title-regexp "\\)"
+          "\\(?2:.*?\\)"
           "\\."
           zk-file-extension
           ".*"))
 
-(defun zk-link-regexp (&optional id title)
-  "Return the correct regexp matching zk links.
-If ID and/or TITLE are given, use those, generating a regexp
-that specifically matches them. Othewrise use `zk-id-regexp'
-and `zk-title-regexp', respectively.
-The regexp captures these groups:
-
-Group 1 is the zk ID.
-Group 2 is the title."
-  (zk--format (regexp-quote zk-link-format)
-              (concat "\\(?1:" (or id zk-id-regexp) "\\)")
-              (concat "\\(?2:" (or title zk-title-regexp) "\\)")))
+(defun zk-link-regexp ()
+  "Return the correct regexp for zk links.
+The value is based on `zk-link-format' and `zk-id-regexp'."
+  (format (regexp-quote zk-link-format) zk-id-regexp))
 
 (defun zk--file-id (file)
   "Return the ID of the given zk FILE."
@@ -618,15 +604,17 @@ When NO-PROC is non-nil, bypass `zk--processor'."
 
 (defun zk-format-id-and-title (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
-The sequence `%t' in FORMAT is replaced with the TITLE
-and `%i' with the ID. This is the default function
-that `zk-format-function' is set to."
+This is the default function set in `zk-format-function' and used by
+`zk--format' therwise, replace the sequence `%t' with the TITLE and
+`%i' with the ID."
   (format-spec format `((?i . ,id) (?t . ,title))))
 
 (defun zk--format (format id title)
-  "Format ID and TITLE based on the `format-spec' FORMAT.
-This is a wrapper around `zk-format-function', which see."
-  (funcall zk-format-function format id title))
+  "Format ID and TITLE based on the `format-spec' FORMAT."
+  (if (eq format zk-link-format)
+      (format zk-link-format id)
+    (funcall zk-format-function format id title)))
+
 
 ;;; Buttons
 
@@ -960,7 +948,7 @@ brackets \"[[\" initiates completion."
 
 (defun zk--backlinks-list (id)
   "Return list of notes that link to note with ID."
-  (zk--grep-file-list (zk-link-regexp id)))
+  (zk--grep-file-list (regexp-quote (format zk-link-format id))))
 
 ;;;###autoload
 (defun zk-backlinks ()
