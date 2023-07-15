@@ -427,6 +427,29 @@ file-paths."
              (buffer-file-name x)))
          (buffer-list))))
 
+(defun zk--posix-regexp (regexp &optional basic)
+  "Convert Elisp-style REGEXP to extended POSIX 1003.2 regexp.
+If BASIC is non-nil, convert as much as possible to basic
+regexp instead. See manual page `re_format(7)' for details."
+  (let (result)
+    ;; 1. For basic REs, warn the user about lack of \| (or) operator
+    (when (and basic (string-match "\\\\|" regexp))
+      ;; FIXME: Basic REs don't have or (\|) operator, as in \(one\|two\); one
+      ;; would need to pass multiple -e command line args to grep. So, just
+      ;; treat the operator as normal text, but let the user know.
+      (warn "Operator \\| (or) cannot be used with basic regexps: %s" regexp)
+      (setq result regexp))
+    ;; 2. Strip numbered groups for extended REs, numbered and shy groups for basic
+    (setq result
+      (if basic
+          (replace-regexp-in-string "\\\\(\\?[0-9]?:" "\\(" regexp nil 'literal)
+        (replace-regexp-in-string "\\\\(\\?[0-9]:" "\\(" regexp nil 'literal)))
+    ;; 3. Un-escape special characters (){}|+ for extended REs
+    (unless basic
+      (setq result
+        (replace-regexp-in-string "\\\\\\([(){}+|]\\)" "\\1" result)))
+    result))
+
 (defun zk--grep-file-list (str &optional extended invert)
   "Return a list of files containing regexp STR.
 If EXTENDED is non-nil, use egrep. If INVERT is non-nil,
@@ -438,7 +461,8 @@ return list of files not matching the regexp."
             " --recursive"
             " --ignore-case"
             " --include=\\*." zk-file-extension
-            " --regexp=" (shell-quote-argument str)
+            " --regexp=" (shell-quote-argument
+                          (zk--posix-regexp str (not extended)))
             " " zk-directory
             " 2>/dev/null"))
    "\n" t))
@@ -451,14 +475,15 @@ return list of files not matching the regexp."
 
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
-  (let* ((files (shell-command-to-string (concat
-                                          "grep -ohir --include \\*."
-                                          zk-file-extension
-                                          " -e "
-                                          (shell-quote-argument
-                                           zk-tag-regexp)
-                                          " "
-                                          zk-directory " 2>/dev/null")))
+  (let* ((files
+          (shell-command-to-string (concat
+                                    "grep -ohir --include \\*."
+                                    zk-file-extension
+                                    " -e "
+                                    (shell-quote-argument
+                                     (zk--posix-regexp zk-tag-regexp 'basic))
+                                    " "
+                                    zk-directory " 2>/dev/null")))
          (list (split-string files "\n" t "\s")))
     (delete-dups list)))
 
@@ -1013,12 +1038,13 @@ Select TAG, with completion, from list of all tags in zk notes."
 
 (defun zk--grep-link-id-list ()
   "Return list of all ids that appear as links in `zk-directory' files."
-  (let* ((files (shell-command-to-string (concat
-                                          "grep -ohir -e "
-                                          (shell-quote-argument
-                                           (zk-link-regexp))
-                                          " "
-                                          zk-directory " 2>/dev/null")))
+  (let* ((files (shell-command-to-string
+                 (concat
+                  "grep -ohir -e "
+                  (shell-quote-argument
+                   (zk--posix-regexp (zk-link-regexp) 'basic))
+                  " "
+                  zk-directory " 2>/dev/null")))
          (list (split-string files "\n" t))
          (ids (mapcar
                (lambda (x)
