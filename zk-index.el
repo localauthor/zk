@@ -158,7 +158,7 @@ example."
     (save-excursion
       (beginning-of-line)
       (re-search-forward zk-id-regexp (line-end-position)))
-    (let ((zk-id (match-string-no-properties 1)))
+    (let ((zk-id (match-string-no-properties 0)))
       `(zk-id ,zk-id . ,(cons (line-beginning-position) (line-end-position))))))
 
 (defun zk-index-narrow (arg)
@@ -600,8 +600,8 @@ Takes an option POS position argument."
     (when (and button
                (button-has-type-p button 'zk-index))
       (save-excursion
-        (re-search-forward zk-id-regexp)
-        (match-string-no-properties 1)))))
+        (when (re-search-forward zk-id-regexp)
+          (match-string-no-properties 0))))))
 
 (defun zk-index-insert-link (&optional id)
   "Insert zk-link in `other-window' for button ID at point."

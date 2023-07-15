@@ -1010,8 +1010,8 @@ Select TAG, with completion, from list of all tags in zk notes."
          (list (split-string files "\n" t))
          (ids (mapcar
                (lambda (x)
-                 (string-match zk-id-regexp x)
-                 (match-string 0 x))
+                 (when (string-match zk-id-regexp x)
+                   (match-string 0 x)))
                list)))
     (delete-dups ids)))
 
