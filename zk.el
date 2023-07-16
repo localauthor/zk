@@ -361,9 +361,10 @@ an internal loop."
 
 (defun zk-id-p (id)
   "Return t if ID is already in use as a zk-id."
-  (when (and (listp (zk--id-list))
-             (member id (zk--id-list)))
-    t))
+  (let ((zk-alist (zk--alist)))
+    (when (and (listp (zk--id-list nil zk-alist))
+               (member id (zk--id-list nil zk-alist)))
+      t)))
 
 (defun zk--current-id ()
   "Return the ID of zk note in current buffer."
@@ -508,9 +509,8 @@ in an internal loop."
          (zk--singleton-p ids))
     (car (zk--directory-files t (car ids))))
    (t
-    (let* ((zk-alist (or zk-alist
-                         (zk--alist)))
-           (zk-id-list (zk--id-list))
+    (let* ((zk-alist (or zk-alist (zk--alist)))
+           (zk-id-list (zk--id-list nil zk-alist))
            (return
             (cond ((eq target 'file-path)
                    (cond ((stringp ids)
@@ -828,7 +828,7 @@ Optionally call a custom function by setting the variable
 (defun zk--links-in-note-list ()
   "Return list of zk files that are linked from the current buffer."
   (let* ((zk-alist (zk--alist))
-         (zk-ids (zk--id-list))
+         (zk-ids (zk--id-list nil zk-alist))
          id-list)
     (save-buffer)
     (save-excursion
