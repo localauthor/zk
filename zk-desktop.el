@@ -254,18 +254,10 @@ ID is the zk-ID; TITLE is either existing text in the buffer
 or ID's current title; MISSING, if non-nil, means the ID is
 not found in the current `zk-directory'.
 
-Return a tuple of bounds (BEG . END) for the actual
-zk-desktop-button according to `zk-desktop-button-format'.
-
 This is a helper function used by `zk-desktop-make-buttons'
 and should not be called directly."
-  (let* ((lbeg   (line-beginning-position))
-         (lend   (line-end-position)))
-    (delete-region lbeg lend)
-    (cons (point)
-          (progn
-            (insert (zk--format zk-desktop-button-format id title))
-            (point)))))
+  (delete-region (line-beginning-position) (line-end-position))
+  (insert (zk--format zk-desktop-button-format id title)))
 
 (defun zk-desktop--make-button (match-data)
   "Make a ZK-Desktop button based on MATCH-DATA.
@@ -315,8 +307,8 @@ bounds of the button itself, which will inherit
       (while (re-search-forward (zk-desktop-line-regexp) nil t)
         (let* ((id      (match-string-no-properties 1))
                (title   (match-string-no-properties 2))
-               (missing (not (member id ids)))
-               (bounds  (zk-desktop--update-line id title missing)))
+               (missing (not (member id ids))))
+          (zk-desktop--update-line id title missing)
           (if (not missing)
               (zk-desktop--make-button (match-data))
             (end-of-line)
