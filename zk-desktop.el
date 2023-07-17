@@ -72,8 +72,12 @@ The value is computed from `zk-desktop-prefix',
 `zk-desktop-button-format', and `zk-id-regexp'.
 
 Group 1 is the zk-ID.
-Group 2 is the title."
-  (zk--format (regexp-quote (concat zk-desktop-prefix zk-desktop-button-format))
+Group 2 is the title.
+Group 3 is the entire button (sans `zk-desktop-prefix')."
+  (zk--format (concat "\\(?3:"
+                      (regexp-quote zk-desktop-prefix)
+                      (regexp-quote zk-desktop-button-format)
+                      "\\)")
               (concat "\\(?1:" zk-id-regexp "\\)")
               (concat "\\(?2:" ".*" "\\)"))) ; FIXME: `zk-title-regexp'
 
