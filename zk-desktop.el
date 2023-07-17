@@ -223,6 +223,37 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
     'face 'zk-desktop-button
     'cursor-face 'highlight))
 
+(defun zk-desktop--normalize-titles (buffer id-list zk-alist)
+  "Normalize titles in a BUFFER based on ID-LIST and ZK-ALIST.
+This is a helper function used by `zk-desktop-make-buttons'."
+  (with-current-buffer buffer
+    (goto-char (point-min))
+    (while (re-search-forward zk-id-regexp nil t)
+      (let* ((beg (line-beginning-position))
+             (end (line-end-position))
+             (id  (progn
+                    (save-match-data
+                      (beginning-of-line)
+                      (when (re-search-forward "\\[\\[" end t)
+                        (replace-match ""))
+                      (when (re-search-forward "]]" end t)
+                        (replace-match "")))
+                    (match-string-no-properties 1)))
+             (title (buffer-substring-no-properties beg (match-beginning 0)))
+             (new-title (when (member id id-list)
+                          (concat zk-desktop-prefix
+                                  (zk--parse-id 'title id zk-alist) " "))))
+        (beginning-of-line)
+        (if new-title
+            (unless (string= title new-title)
+              (progn
+                (search-forward title end)
+                (replace-match new-title)))
+          (progn
+            (search-forward title end)
+            (replace-match (propertize title 'face 'error))))
+        (end-of-line)))))
+
 ;;;###autoload
 (defun zk-desktop-make-buttons ()
   "Re-make buttons in ZK-Desktop."
@@ -236,32 +267,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
          (ids (zk--id-list nil zk-alist)))
     (save-excursion
       ;; replace titles
-      (goto-char (point-min))
-      (while (re-search-forward zk-id-regexp nil t)
-        (let* ((beg (line-beginning-position))
-               (end (line-end-position))
-               (id  (progn
-                      (save-match-data
-                        (beginning-of-line)
-                        (when (re-search-forward "\\[\\[" end t)
-                          (replace-match ""))
-                        (when (re-search-forward "]]" end t)
-                          (replace-match "")))
-                      (match-string-no-properties 1)))
-               (title (buffer-substring-no-properties beg (match-beginning 0)))
-               (new-title (when (member id ids)
-                            (concat zk-desktop-prefix
-                                    (zk--parse-id 'title id zk-alist) " "))))
-          (beginning-of-line)
-          (if new-title
-              (unless (string= title new-title)
-                (progn
-                  (search-forward title end)
-                  (replace-match new-title)))
-            (progn
-              (search-forward title end)
-              (replace-match (propertize title 'face 'error))))
-          (end-of-line)))
+      (zk-desktop--normalize-titles (current-buffer) ids zk-alist)
       ;; make buttons
       (goto-char (point-min))
       (while (re-search-forward zk-id-regexp nil t)
