@@ -255,24 +255,22 @@ This is a helper function used by `zk-desktop-make-buttons'."
   (make-text-button beg end
                     'type 'zk-desktop
                     'help-echo zk-desktop-help-echo-function)
-  (when zk-desktop-invisible-ids
+  (if (not zk-desktop-invisible-ids)
+      ;; I.e. can add text in front of the button
+      (add-text-properties beg (+ beg 1) '(front-sticky nil))
+    ;; Make both zk-links and plain zk-ids invisible
     (beginning-of-line)
-    ;; find zk-links and plain zk-ids
-    (if (re-search-forward (zk-link-regexp) (line-end-position) t)
-        (replace-match
-         (propertize (match-string 0) 'invisible t) nil t)
-      (progn
-        (re-search-forward id)
-        (replace-match
-         (propertize id
-                     'read-only t
-                     'front-sticky t
-                     'rear-nonsticky t))
-        ;; enable invisibility in org-mode
-        (overlay-put
-         (make-overlay (match-beginning 0) (match-end 0))
-         'invisible t))))
-  (add-text-properties beg (+ beg 1) '(front-sticky nil)))
+    (cond ((re-search-forward (zk-link-regexp) (line-end-position) t)
+           (replace-match (propertize (match-string 0) 'invisible t) nil t)
+           ;; Org-mode requires more drastic measures
+           (overlay-put (make-overlay (match-beginning 0) (match-end 0))
+                        'invisible t))
+          ((re-search-forward id)
+           ;; I.e. can add text in the rear of invis. IDs, but not in the front
+           (replace-match (propertize id
+                                      'read-only t
+                                      'front-sticky t
+                                      'rear-nonsticky t))))))
 
 ;;;###autoload
 (defun zk-desktop-make-buttons ()
