@@ -74,8 +74,8 @@ The value is computed from `zk-desktop-prefix',
 Group 1 is the zk-ID.
 Group 2 is the title.
 Group 3 is the entire button (sans `zk-desktop-prefix')."
-  (zk--format (concat "\\(?3:"
-                      (regexp-quote zk-desktop-prefix)
+  (zk--format (concat (regexp-quote zk-desktop-prefix)
+                      "\\(?3:"
                       (regexp-quote zk-desktop-button-format)
                       "\\)")
               (concat "\\(?1:" zk-id-regexp "\\)")
@@ -298,7 +298,7 @@ bounds of the button itself, which will inherit
                (title   (match-string-no-properties 2))
                (missing (not (member id ids))))
           (replace-match (zk--format zk-desktop-button-format id title)
-                         nil t nil 0)
+                         nil t nil 3)
           (if (not missing)
               (zk-desktop--make-button (match-data))
             (end-of-line)
