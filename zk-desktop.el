@@ -244,7 +244,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
     'face 'zk-desktop-button
     'cursor-face 'highlight))
 
-(defun zk-desktop--normalize-line (id title missing)
+(defun zk-desktop--update-line (id title missing)
   "Prepare the current line in ZK-Desktop buffer for a button.
 ID is the zk-ID; TITLE is either existing text in the buffer
 or ID's current title; MISSING, if non-nil, means the ID is
@@ -308,7 +308,7 @@ properties defined for `zk-desktop-button' type."
         (let* ((id      (match-string-no-properties 1))
                (title   (match-string-no-properties 2))
                (missing (not (member id ids)))
-               (bounds  (zk-desktop--normalize-line id title missing)))
+               (bounds  (zk-desktop--update-line id title missing)))
           (if (not missing)
               (zk-desktop--make-button id (car bounds) (cdr bounds))
             (end-of-line)
