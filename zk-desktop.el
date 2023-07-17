@@ -229,29 +229,20 @@ This is a helper function used by `zk-desktop-make-buttons'."
   (with-current-buffer buffer
     (goto-char (point-min))
     (while (re-search-forward zk-id-regexp nil t)
-      (let* ((beg (line-beginning-position))
-             (end (line-end-position))
-             (id  (progn
-                    (save-match-data
-                      (beginning-of-line)
-                      (when (re-search-forward "\\[\\[" end t)
-                        (replace-match ""))
-                      (when (re-search-forward "]]" end t)
-                        (replace-match "")))
-                    (match-string-no-properties 1)))
+      (let* ((beg   (line-beginning-position))
+             (end   (line-end-position))
+             (id    (match-string-no-properties 0))
              (title (buffer-substring-no-properties beg (match-beginning 0)))
              (new-title (when (member id id-list)
                           (concat zk-desktop-prefix
                                   (zk--parse-id 'title id zk-alist) " "))))
-        (beginning-of-line)
-        (if new-title
-            (unless (string= title new-title)
-              (progn
-                (search-forward title end)
-                (replace-match new-title)))
-          (progn
-            (search-forward title end)
-            (replace-match (propertize title 'face 'error))))
+        (delete-region beg end)
+        (insert (zk--format "%t %i"     ; FIXME: Hardcoded
+                            id
+                            (if (null new-title)
+                                (propertize title 'face 'error)
+                              ;; If there is NEW-TITLE, just use that
+                              new-title)))
         (end-of-line)))))
 
 ;;;###autoload
