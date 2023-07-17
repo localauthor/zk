@@ -248,17 +248,6 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
     'face 'zk-desktop-button
     'cursor-face 'highlight))
 
-(defun zk-desktop--update-line (id title missing)
-  "Prepare the current line in ZK-Desktop buffer for a button.
-ID is the zk-ID; TITLE is either existing text in the buffer
-or ID's current title; MISSING, if non-nil, means the ID is
-not found in the current `zk-directory'.
-
-This is a helper function used by `zk-desktop-make-buttons'
-and should not be called directly."
-  (delete-region (line-beginning-position) (line-end-position))
-  (insert (zk--format zk-desktop-button-format id title)))
-
 (defun zk-desktop--make-button (match-data)
   "Make a ZK-Desktop button based on MATCH-DATA.
 The match data should have captured sub-expresions 1-3
@@ -308,7 +297,8 @@ bounds of the button itself, which will inherit
         (let* ((id      (match-string-no-properties 1))
                (title   (match-string-no-properties 2))
                (missing (not (member id ids))))
-          (zk-desktop--update-line id title missing)
+          (delete-region (line-beginning-position) (line-end-position))
+          (insert (zk--format zk-desktop-button-format id title))
           (if (not missing)
               (zk-desktop--make-button (match-data))
             (end-of-line)
