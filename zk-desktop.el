@@ -256,7 +256,10 @@ This is a helper function used by `zk-desktop-make-buttons'."
         (end-of-line)))))
 
 (defun zk-desktop--make-button (id beg end)
-  "Make a ZK-Desktop button between BEG and END for ID."
+  "Make text between BEG and END into a ZK-Desktop button for zk ID.
+BEG and END should be the bounds of the button itself, which
+will inherit `zk-desktop-button' face and all text
+properties defined for `zk-desktop-button' type."
   (make-text-button beg end
                     'type 'zk-desktop
                     'help-echo zk-desktop-help-echo-function)
