@@ -295,11 +295,11 @@ properties defined for `zk-desktop-button' type."
       (zk-desktop--normalize-titles (current-buffer) ids zk-alist)
       (goto-char (point-min))
       (while (re-search-forward zk-id-regexp nil t)
-        (let* ((beg (line-beginning-position))
-               (end (line-end-position))
-               (id (match-string-no-properties 0)))
+        (let* ((id (match-string-no-properties 0)))
           (if (member id ids)
-              (zk-desktop--make-button id beg end)
+              (zk-desktop--make-button id
+                                       (line-beginning-position)
+                                       (line-end-position))
             (end-of-line)
             (overlay-put (make-overlay (point) (point))
                          'before-string
