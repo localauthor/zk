@@ -250,6 +250,30 @@ This is a helper function used by `zk-desktop-make-buttons'."
                               new-title)))
         (end-of-line)))))
 
+(defun zk-desktop--make-button (id beg end)
+  "Make a ZK-Desktop button between BEG and END for ID."
+  (make-text-button beg end
+                    'type 'zk-desktop
+                    'help-echo zk-desktop-help-echo-function)
+  (when zk-desktop-invisible-ids
+    (beginning-of-line)
+    ;; find zk-links and plain zk-ids
+    (if (re-search-forward (zk-link-regexp) (line-end-position) t)
+        (replace-match
+         (propertize (match-string 0) 'invisible t) nil t)
+      (progn
+        (re-search-forward id)
+        (replace-match
+         (propertize id
+                     'read-only t
+                     'front-sticky t
+                     'rear-nonsticky t))
+        ;; enable invisibility in org-mode
+        (overlay-put
+         (make-overlay (match-beginning 0) (match-end 0))
+         'invisible t))))
+  (add-text-properties beg (+ beg 1) '(front-sticky nil)))
+
 ;;;###autoload
 (defun zk-desktop-make-buttons ()
   "Re-make buttons in ZK-Desktop."
@@ -263,36 +287,13 @@ This is a helper function used by `zk-desktop-make-buttons'."
          (ids (zk--id-list nil zk-alist)))
     (save-excursion
       (zk-desktop--normalize-titles (current-buffer) ids zk-alist)
-      ;; make buttons
       (goto-char (point-min))
       (while (re-search-forward zk-id-regexp nil t)
         (let* ((beg (line-beginning-position))
                (end (line-end-position))
                (id (match-string-no-properties 0)))
           (if (member id ids)
-              (progn
-                (make-text-button beg end
-                                  'type 'zk-desktop
-                                  'help-echo zk-desktop-help-echo-function)
-                (when zk-desktop-invisible-ids
-                  (beginning-of-line)
-                  ;; find zk-links and plain zk-ids
-                  (if (re-search-forward (zk-link-regexp) (line-end-position) t)
-                      (replace-match
-                       (propertize (match-string 0) 'invisible t) nil t)
-                    (progn
-                      (re-search-forward id)
-                      (replace-match
-                       (propertize id
-                                   'read-only t
-                                   'front-sticky t
-                                   'rear-nonsticky t))
-                      ;; enable invisibility in org-mode
-                      (overlay-put
-                       (make-overlay (match-beginning 0) (match-end 0))
-                       'invisible t))))
-                (add-text-properties beg (+ beg 1)
-                                     '(front-sticky nil)))
+              (zk-desktop--make-button id beg end)
             (end-of-line)
             (overlay-put (make-overlay (point) (point))
                          'before-string
