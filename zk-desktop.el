@@ -262,14 +262,13 @@ This is a helper function used by `zk-desktop-make-buttons'."
          (zk-alist (zk--alist))
          (ids (zk--id-list nil zk-alist)))
     (save-excursion
-      ;; replace titles
       (zk-desktop--normalize-titles (current-buffer) ids zk-alist)
       ;; make buttons
       (goto-char (point-min))
       (while (re-search-forward zk-id-regexp nil t)
         (let* ((beg (line-beginning-position))
                (end (line-end-position))
-               (id (match-string-no-properties 1)))
+               (id (match-string-no-properties 0)))
           (if (member id ids)
               (progn
                 (make-text-button beg end
