@@ -297,7 +297,8 @@ bounds of the button itself, which will inherit
         (let* ((id      (match-string-no-properties 1))
                (title   (match-string-no-properties 2))
                (missing (not (member id ids))))
-          (replace-match (zk--format zk-desktop-button-format id title)
+          (replace-match (save-match-data
+                           (zk--format zk-desktop-button-format id title))
                          nil t nil 3)
           (if (not missing)
               (zk-desktop--make-button (match-data))
