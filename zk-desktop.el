@@ -276,17 +276,20 @@ properties defined for `zk-desktop-button' type."
       (add-text-properties beg (+ beg 1) '(front-sticky nil))
     ;; Make both zk-links and plain zk-ids invisible
     (beginning-of-line)
-    (cond ((re-search-forward (zk-link-regexp) (line-end-position) t)
-           (replace-match (propertize (match-string 0) 'invisible t) nil t)
+    (cond ((re-search-forward (zk-desktop-line-regexp) (line-end-position) t)
+           (replace-match (propertize (match-string 1) 'invisible t) nil t)
            ;; Org-mode requires more drastic measures
-           (overlay-put (make-overlay (match-beginning 0) (match-end 0))
+           (overlay-put (make-overlay (match-beginning 1) (match-end 1))
                         'invisible t))
-          ((re-search-forward id)
+          ((re-search-forward id)       ; misformatted line?
            ;; I.e. can add text in the rear of invis. IDs, but not in the front
            (replace-match (propertize id
                                       'read-only t
                                       'front-sticky t
-                                      'rear-nonsticky t))))))
+                                      'rear-nonsticky t)))
+          (t
+           ;; Not our line; skip
+           ))))
 
 ;;;###autoload
 (defun zk-desktop-make-buttons ()
@@ -301,10 +304,9 @@ properties defined for `zk-desktop-button' type."
          (ids (zk--id-list nil zk-alist)))
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward zk-id-regexp nil t)
-        (let* ((id      (match-string-no-properties 0))
-               (title   (buffer-substring-no-properties
-                         (line-beginning-position) (match-beginning 0)))
+      (while (re-search-forward (zk-desktop-line-regexp) nil t)
+        (let* ((id      (match-string-no-properties 1))
+               (title   (match-string-no-properties 2))
                (missing (not (member id ids)))
                (bounds  (zk-desktop--normalize-line id title missing)))
           (if (not missing)
