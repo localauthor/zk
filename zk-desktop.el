@@ -294,6 +294,8 @@ type."
   (let* ((inhibit-read-only t)
          (zk-alist (zk--alist))
          (ids (zk--id-list nil zk-alist)))
+    ;; Clear any residual overlays
+    (mapc #'delete-overlay (overlays-in (point-min) (point-max)))
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward (zk-desktop-line-regexp) nil t)
