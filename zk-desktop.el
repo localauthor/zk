@@ -56,9 +56,14 @@ The names of all ZK-Desktops should begin with this string."
   "String to prepend to note names in ZK-Desktop."
   :type 'string)
 
-(defcustom zk-desktop-format "%t %i"
+(defcustom zk-desktop-button-format "%t %i"
   "Format string for notes in ZK-Desktop.
-See `zk-format-function' and `zk-format-id-and-title'."
+This is the format for the buttons in ZK-Desktop buffer; use
+`zk-desktop-prefix' to add arbitary text that should not be
+part of the button itself.
+
+See `zk-format-function' and `zk-format-id-and-title' for
+valid control strings."
   :type 'string)
 
 (defcustom zk-desktop-invisible-ids t
@@ -242,7 +247,7 @@ This is a helper function used by `zk-desktop-make-buttons'."
                           (concat zk-desktop-prefix
                                   (zk--parse-id 'title id zk-alist) " "))))
         (delete-region beg end)
-        (insert (zk--format zk-desktop-format
+        (insert (zk--format zk-desktop-button-format
                             id
                             (if (null new-title)
                                 (propertize title 'face 'error)
@@ -343,7 +348,7 @@ on zk-id at point."
         buffer
         (items
          (cond
-          (arg (zk--formatted-string arg zk-desktop-format))
+          (arg (zk--formatted-string arg zk-desktop-button-format))
           ((eq major-mode 'zk-index-mode)
            (if (use-region-p)
                (buffer-substring
