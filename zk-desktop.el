@@ -267,33 +267,37 @@ and should not be called directly."
             (insert (zk--format zk-desktop-button-format id title))
             (point)))))
 
-(defun zk-desktop--make-button (id beg end)
-  "Make text between BEG and END into a ZK-Desktop button for zk ID.
-BEG and END should be the bounds of the button itself, which
-will inherit `zk-desktop-button' face and all text
-properties defined for `zk-desktop-button' type."
-  (make-text-button beg end
-                    'type 'zk-desktop
-                    'help-echo zk-desktop-help-echo-function)
-  (if (not zk-desktop-invisible-ids)
-      ;; I.e. can add text in front of the button
-      (add-text-properties beg (+ beg 1) '(front-sticky nil))
-    ;; Make both zk-links and plain zk-ids invisible
-    (beginning-of-line)
-    (cond ((re-search-forward (zk-desktop-line-regexp) (line-end-position) t)
-           (replace-match (propertize (match-string 1) 'invisible t) nil t)
-           ;; Org-mode requires more drastic measures
-           (overlay-put (make-overlay (match-beginning 1) (match-end 1))
-                        'invisible t))
-          ((re-search-forward id)       ; misformatted line?
-           ;; I.e. can add text in the rear of invis. IDs, but not in the front
-           (replace-match (propertize id
-                                      'read-only t
-                                      'front-sticky t
-                                      'rear-nonsticky t)))
-          (t
-           ;; Not our line; skip
-           ))))
+(defun zk-desktop--make-button (match-data)
+  "Make a ZK-Desktop button based on MATCH-DATA.
+The match data should have captured sub-expresions 1-3
+\(see `zk-desktop-line-regexp'). BEG and END should be the
+bounds of the button itself, which will inherit
+`zk-desktop-button' face and all text properties defined for
+`zk-desktop-button' button type."
+  (save-match-data
+    (set-match-data match-data)
+    (make-text-button (match-beginning 3) (match-end 3)
+                      'type 'zk-desktop
+                      'help-echo zk-desktop-help-echo-function)
+    (if (not zk-desktop-invisible-ids)
+        ;; I.e. can add text in front of the button
+        (add-text-properties beg (+ beg 1) '(front-sticky nil))
+      ;; Make both zk-links and plain zk-ids invisible
+      (beginning-of-line)
+      (cond ((re-search-forward (zk-desktop-line-regexp) (line-end-position) t)
+             (replace-match (propertize (match-string 1) 'invisible t) nil t)
+             ;; Org-mode requires more drastic measures
+             (overlay-put (make-overlay (match-beginning 1) (match-end 1))
+                          'invisible t))
+            ((re-search-forward id)     ; misformatted line?
+             ;; I.e. can add text in the rear of invis. IDs, but not in the front
+             (replace-match (propertize id
+                                        'read-only t
+                                        'front-sticky t
+                                        'rear-nonsticky t)))
+            (t
+             ;; Not our line; skip
+             )))))
 
 ;;;###autoload
 (defun zk-desktop-make-buttons ()
@@ -314,7 +318,7 @@ properties defined for `zk-desktop-button' type."
                (missing (not (member id ids)))
                (bounds  (zk-desktop--update-line id title missing)))
           (if (not missing)
-              (zk-desktop--make-button id (car bounds) (cdr bounds))
+              (zk-desktop--make-button (match-data))
             (end-of-line)
             (overlay-put (make-overlay (point) (point))
                          'before-string
