@@ -56,6 +56,11 @@ The names of all ZK-Desktops should begin with this string."
   "String to prepend to note names in ZK-Desktop."
   :type 'string)
 
+(defcustom zk-desktop-format "%t %i"
+  "Format string for notes in ZK-Desktop.
+See `zk-format-function' and `zk-format-id-and-title'."
+  :type 'string)
+
 (defcustom zk-desktop-invisible-ids t
   "If non-nil, IDs will not be visible in the index."
   :type 'boolean)
@@ -237,7 +242,7 @@ This is a helper function used by `zk-desktop-make-buttons'."
                           (concat zk-desktop-prefix
                                   (zk--parse-id 'title id zk-alist) " "))))
         (delete-region beg end)
-        (insert (zk--format "%t %i"     ; FIXME: Hardcoded
+        (insert (zk--format zk-desktop-format
                             id
                             (if (null new-title)
                                 (propertize title 'face 'error)
@@ -340,7 +345,7 @@ on zk-id at point."
         buffer
         (items
          (cond
-          (arg (zk--formatted-string arg zk-index-format))
+          (arg (zk--formatted-string arg zk-desktop-format))
           ((eq major-mode 'zk-index-mode)
            (if (use-region-p)
                (buffer-substring
