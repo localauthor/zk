@@ -233,27 +233,27 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
     'face 'zk-desktop-button
     'cursor-face 'highlight))
 
-(defun zk-desktop--normalize-titles (buffer id-list zk-alist)
-  "Normalize titles in a BUFFER based on ID-LIST and ZK-ALIST.
-This is a helper function used by `zk-desktop-make-buttons'."
-  (with-current-buffer buffer
-    (goto-char (point-min))
-    (while (re-search-forward zk-id-regexp nil t)
-      (let* ((beg   (line-beginning-position))
-             (end   (line-end-position))
-             (id    (match-string-no-properties 0))
-             (title (buffer-substring-no-properties beg (match-beginning 0)))
-             (new-title (when (member id id-list)
-                          (concat zk-desktop-prefix
-                                  (zk--parse-id 'title id zk-alist) " "))))
-        (delete-region beg end)
-        (insert (zk--format zk-desktop-button-format
-                            id
-                            (if (null new-title)
-                                (propertize title 'face 'error)
-                              ;; If there is NEW-TITLE, just use that
-                              new-title)))
-        (end-of-line)))))
+(defun zk-desktop--normalize-line (id known-ids zk-alist)
+  "Normalize the current line in ZK-Desktop buffer containing ID.
+KNOWN-IDS and ZK-ALIST are passed for efficiency.
+
+This is a helper function used by `zk-desktop-make-buttons'
+and should not be called directly."
+  (let* ((beg   (line-beginning-position))
+         (end   (line-end-position))
+         (id    (match-string-no-properties 0))
+         (title (buffer-substring-no-properties beg (match-beginning 0)))
+         (new-title (when (member id known-ids)
+                      (concat zk-desktop-prefix
+                              (zk--parse-id 'title id zk-alist) " "))))
+    (delete-region beg end)
+    (insert (zk--format zk-desktop-button-format
+                        id
+                        (if (null new-title)
+                            (propertize title 'face 'error)
+                          ;; If there is NEW-TITLE, just use that
+                          new-title)))
+    (end-of-line)))
 
 (defun zk-desktop--make-button (id beg end)
   "Make text between BEG and END into a ZK-Desktop button for zk ID.
@@ -292,14 +292,12 @@ properties defined for `zk-desktop-button' type."
          (zk-alist (zk--alist))
          (ids (zk--id-list nil zk-alist)))
     (save-excursion
-      (zk-desktop--normalize-titles (current-buffer) ids zk-alist)
       (goto-char (point-min))
       (while (re-search-forward zk-id-regexp nil t)
         (let* ((id (match-string-no-properties 0)))
+          (zk-desktop--normalize-line id ids zk-alist)
           (if (member id ids)
-              (zk-desktop--make-button id
-                                       (line-beginning-position)
-                                       (line-end-position))
+              (zk-desktop--make-button id ids zk-alist)
             (end-of-line)
             (overlay-put (make-overlay (point) (point))
                          'before-string
