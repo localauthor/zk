@@ -227,74 +227,76 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
 (defun zk-desktop-make-buttons ()
   "Re-make buttons in ZK-Desktop."
   (interactive)
-  (when (and (string-match-p zk-desktop-basename (buffer-name))
-             (file-in-directory-p default-directory zk-desktop-directory))
-    (let ((inhibit-read-only t))
-      (save-excursion
-        ;; replace titles
-        (goto-char (point-min))
-        (let* ((zk-alist (zk--alist))
-               (ids (zk--id-list)))
-          (while (re-search-forward zk-id-regexp nil t)
-            (let* ((beg (line-beginning-position))
-                   (end (line-end-position))
-                   (id  (progn
-                          (save-match-data
-                            (beginning-of-line)
-                            (when (re-search-forward "\\[\\[" end t)
-                              (replace-match ""))
-                            (when (re-search-forward "]]" end t)
-                              (replace-match "")))
-                          (match-string-no-properties 1)))
-                   (title (buffer-substring-no-properties beg (match-beginning 0)))
-                   (new-title (when (member id ids)
-                                (concat zk-desktop-prefix
-                                        (zk--parse-id 'title id zk-alist) " "))))
-              (beginning-of-line)
-              (if new-title
-                  (unless (string= title new-title)
-                    (progn
-                      (search-forward title end)
-                      (replace-match new-title)))
-                (progn
-                  (search-forward title end)
-                  (replace-match (propertize title 'face 'error))))
-              (end-of-line)))
-          ;; make buttons
-          (goto-char (point-min))
-          (while (re-search-forward zk-id-regexp nil t)
-            (let* ((beg (line-beginning-position))
-                   (end (line-end-position))
-                   (id (match-string-no-properties 1)))
-              (if (member id ids)
+  (unless (and (string-match-p zk-desktop-basename (buffer-name))
+               (file-in-directory-p default-directory zk-desktop-directory))
+    (user-error "Can only make buttons in Zk desktop file; %s isn't"
+                (buffer-name)))
+  (let ((inhibit-read-only t))
+    (save-excursion
+      ;; replace titles
+      (goto-char (point-min))
+      (let* ((zk-alist (zk--alist))
+             (ids (zk--id-list)))
+        (while (re-search-forward zk-id-regexp nil t)
+          (let* ((beg (line-beginning-position))
+                 (end (line-end-position))
+                 (id  (progn
+                        (save-match-data
+                          (beginning-of-line)
+                          (when (re-search-forward "\\[\\[" end t)
+                            (replace-match ""))
+                          (when (re-search-forward "]]" end t)
+                            (replace-match "")))
+                        (match-string-no-properties 1)))
+                 (title (buffer-substring-no-properties beg (match-beginning 0)))
+                 (new-title (when (member id ids)
+                              (concat zk-desktop-prefix
+                                      (zk--parse-id 'title id zk-alist) " "))))
+            (beginning-of-line)
+            (if new-title
+                (unless (string= title new-title)
                   (progn
-                    (make-text-button beg end
-                                      'type 'zk-desktop
-                                      'help-echo zk-desktop-help-echo-function)
-                    (when zk-desktop-invisible-ids
-                      (beginning-of-line)
-                      ;; find zk-links and plain zk-ids
-                      (if (re-search-forward (zk-link-regexp) (line-end-position) t)
-                          (replace-match
-                           (propertize (match-string 0) 'invisible t) nil t)
-                        (progn
-                          (re-search-forward id)
-                          (replace-match
-                           (propertize id
-                                       'read-only t
-                                       'front-sticky t
-                                       'rear-nonsticky t))
-                          ;; enable invisibility in org-mode
-                          (overlay-put
-                           (make-overlay (match-beginning 0) (match-end 0))
-                           'invisible t))))
-                    (add-text-properties beg (+ beg 1)
-                                         '(front-sticky nil)))
-                (end-of-line)
-                (overlay-put (make-overlay (point) (point))
-                             'before-string
-                             (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
-            (end-of-line)))))))
+                    (search-forward title end)
+                    (replace-match new-title)))
+              (progn
+                (search-forward title end)
+                (replace-match (propertize title 'face 'error))))
+            (end-of-line)))
+        ;; make buttons
+        (goto-char (point-min))
+        (while (re-search-forward zk-id-regexp nil t)
+          (let* ((beg (line-beginning-position))
+                 (end (line-end-position))
+                 (id (match-string-no-properties 1)))
+            (if (member id ids)
+                (progn
+                  (make-text-button beg end
+                                    'type 'zk-desktop
+                                    'help-echo zk-desktop-help-echo-function)
+                  (when zk-desktop-invisible-ids
+                    (beginning-of-line)
+                    ;; find zk-links and plain zk-ids
+                    (if (re-search-forward (zk-link-regexp) (line-end-position) t)
+                        (replace-match
+                         (propertize (match-string 0) 'invisible t) nil t)
+                      (progn
+                        (re-search-forward id)
+                        (replace-match
+                         (propertize id
+                                     'read-only t
+                                     'front-sticky t
+                                     'rear-nonsticky t))
+                        ;; enable invisibility in org-mode
+                        (overlay-put
+                         (make-overlay (match-beginning 0) (match-end 0))
+                         'invisible t))))
+                  (add-text-properties beg (+ beg 1)
+                                       '(front-sticky nil)))
+              (end-of-line)
+              (overlay-put (make-overlay (point) (point))
+                           'before-string
+                           (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
+          (end-of-line))))))
 
 ;;; Utilities
 
