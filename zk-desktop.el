@@ -235,25 +235,30 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
 
 (defun zk-desktop--normalize-line (id known-ids zk-alist)
   "Normalize the current line in ZK-Desktop buffer containing ID.
-KNOWN-IDS and ZK-ALIST are passed for efficiency.
+KNOWN-IDS and ZK-ALIST are passed for efficiency. Return a
+tuple of bounds (BEG . END) of the actual zk-desktop-button
+according to `zk-desktop-button-format'.
 
 This is a helper function used by `zk-desktop-make-buttons'
 and should not be called directly."
-  (let* ((beg   (line-beginning-position))
-         (end   (line-end-position))
-         (id    (match-string-no-properties 0))
-         (title (buffer-substring-no-properties beg (match-beginning 0)))
+  (let* ((lbeg   (line-beginning-position))
+         (lend   (line-end-position))
+         (id     (match-string-no-properties 0))
+         (title  (buffer-substring-no-properties lbeg (match-beginning 0)))
          (new-title (when (member id known-ids)
                       (concat zk-desktop-prefix
-                              (zk--parse-id 'title id zk-alist) " "))))
-    (delete-region beg end)
-    (insert (zk--format zk-desktop-button-format
-                        id
-                        (if (null new-title)
-                            (propertize title 'face 'error)
-                          ;; If there is NEW-TITLE, just use that
-                          new-title)))
-    (end-of-line)))
+                              (zk--parse-id 'title id zk-alist) " ")))
+         bounds)
+    (delete-region lbeg lend)
+    (cons (point)
+          (progn
+            (insert (zk--format zk-desktop-button-format
+                                id
+                                (if (null new-title)
+                                    (propertize title 'face 'error)
+                                  ;; If there is NEW-TITLE, just use that
+                                  new-title)))
+            (point)))))
 
 (defun zk-desktop--make-button (id beg end)
   "Make text between BEG and END into a ZK-Desktop button for zk ID.
@@ -294,10 +299,10 @@ properties defined for `zk-desktop-button' type."
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward zk-id-regexp nil t)
-        (let* ((id (match-string-no-properties 0)))
-          (zk-desktop--normalize-line id ids zk-alist)
+        (let* ((id (match-string-no-properties 0))
+               (bounds (zk-desktop--normalize-line id ids zk-alist)))
           (if (member id ids)
-              (zk-desktop--make-button id ids zk-alist)
+              (zk-desktop--make-button id (car bounds) (cdr bounds))
             (end-of-line)
             (overlay-put (make-overlay (point) (point))
                          'before-string
