@@ -249,36 +249,39 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
     'cursor-face 'highlight))
 
 (defun zk-desktop--make-button (match-data)
-  "Make a ZK-Desktop button based on MATCH-DATA.
-The match data should have captured sub-expresions 1-3
-\(see `zk-desktop-line-regexp'). BEG and END should be the
-bounds of the button itself, which will inherit
-`zk-desktop-button' face and all text properties defined for
-`zk-desktop-button' button type."
+  "Make a ZK-Desktop button on the current line.
+The MATCH-DATA should have captured groups 1-3 (see
+`zk-desktop-line-regexp'). Group 3 becomes the button
+itself, which will inherit `zk-desktop-button' face and all
+text properties defined for `zk-desktop-button' button
+type."
   (save-match-data
     (set-match-data match-data)
-    (make-text-button (match-beginning 3) (match-end 3)
-                      'type 'zk-desktop
-                      'help-echo zk-desktop-help-echo-function)
-    (if (not zk-desktop-invisible-ids)
-        ;; I.e. can add text in front of the button
-        (add-text-properties beg (+ beg 1) '(front-sticky nil))
-      ;; Make both zk-links and plain zk-ids invisible
-      (beginning-of-line)
-      (cond ((re-search-forward (zk-desktop-line-regexp) (line-end-position) t)
-             (replace-match (propertize (match-string 1) 'invisible t) nil t)
-             ;; Org-mode requires more drastic measures
-             (overlay-put (make-overlay (match-beginning 1) (match-end 1))
-                          'invisible t))
-            ((re-search-forward id)     ; misformatted line?
-             ;; I.e. can add text in the rear of invis. IDs, but not in the front
-             (replace-match (propertize id
-                                        'read-only t
-                                        'front-sticky t
-                                        'rear-nonsticky t)))
-            (t
-             ;; Not our line; skip
-             )))))
+    (let ((beg (match-beginning 3))
+          (end (match-end 3)))
+      (make-text-button beg end
+                        'type 'zk-desktop
+                        'help-echo zk-desktop-help-echo-function)
+      (if (not zk-desktop-invisible-ids)
+          ;; I.e. can add text in front of the button
+          (add-text-properties beg (1+ beg) '(front-sticky nil))
+        ;; Make whole zk-links invisible, not just zk-ids
+        (beginning-of-line)
+        (cond ((re-search-forward (zk-link-regexp) (line-end-position) t)
+               (replace-match
+                (propertize (match-string-no-properties 0) 'invisible t) nil t)
+               ;; Org-mode requires more drastic measures
+               (overlay-put (make-overlay (match-beginning 0) (match-end 0))
+                            'invisible t))
+              ((re-search-forward id)
+               ;; I.e. can add text in the rear of invis. IDs, but not in the front
+               (replace-match (propertize id
+                                          'read-only t
+                                          'front-sticky t
+                                          'rear-nonsticky t)))
+              (t
+               ;; Not our line; skip
+               ))))))
 
 ;;;###autoload
 (defun zk-desktop-make-buttons ()
