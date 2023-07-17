@@ -66,6 +66,17 @@ See `zk-format-function' and `zk-format-id-and-title' for
 valid control strings."
   :type 'string)
 
+(defun zk-desktop-line-regexp ()
+  "Return the regexp for the relevant ZK-DESKTOP lines.
+The value is computed from `zk-desktop-prefix',
+`zk-desktop-button-format', and `zk-id-regexp'.
+
+Group 1 is the zk-ID.
+Group 2 is the title."
+  (zk--format (regexp-quote (concat zk-desktop-prefix zk-desktop-button-format))
+              (concat "\\(?1:" zk-id-regexp "\\)")
+              (concat "\\(?2:" ".*" "\\)"))) ; FIXME: `zk-title-regexp'
+
 (defcustom zk-desktop-invisible-ids t
   "If non-nil, IDs will not be visible in the index."
   :type 'boolean)
