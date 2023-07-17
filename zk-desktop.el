@@ -233,31 +233,23 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
     'face 'zk-desktop-button
     'cursor-face 'highlight))
 
-(defun zk-desktop--normalize-line (id known-ids zk-alist)
-  "Normalize the current line in ZK-Desktop buffer containing ID.
-KNOWN-IDS and ZK-ALIST are passed for efficiency. Return a
-tuple of bounds (BEG . END) of the actual zk-desktop-button
-according to `zk-desktop-button-format'.
+(defun zk-desktop--normalize-line (id title missing)
+  "Prepare the current line in ZK-Desktop buffer for a button.
+ID is the zk-ID; TITLE is either existing text in the buffer
+or ID's current title; MISSING, if non-nil, means the ID is
+not found in the current `zk-directory'.
+
+Return a tuple of bounds (BEG . END) for the actual
+zk-desktop-button according to `zk-desktop-button-format'.
 
 This is a helper function used by `zk-desktop-make-buttons'
 and should not be called directly."
   (let* ((lbeg   (line-beginning-position))
-         (lend   (line-end-position))
-         (id     (match-string-no-properties 0))
-         (title  (buffer-substring-no-properties lbeg (match-beginning 0)))
-         (new-title (when (member id known-ids)
-                      (concat zk-desktop-prefix
-                              (zk--parse-id 'title id zk-alist) " ")))
-         bounds)
+         (lend   (line-end-position)))
     (delete-region lbeg lend)
     (cons (point)
           (progn
-            (insert (zk--format zk-desktop-button-format
-                                id
-                                (if (null new-title)
-                                    (propertize title 'face 'error)
-                                  ;; If there is NEW-TITLE, just use that
-                                  new-title)))
+            (insert (zk--format zk-desktop-button-format id title))
             (point)))))
 
 (defun zk-desktop--make-button (id beg end)
@@ -299,9 +291,12 @@ properties defined for `zk-desktop-button' type."
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward zk-id-regexp nil t)
-        (let* ((id (match-string-no-properties 0))
-               (bounds (zk-desktop--normalize-line id ids zk-alist)))
-          (if (member id ids)
+        (let* ((id      (match-string-no-properties 0))
+               (title   (buffer-substring-no-properties
+                         (line-beginning-position) (match-beginning 0)))
+               (missing (not (member id ids)))
+               (bounds  (zk-desktop--normalize-line id title missing)))
+          (if (not missing)
               (zk-desktop--make-button id (car bounds) (cdr bounds))
             (end-of-line)
             (overlay-put (make-overlay (point) (point))
