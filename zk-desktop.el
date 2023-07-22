@@ -202,7 +202,9 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
 
 ;;;###autoload
 (defun zk-desktop-select ()
-  "Select a ZK-Desktop to work with."
+  "Select a ZK-Desktop to work with.
+Return the buffer object visiting the selected or created
+desktop."
   (interactive)
   (unless zk-desktop-directory
     (error "Please set `zk-desktop-directory' first"))
@@ -216,12 +218,10 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
                                              ".*"))
                            nil nil zk-desktop-basename nil))
          (file (concat zk-desktop-directory "/" desktop)))
-    (if (file-exists-p (expand-file-name file))
-        (setq zk-desktop-current
-              (find-file-noselect file))
-      (progn
-        (generate-new-buffer desktop)
-        (setq zk-desktop-current desktop)))
+    (setq zk-desktop-current
+      (if (file-exists-p (expand-file-name file))
+          (find-file-noselect file)
+        (generate-new-buffer desktop)))
     (with-current-buffer zk-desktop-current
       (setq require-final-newline 'visit-save)
       (unless (bound-and-true-p truncate-lines)
