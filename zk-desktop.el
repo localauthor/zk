@@ -209,14 +209,12 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
   (let* ((last-command last-command)
          (desktop
           (completing-read "Select or Create ZK-Desktop: "
-                           (directory-files
-                            zk-desktop-directory
-                            nil
-                            (concat
-                             zk-desktop-basename
-                             ".*"))
-                           nil nil nil nil
-                           (concat zk-desktop-basename " ")))
+                           (directory-files zk-desktop-directory
+                                            nil
+                                            (concat
+                                             zk-desktop-basename
+                                             ".*"))
+                           nil nil zk-desktop-basename nil))
          (file (concat zk-desktop-directory "/" desktop)))
     (if (file-exists-p (expand-file-name file))
         (setq zk-desktop-current
