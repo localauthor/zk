@@ -377,13 +377,9 @@ on zk-id at point."
     (error "Please set `zk-desktop-directory' first"))
   (let ((inhibit-read-only t)
         (items (zk-desktop--gather-items arg))
-        buffer)
-    (if (and zk-desktop-current
-             (buffer-live-p (get-buffer zk-desktop-current)))
-        (setq buffer zk-desktop-current)
-      (setq buffer (zk-desktop-select)))
-    (unless (get-buffer buffer)
-      (generate-new-buffer buffer))
+        (buffer (if (buffer-live-p zk-desktop-current)
+                    zk-desktop-current
+                  (zk-desktop-select))))
     (with-current-buffer buffer
       (setq require-final-newline 'visit-save)
       (pcase zk-desktop-add-pos
