@@ -345,6 +345,29 @@ type."
 
 ;;; Commands
 
+(defun zk-desktop--gather-items (arg)
+  "Normalize ARG into a list of files."
+  (cond
+   (arg (zk--formatted-string arg zk-desktop-button-format))
+   ((eq major-mode 'zk-index-mode)
+    ;; TODO: This just copies the region into desktop file; need to
+    ;; reformat first, but it would be easier if
+    ;; `zk-index--current-id-list' could work with region.
+    (if (use-region-p)
+        (buffer-substring
+         (save-excursion
+           (goto-char (region-beginning))
+           (line-beginning-position))
+         (save-excursion
+           (goto-char (region-end))
+           (line-end-position)))
+      (buffer-substring
+       (line-beginning-position)
+       (line-end-position))))
+   ((zk-file-p)
+    (car (zk--formatter buffer-file-name zk-desktop-button-format)))
+   (t (user-error "No item to send to desktop"))))
+
 ;;;###autoload
 (defun zk-desktop-send-to-desktop (&optional arg)
   "Send notes from ZK-Index to ZK-Desktop.
@@ -355,28 +378,8 @@ on zk-id at point."
   (unless zk-desktop-directory
     (error "Please set `zk-desktop-directory' first"))
   (let ((inhibit-read-only t)
-        buffer
-        (items
-         (cond
-          (arg (zk--formatted-string arg zk-desktop-button-format))
-          ((eq major-mode 'zk-index-mode)
-           (if (use-region-p)
-               (buffer-substring
-                (save-excursion
-                  (goto-char (region-beginning))
-                  (line-beginning-position))
-                (save-excursion
-                  (goto-char (region-end))
-                  (line-end-position)))
-             (buffer-substring
-              (line-beginning-position)
-              (line-end-position))))
-          ((zk-file-p)
-           (car
-            (funcall
-             zk-index-format-function
-             (list buffer-file-name))))
-          (t (user-error "No item to send to desktop")))))
+        (items (zk-desktop--gather-items arg))
+        buffer)
     (if (and zk-desktop-current
              (buffer-live-p (get-buffer zk-desktop-current)))
         (setq buffer zk-desktop-current)
