@@ -269,8 +269,9 @@ type."
                (replace-match
                 (propertize (match-string-no-properties 0) 'invisible t) nil t)
                ;; Org-mode requires more drastic measures
-               (overlay-put (make-overlay (match-beginning 0) (match-end 0))
-                            'invisible t))
+               (let ((overlay (make-overlay (match-beginning 0) (match-end 0))))
+                 (overlay-put overlay 'invisible t)
+                 (overlay-put overlay 'type 'zk-desktop)))
               ((re-search-forward id)
                ;; I.e. can add text in the rear of invis. IDs, but not in the front
                (replace-match (propertize id
@@ -280,6 +281,15 @@ type."
               (t
                ;; Not our line; skip
                ))))))
+
+(defun zk-desktop--clear ()
+  "Clear special text properties added by `zk-desktop-make-buttons'.
+This removes buttons, overlays, and text properties from the
+entire buffer."
+  (save-excursion
+    (let ((inhibit-read-only t))
+      (remove-overlays (point-min) (point-max) 'type 'zk-desktop)
+      (set-text-properties (point-min) (point-max) '()))))
 
 ;;;###autoload
 (defun zk-desktop-make-buttons ()
@@ -292,8 +302,7 @@ type."
   (let* ((inhibit-read-only t)
          (zk-alist (zk--alist))
          (ids (zk--id-list nil zk-alist)))
-    ;; Clear any residual overlays
-    (mapc #'delete-overlay (overlays-in (point-min) (point-max)))
+    (zk-desktop--clear)
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward (zk-desktop-line-regexp) nil t)
@@ -306,9 +315,11 @@ type."
           (if (not missing)
               (zk-desktop--make-button (match-data))
             (end-of-line)
-            (overlay-put (make-overlay (point) (point))
-                         'before-string
-                         (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
+            (let ((overlay (make-overlay (point) (point))))
+              (overlay-put overlay 'type 'zk-desktop)
+              (overlay-put overlay
+                           'before-string
+                           (propertize" <- ID NOT FOUND" 'font-lock-face 'error)))))
         (end-of-line)))))
 
 ;;; Utilities
