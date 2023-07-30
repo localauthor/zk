@@ -378,11 +378,12 @@ entire buffer."
    (t (user-error "No item to send to desktop"))))
 
 ;;;###autoload
-(defun zk-desktop-send-to-desktop (&optional arg)
+(defun zk-desktop-send-to-desktop (&optional arg suffix)
   "Send notes from ZK-Index to ZK-Desktop.
-In ZK-Index, works on note at point or notes in active region.
-Also works on files or group of files in minibuffer, as ARG, and
-on zk-id at point."
+In ZK-Index, works on note at point or notes in active
+region. Also works on files or group of files in minibuffer,
+as ARG, and on zk-id at point. With non-nil SUFFIX, insert
+it after each item."
   (interactive)
   (unless zk-desktop-directory
     (error "Please set `zk-desktop-directory' first"))
@@ -403,7 +404,10 @@ on zk-id at point."
         ('prepend (progn
                     (goto-char (point-min))))
         ('at-point (goto-char (point))))
-      (insert items "\n")
+      (mapc (lambda (i)
+              (insert (concat zk-desktop-prefix
+                              i (or suffix "") "\n")))
+            items)
       (beginning-of-line)
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
