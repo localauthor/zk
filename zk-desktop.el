@@ -121,11 +121,10 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
   '((t :inherit default))
   "Face used for buttons in `zk-desktop-mode'.")
 
-
 ;;; Declarations
 
-(defvar zk-desktop-current nil)
-
+(defvar zk-desktop-current nil
+  "Buffer object of the current Zk-Desktop.")
 
 ;;; Embark Integration
 
@@ -155,13 +154,16 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
 
 (define-minor-mode zk-desktop-mode
   "Minor mode for `zk-desktop'."
+  :lighter " Zk-Desktop"
   :init-value nil
   :keymap zk-desktop-map
-  (zk-desktop-make-buttons)
-  (when-let ((mode zk-desktop-major-mode))
-    (funcall mode))
-  ;;(setq truncate-lines t)
-  (setq-local zk-desktop-mode t))
+  (cond (zk-desktop-mode                ; enabled
+         (zk-desktop-make-buttons)
+         (when-let ((major-mode zk-desktop-major-mode))
+           (funcall major-mode))
+         (setq zk-desktop-mode t))
+        (t                              ; disabled
+         (zk-desktop--clear))))
 
 (eval-and-compile
   (defvar zk-desktop-button-map
@@ -578,7 +580,6 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (let ((inhibit-read-only t))
     (yank)
     (zk-desktop-make-buttons)))
-
 
 (provide 'zk-desktop)
 
