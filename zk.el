@@ -438,13 +438,13 @@ return list of files not matching the regexp."
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
   (let* ((files (shell-command-to-string (concat
-                                          "grep -ohir --include \\*."
-                                          zk-file-extension
-                                          " -e "
-                                          (shell-quote-argument
-                                           zk-tag-regexp)
-                                          " "
-                                          zk-directory " 2>/dev/null")))
+						  "grep --include=*." zk-file-extension " -hr -e === -A 1 " zk-directory
+						  " 2>/dev/null |" 
+                          "grep -o -e "
+                          (shell-quote-argument
+                           zk-tag-regexp)
+                          )
+						 ))
          (list (split-string files "\n" t "\s")))
     (delete-dups list)))
 
@@ -990,12 +990,32 @@ Defaults to `zk-grep'."
   (interactive (list (completing-read "Find tag: " (zk--grep-tag-list))))
   (funcall zk-tag-search-function tag))
 
+
+(defun add-hash-to-string (str)
+  "Add simbol # in start STR, if doesn`t start."
+  (if (string-prefix-p "#" str)
+      str
+    (concat "#" str)))
+
+(defun zk--move-cursor-tags-end ()
+  "Move cursor to tags block in file."
+  (let ((current-pos (point)))
+  (goto-char (point-min))
+  (let ((found (re-search-forward "^===" nil t)))
+    (when found
+      (goto-char (match-beginning 0))
+	  (forward-line)
+	  (end-of-line))
+	(unless found
+	  (goto-char current-pos)))))
+
 ;;;###autoload
 (defun zk-tag-insert (tag)
   "Insert TAG at point.
 Select TAG, with completion, from list of all tags in zk notes."
   (interactive (list (completing-read "Insert tag: " (zk--grep-tag-list))))
-  (insert tag))
+  (zk--move-cursor-tags-end)
+  (insert (concat " " (add-hash-to-string tag) " ,")))
 
 ;;; Find Dead Links and Unlinked Notes
 
