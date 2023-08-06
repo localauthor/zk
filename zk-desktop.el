@@ -66,6 +66,10 @@ See `zk-format-function' and `zk-format-id-and-title' for
 valid control strings."
   :type 'string)
 
+;; TODO: Combine with `zk-desktop-invisible-ids'
+(defcustom zk-desktop-make-buttons t
+  "If non-nil, Zk-Desktop will make buttons.")
+
 (defun zk-desktop-line-regexp ()
   "Return the regexp for the relevant ZK-DESKTOP lines.
 The value is computed from `zk-desktop-prefix',
@@ -158,7 +162,8 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
   :init-value nil
   :keymap zk-desktop-map
   (cond (zk-desktop-mode                ; enabled
-         (zk-desktop-make-buttons)
+         (when zk-desktop-make-buttons
+           (zk-desktop-make-buttons))
          (when-let ((major-mode zk-desktop-major-mode))
            (funcall major-mode))
          (setq zk-desktop-mode t))
@@ -413,7 +418,8 @@ it after each item."
       (beginning-of-line)
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
-      (zk-desktop-mode))
+      (when zk-desktop-make-buttons
+        (zk-desktop-make-buttons)))
     (if (eq major-mode 'zk-index-mode)
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
@@ -458,7 +464,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
     (forward-line 1)
     (transpose-lines 1)
     (forward-line -1)
-    (when zk-desktop-invisible-ids
+    (when (or zk-desktop-make-buttons zk-desktop-invisible-ids)
       (zk-desktop-make-buttons))))
 
 (defun zk-desktop-move-line-up ()
@@ -467,7 +473,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (let ((inhibit-read-only t))
     (transpose-lines 1)
     (forward-line -2)
-    (when zk-desktop-invisible-ids
+    (when (or zk-desktop-make-buttons zk-desktop-invisible-ids)
       (zk-desktop-make-buttons))))
 
 (defun zk-desktop-delete-region-maybe ()
@@ -579,7 +585,8 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (interactive)
   (let ((inhibit-read-only t))
     (yank)
-    (zk-desktop-make-buttons)))
+    (when zk-desktop-make-buttons
+      (zk-desktop-make-buttons))))
 
 (provide 'zk-desktop)
 
