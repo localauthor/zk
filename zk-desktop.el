@@ -66,9 +66,16 @@ See `zk-format-function' and `zk-format-id-and-title' for
 valid control strings."
   :type 'string)
 
-;; TODO: Combine with `zk-desktop-invisible-ids'
 (defcustom zk-desktop-make-buttons t
-  "If non-nil, Zk-Desktop will make buttons.")
+  "If non-nil, Zk-Desktop will make buttons.
+Possible values are t (make normal buttons), 'invisible
+\(make buttons with invisible IDs), or nil (don't make any
+buttons)."
+  :type '(choice (const :tag "Yes" t)
+                 (const :tag "Yes, with invisible IDs" invisible)
+                 (const :tag "No" nil)))
+
+(make-obsolete-variable 'zk-desktop-invisible-ids 'zk-desktop-make-buttons "0.6")
 
 (defun zk-desktop-line-regexp ()
   "Return the regexp for the relevant ZK-DESKTOP lines.
@@ -84,10 +91,6 @@ Group 3 is the entire button (sans `zk-desktop-prefix')."
                       "\\)")
               (concat "\\(?1:" zk-id-regexp "\\)")
               (concat "\\(?2:" ".*" "\\)"))) ; FIXME: `zk-title-regexp'
-
-(defcustom zk-desktop-invisible-ids t
-  "If non-nil, IDs will not be visible in the index."
-  :type 'boolean)
 
 (defcustom zk-desktop-major-mode nil
   "Name of major-mode for ZK-Desktop buffers.
@@ -267,7 +270,7 @@ type."
       (make-text-button beg end
                         'type 'zk-desktop
                         'help-echo zk-desktop-help-echo-function)
-      (if (not zk-desktop-invisible-ids)
+      (if (not (eq 'invisible zk-desktop-make-buttons))
           ;; I.e. can add text in front of the button
           (add-text-properties beg (1+ beg) '(front-sticky nil))
         ;; Make whole zk-links invisible, not just zk-ids
@@ -464,7 +467,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
     (forward-line 1)
     (transpose-lines 1)
     (forward-line -1)
-    (when (or zk-desktop-make-buttons zk-desktop-invisible-ids)
+    (when zk-desktop-make-buttons
       (zk-desktop-make-buttons))))
 
 (defun zk-desktop-move-line-up ()
@@ -473,7 +476,7 @@ With prefix-argument, raise ZK-Desktop in other frame."
   (let ((inhibit-read-only t))
     (transpose-lines 1)
     (forward-line -2)
-    (when (or zk-desktop-make-buttons zk-desktop-invisible-ids)
+    (when zk-desktop-make-buttons
       (zk-desktop-make-buttons))))
 
 (defun zk-desktop-delete-region-maybe ()
