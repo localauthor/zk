@@ -148,6 +148,12 @@ insertion. See `zk-new-note-header' for an example."
 Must take an optional prompt and a list of files"
   :type 'function)
 
+(defcustom zk-tag-insert-function nil
+  "Function for inserting tag.
+Function must take a single argument TAG, as a string.
+If nil, tag will be inserted at point."
+  :type 'function)
+
 (defcustom zk-search-function #'zk-grep
   "Function used by `zk-search'.
 Must take a single STRING argument."
@@ -995,7 +1001,10 @@ Defaults to `zk-grep'."
   "Insert TAG at point.
 Select TAG, with completion, from list of all tags in zk notes."
   (interactive (list (completing-read "Insert tag: " (zk--grep-tag-list))))
-  (insert tag))
+  (if (eq zk-tag-insert-function nil)
+      (insert tag)
+    (save-excursion
+      (funcall zk-tag-insert-function tag))))
 
 ;;; Find Dead Links and Unlinked Notes
 
