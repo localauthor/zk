@@ -65,7 +65,7 @@ with no subdirectories.
 
 Each note is a separate file, named as follows: a unique ID number followed
 by the title of the note followed by the file extension (set in the variable
-=zk-extension=), e.g. "202012091130 On the origin of species.txt".
+=zk-file-extension=), e.g. "202012091130 On the origin of species.txt".
 
 ** IDs and Links
 
