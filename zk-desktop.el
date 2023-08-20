@@ -366,26 +366,19 @@ entire buffer."
 
 (defun zk-desktop--gather-items (arg)
   "Normalize ARG into a list of files."
-  (cond
-   (arg (zk--formatted-string arg zk-desktop-button-format))
-   ((eq major-mode 'zk-index-mode)
-    ;; TODO: This just copies the region into desktop file; need to
-    ;; reformat first, but it would be easier if
-    ;; `zk-index--current-id-list' could work with region.
-    (if (use-region-p)
-        (buffer-substring
-         (save-excursion
-           (goto-char (region-beginning))
-           (line-beginning-position))
-         (save-excursion
-           (goto-char (region-end))
-           (line-end-position)))
-      (buffer-substring
-       (line-beginning-position)
-       (line-end-position))))
-   ((zk-file-p)
-    (car (zk--formatter buffer-file-name zk-desktop-button-format)))
-   (t (user-error "No item to send to desktop"))))
+  (cond ((stringp arg)
+         (zk--formatter arg zk-desktop-button-format))
+        ((eq major-mode 'zk-index-mode)
+         (if (use-region-p)
+             (zk-index--current-id-list (current-buffer)
+                                        (region-beginning)
+                                        (region-end))
+           (zk-index--current-id-list (current-buffer)
+                                      (line-beginning-position)
+                                      (line-end-position))))
+        ((zk-file-p)
+         (zk--formatter buffer-file-name zk-desktop-button-format))
+        (t (user-error "No item to send to desktop"))))
 
 ;;;###autoload
 (defun zk-desktop-send-to-desktop (&optional arg suffix)
