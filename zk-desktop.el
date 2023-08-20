@@ -390,31 +390,33 @@ entire buffer."
         (t (user-error "No item to send to desktop"))))
 
 ;;;###autoload
-(defun zk-desktop-send-to-desktop (&optional arg suffix)
-  "Send notes from ZK-Index to ZK-Desktop.
+(defun zk-desktop-send-to-desktop (&optional items suffix)
+  "Add ITEMS to the current ZK-Desktop.
 In ZK-Index, works on note at point or notes in active
 region. Also works on files or group of files in minibuffer,
-as ARG, and on zk-id at point. With non-nil SUFFIX, insert
-it after each item."
+passed as ITEMS, and on Zk-ID at point. With non-nil SUFFIX,
+insert it after each entry. New entries are inserted
+according to `zk-desktop-add-pos'.
+
+See `zk-desktop-entry-format', `zk-desktop-entry-prefix',
+and `zk-desktop-entry-suffix' for the format of each line."
   (interactive)
   (unless zk-desktop-directory
     (error "Please set `zk-desktop-directory' first"))
   (let ((inhibit-read-only t)
-        (items (zk-desktop--gather-items arg))
+        (items (zk-desktop--gather-items items))
         (buffer (if (buffer-live-p zk-desktop-current)
                     zk-desktop-current
                   (zk-desktop-select))))
     (with-current-buffer buffer
       (setq require-final-newline 'visit-save)
       (pcase zk-desktop-add-pos
-        ('append (progn
-                   (goto-char (point-max))
-                   (beginning-of-line)
-                   (when (looking-at-p ".")
-                     (end-of-line)
-                     (newline))))
-        ('prepend (progn
-                    (goto-char (point-min))))
+        ('append (goto-char (point-max))
+                 (beginning-of-line)
+                 (when (looking-at-p ".")
+                   (end-of-line)
+                   (newline)))
+        ('prepend (goto-char (point-min)))
         ('at-point (goto-char (point))))
       (mapc (lambda (item)
               (insert (concat zk-desktop-entry-prefix
