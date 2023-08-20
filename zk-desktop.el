@@ -56,13 +56,17 @@ The names of all ZK-Desktops should begin with this string."
   "String to prepend to entries in Zk-Desktop."
   :type 'string)
 
+(defcustom zk-desktop-entry-suffix ""
+  "String to append to entries in Zk-Desktop."
+  :type 'string)
+
 (defcustom zk-desktop-entry-format "%t %i"
   "Format string for entries in ZK-Desktop.
 This is the part of each line in ZK-Desktop buffer that
 become buttons (see `zk-desktop-make-buttons'); use
-`zk-desktop-entry-prefix' to add arbitary text at the
-beginning of each line, and which would not be part of the
-buttons themselves.
+`zk-desktop-entry-prefix' and `zk-desktop-entry-suffix' to
+add arbitary text around the entry, and which would not be
+part of the buttons themselves.
 
 See `zk-format-function' and `zk-format-id-and-title' for
 valid control strings."
@@ -82,17 +86,19 @@ buttons)."
 (defun zk-desktop-line-regexp ()
   "Return the regexp for the relevant Zk-Desktop lines.
 The value is computed from `zk-desktop-entry-prefix',
-`zk-desktop-entry-format', and `zk-id-regexp'.
+`zk-desktop-entry-suffix', `zk-desktop-entry-format', and
+`zk-id-regexp'.
 
-Group 1 is the zk-ID.
+Group 1 is the note zk-ID.
 Group 2 is the note title.
 Group 3 is the entire entry."
   (zk--format (concat (regexp-quote zk-desktop-entry-prefix)
                       "\\(?3:"
                       (regexp-quote zk-desktop-entry-format)
-                      "\\)")
+                      "\\)"
+                      (regexp-quote zk-desktop-entry-suffix))
               (concat "\\(?1:" zk-id-regexp "\\)")
-              (concat "\\(?2:" ".*" "\\)"))) ; FIXME: `zk-title-regexp'
+              (concat "\\(?2:" ".*" "\\)"))) ; FIXME: `zk-title-regexp' (PR #68)
 
 (defcustom zk-desktop-major-mode nil
   "Name of major-mode for ZK-Desktop buffers.
@@ -360,8 +366,9 @@ entire buffer."
       (goto-char pos)
       (let* ((beg (+ (line-beginning-position)
                      (length zk-desktop-entry-prefix)))
-             (end (line-end-position))
-             (title (buffer-substring beg end)))
+             (end (- (line-end-position)
+                     (length zk-desktop-entry-suffix)))
+             (title (buffer-substring-no-properties beg end)))
         (format "%s" title)))))
 
 ;;; Commands
@@ -409,9 +416,11 @@ it after each item."
         ('prepend (progn
                     (goto-char (point-min))))
         ('at-point (goto-char (point))))
-      (mapc (lambda (i)
+      (mapc (lambda (item)
               (insert (concat zk-desktop-entry-prefix
-                              i (or suffix "") "\n")))
+                              item
+                              (or suffix zk-desktop-entry-suffix)
+                              "\n")))
             items)
       (beginning-of-line)
       (unless (bound-and-true-p truncate-lines)
