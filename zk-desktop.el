@@ -52,15 +52,17 @@
 The names of all ZK-Desktops should begin with this string."
   :type 'string)
 
-(defcustom zk-desktop-prefix ""
-  "String to prepend to note names in ZK-Desktop."
+(defcustom zk-desktop-entry-prefix ""
+  "String to prepend to entries in Zk-Desktop."
   :type 'string)
 
-(defcustom zk-desktop-button-format "%t %i"
-  "Format string for notes in ZK-Desktop.
-This is the format for the buttons in ZK-Desktop buffer; use
-`zk-desktop-prefix' to add arbitary text that should not be
-part of the button itself.
+(defcustom zk-desktop-entry-format "%t %i"
+  "Format string for entries in ZK-Desktop.
+This is the part of each line in ZK-Desktop buffer that
+become buttons (see `zk-desktop-make-buttons'); use
+`zk-desktop-entry-prefix' to add arbitary text at the
+beginning of each line, and which would not be part of the
+buttons themselves.
 
 See `zk-format-function' and `zk-format-id-and-title' for
 valid control strings."
@@ -78,16 +80,16 @@ buttons)."
 (make-obsolete-variable 'zk-desktop-invisible-ids 'zk-desktop-make-buttons "0.6")
 
 (defun zk-desktop-line-regexp ()
-  "Return the regexp for the relevant ZK-DESKTOP lines.
-The value is computed from `zk-desktop-prefix',
-`zk-desktop-button-format', and `zk-id-regexp'.
+  "Return the regexp for the relevant Zk-Desktop lines.
+The value is computed from `zk-desktop-entry-prefix',
+`zk-desktop-entry-format', and `zk-id-regexp'.
 
 Group 1 is the zk-ID.
-Group 2 is the title.
-Group 3 is the entire button (sans `zk-desktop-prefix')."
-  (zk--format (concat (regexp-quote zk-desktop-prefix)
+Group 2 is the note title.
+Group 3 is the entire entry."
+  (zk--format (concat (regexp-quote zk-desktop-entry-prefix)
                       "\\(?3:"
-                      (regexp-quote zk-desktop-button-format)
+                      (regexp-quote zk-desktop-entry-format)
                       "\\)")
               (concat "\\(?1:" zk-id-regexp "\\)")
               (concat "\\(?2:" ".*" "\\)"))) ; FIXME: `zk-title-regexp'
@@ -320,7 +322,7 @@ entire buffer."
                (title   (match-string-no-properties 2))
                (missing (not (member id ids))))
           (replace-match (save-match-data
-                           (zk--format zk-desktop-button-format id title))
+                           (zk--format zk-desktop-entry-format id title))
                          nil t nil 3)
           (if (not missing)
               (zk-desktop--make-button (match-data))
@@ -357,7 +359,7 @@ entire buffer."
     (with-selected-window win
       (goto-char pos)
       (let* ((beg (+ (line-beginning-position)
-                     (length zk-desktop-prefix)))
+                     (length zk-desktop-entry-prefix)))
              (end (line-end-position))
              (title (buffer-substring beg end)))
         (format "%s" title)))))
@@ -367,7 +369,7 @@ entire buffer."
 (defun zk-desktop--gather-items (arg)
   "Normalize ARG into a list of files."
   (cond ((stringp arg)
-         (zk--formatter arg zk-desktop-button-format))
+         (zk--formatter arg zk-desktop-entry-format))
         ((eq major-mode 'zk-index-mode)
          (if (use-region-p)
              (zk-index--current-id-list (current-buffer)
@@ -377,7 +379,7 @@ entire buffer."
                                       (line-beginning-position)
                                       (line-end-position))))
         ((zk-file-p)
-         (zk--formatter buffer-file-name zk-desktop-button-format))
+         (zk--formatter buffer-file-name zk-desktop-entry-format))
         (t (user-error "No item to send to desktop"))))
 
 ;;;###autoload
@@ -408,7 +410,7 @@ it after each item."
                     (goto-char (point-min))))
         ('at-point (goto-char (point))))
       (mapc (lambda (i)
-              (insert (concat zk-desktop-prefix
+              (insert (concat zk-desktop-entry-prefix
                               i (or suffix "") "\n")))
             items)
       (beginning-of-line)
