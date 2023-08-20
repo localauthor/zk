@@ -83,6 +83,16 @@ buttons)."
 
 (make-obsolete-variable 'zk-desktop-invisible-ids 'zk-desktop-make-buttons "0.6")
 
+(defcustom zk-desktop-mark-missing "<- ID NOT FOUND"
+  "If non-nil, Zk-Desktop will mark missing IDs.
+Possible values are a string for the text of an overlay to
+add at the end of lines with missing IDs, non-nil to merely
+display their buttons with `zk-desktop-missing-button' face,
+or nil to eschew checking for missing IDs at all."
+  :type '(choice (string :tag "Add overlay text" "<- ID NOT FOUND")
+                 (const :tag "Propertize missing" t)
+                 (const :tag "Do not mark" nil)))
+
 (defun zk-desktop-line-regexp ()
   "Return the regexp for the relevant Zk-Desktop lines.
 The value is computed from `zk-desktop-entry-prefix',
@@ -135,6 +145,10 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
 (defface zk-desktop-button
   '((t :inherit default))
   "Face used for buttons in `zk-desktop-mode'.")
+
+(defface zk-desktop-missing-button
+  '((t :inherit error))
+  "Face used for buttons in `zk-desktop-mode' with missing IDs.")
 
 ;;; Declarations
 
@@ -333,11 +347,13 @@ entire buffer."
           (if (not missing)
               (zk-desktop--make-button (match-data))
             (end-of-line)
-            (let ((overlay (make-overlay (point) (point))))
-              (overlay-put overlay 'type 'zk-desktop)
-              (overlay-put overlay
-                           'before-string
-                           (propertize" <- ID NOT FOUND" 'font-lock-face 'error)))))
+            (when (stringp zk-desktop-mark-missing)
+              (let ((overlay (make-overlay (point) (point))))
+                (overlay-put overlay 'type 'zk-desktop)
+                (overlay-put overlay
+                             'before-string
+                             (propertize zk-desktop-mark-missing
+                                         'font-lock-face 'error))))))
         (end-of-line)))))
 
 ;;; Utilities
