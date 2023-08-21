@@ -273,46 +273,50 @@ desktop."
     'read-only t
     'front-sticky t
     'rear-sticky t
+    'button-data nil                    ; filled by `zk-desktop--make-button'
     'keymap zk-desktop-button-map
     'action 'zk-desktop-button-action
     'face 'zk-desktop-button
     'cursor-face 'highlight))
 
-(defun zk-desktop--make-button (match-data)
-  "Make a ZK-Desktop button on the current line.
-The MATCH-DATA should have captured groups 1-3 (see
-`zk-desktop-line-regexp'). Group 3 becomes the button
-itself, which will inherit `zk-desktop-button' face and all
-text properties defined for `zk-desktop-button' button
-type."
+(defun zk-desktop--make-button ()
+  "Try to make a ZK-Desktop button after point.
+Return nil if there are no more buttons to be made in the
+buffer. Otherwise, move point after the button created and
+return a tuple of button boundaries."
   (save-match-data
-    (set-match-data match-data)
-    (let ((beg (match-beginning 3))
-          (end (match-end 3)))
-      (make-text-button beg end
-                        'type 'zk-desktop
-                        'help-echo zk-desktop-help-echo-function)
+    (when-let* ((beg        (point))
+                (_          (re-search-forward (zk-desktop-line-regexp) nil t))
+                (id         (match-string-no-properties 1))
+                (id-beg     (match-beginning 1))
+                (id-end     (match-end 1))
+                (title      (match-string-no-properties 2))
+                (button-beg (match-beginning 3))
+                (button-end (match-end 3)))
+      (replace-match (save-match-data
+                       (zk--format zk-desktop-entry-format id title))
+                     nil t nil 3)
       (if (not (eq 'invisible zk-desktop-make-buttons))
-          ;; I.e. can add text in front of the button
-          (add-text-properties beg (1+ beg) '(front-sticky nil))
-        ;; Make whole zk-links invisible, not just zk-ids
-        (beginning-of-line)
-        (cond ((re-search-forward (zk-link-regexp) (line-end-position) t)
-               (replace-match
-                (propertize (match-string-no-properties 0) 'invisible t) nil t)
-               ;; Org-mode requires more drastic measures
-               (let ((overlay (make-overlay (match-beginning 0) (match-end 0))))
-                 (overlay-put overlay 'invisible t)
-                 (overlay-put overlay 'type 'zk-desktop)))
-              ((re-search-forward id)
-               ;; I.e. can add text in the rear of invis. IDs, but not in the front
-               (replace-match (propertize id
-                                          'read-only t
-                                          'front-sticky t
-                                          'rear-nonsticky t)))
-              (t
-               ;; Not our line; skip
-               ))))))
+          ;; I.e. can add text in front of the button?
+          (add-text-properties button-beg (1+ button-beg) '(front-sticky nil))
+        ;; Make entire link invisible, not just the ID
+        (goto-char beg)
+        (when (re-search-forward (zk-link-regexp) (line-end-position) t)
+          (setq id-beg (match-beginning 0)
+                id-end (match-end 0)))
+        ;; I.e. can add text in the rear of invisible IDs, but not in the front?
+        (add-text-properties id-beg id-end '(invisible t rear-nonsticky t))
+        ;; Org-mode requires more drastic measures
+        (when (eq zk-desktop-major-mode 'org-mode)
+          (let ((overlay (make-overlay (match-beginning 0) (match-end 0))))
+            (overlay-put overlay 'invisible t)
+            (overlay-put overlay 'type 'zk-desktop))))
+      (make-text-button button-beg button-end
+                        'type 'zk-desktop
+                        'button-data (list id title nil) ; matches `zk--alist'
+                        'help-echo zk-desktop-help-echo-function)
+      (goto-char button-end)
+      (cons button-beg button-end))))
 
 (defun zk-desktop--clear ()
   "Clear special text properties added by `zk-desktop-make-buttons'.
@@ -325,36 +329,40 @@ entire buffer."
 
 ;;;###autoload
 (defun zk-desktop-make-buttons ()
-  "Re-make buttons in ZK-Desktop."
+  "Re-make buttons in ZK-Desktop.
+If `zk-desktop-make-buttons' is nil, just clear any existing
+buttons and overlays."
   (interactive)
   (unless (and (string-match-p zk-desktop-basename (buffer-name))
                (file-in-directory-p default-directory zk-desktop-directory))
     (user-error "Can only make buttons in Zk desktop file; %s isn't"
                 (buffer-name)))
   (let* ((inhibit-read-only t)
-         (zk-alist (zk--alist))
-         (ids (zk--id-list nil zk-alist)))
+         (ids (if zk-desktop-mark-missing
+                  (zk--id-list nil (zk--alist))
+                nil))
+         button-bounds)
     (zk-desktop--clear)
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward (zk-desktop-line-regexp) nil t)
-        (let* ((id      (match-string-no-properties 1))
-               (title   (match-string-no-properties 2))
-               (missing (not (member id ids))))
-          (replace-match (save-match-data
-                           (zk--format zk-desktop-entry-format id title))
-                         nil t nil 3)
-          (if (not missing)
-              (zk-desktop--make-button (match-data))
-            (end-of-line)
-            (when (stringp zk-desktop-mark-missing)
-              (let ((overlay (make-overlay (point) (point))))
-                (overlay-put overlay 'type 'zk-desktop)
-                (overlay-put overlay
-                             'before-string
-                             (propertize zk-desktop-mark-missing
-                                         'font-lock-face 'error))))))
-        (end-of-line)))))
+    (when zk-desktop-make-buttons
+      (save-excursion
+        (goto-char (point-min))
+        (while (setq button-bounds (zk-desktop--make-button))
+          (let* ((button-data (get-text-property (car button-bounds) 'button-data))
+                 (button-id (car button-data)))
+            (cond ((and (stringp zk-desktop-mark-missing)
+                        (not (member button-id ids)))
+                   (let ((overlay (make-overlay (line-end-position) (line-end-position))))
+                     (overlay-put overlay 'type 'zk-desktop)
+                     (overlay-put overlay 'before-string
+                                  (propertize zk-desktop-mark-missing
+                                              'font-lock-face 'zk-desktop-missing-button))))
+                  ((and zk-desktop-mark-missing
+                        (not (member button-id ids)))
+                   (add-text-properties (car button-bounds) (cdr button-bounds)
+                                        '(face zk-desktop-missing-button)))
+                  (t
+                   ;; do nothing
+                   ))))))))
 
 ;;; Utilities
 
