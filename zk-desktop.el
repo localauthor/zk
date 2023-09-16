@@ -452,7 +452,7 @@ and `zk-desktop-entry-suffix' for the format of each line."
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (when zk-desktop-make-buttons
-        (zk-desktop-make-buttons)))
+        (zk-desktop--make-button)))
     (if (eq major-mode 'zk-index-mode)
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
