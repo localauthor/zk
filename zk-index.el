@@ -465,8 +465,8 @@ with query term STRING."
 
 (defun zk-index--current-id-list (buf-name &optional beg end)
   "Return list of IDs for index in BUF-NAME.
-If region is active, only return the IDs within the lines
-between BEG and END."
+If BEG and END are given, only return the IDs in the lines
+between those positions, inclusive."
   (with-current-buffer buf-name
     (let ((beg (if (not beg)
                    (point-min)
@@ -482,7 +482,7 @@ between BEG and END."
         (save-match-data
           (while (re-search-forward zk-id-regexp end t)
             (push (match-string-no-properties 0) ids))))
-      ids)))
+      (nreverse ids))))
 
 ;;; Index Sort Functions
 
