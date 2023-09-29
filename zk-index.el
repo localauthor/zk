@@ -653,10 +653,12 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
           (cond ((not (zk-file-p)))
                 (zk-index-view--kill
                  (kill-buffer)
-                 (other-window -1))
+                 (select-window (get-buffer-window
+                                 zk-index-buffer-name)))
                 ((not zk-index-view--kill)
                  (zk-index-view-mode)
-                 (other-window -1)))
+                 (select-window (get-buffer-window
+                                 zk-index-buffer-name))))
           (forward-button 1)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
@@ -673,10 +675,12 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
           (cond ((not (zk-file-p)))
                 (zk-index-view--kill
                  (kill-buffer)
-                 (other-window -1))
+                 (select-window (get-buffer-window
+                                 zk-index-buffer-name)))
                 ((not zk-index-view--kill)
                  (zk-index-view-mode)
-                 (other-window -1)))
+                 (select-window (get-buffer-window
+                                 zk-index-buffer-name))))
           (forward-button -1)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
