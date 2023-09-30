@@ -37,6 +37,9 @@
 (require 'zk)
 (require 'link-hint)
 
+
+(defvar zk-link-hint-preview--kill-last)
+
 (defun zk-link-hint--zk-link-at-point-p ()
   "Return the ID for the zk-link at the point or nil."
   (and (zk--id-at-point)
@@ -66,7 +69,8 @@ Only search the range between just after the point and BOUND."
   (defun link-hint--aw-select-zk-link (id)
     (with-demoted-errors "%s"
       (if (> (length (aw-window-list)) 1)
-          (let ((window (aw-select nil))
+          (let ((switch-to-buffer-obey-display-actions nil)
+                (window (aw-select nil))
                 (buffer (current-buffer))
                 (new-buffer))
             (zk-follow-link-at-point id)
@@ -81,7 +85,8 @@ Only search the range between just after the point and BOUND."
   (defun link-hint--aw-select-button (_link)
     (with-demoted-errors "%s"
       (if (> (length (aw-window-list)) 1)
-          (let ((window (aw-select nil))
+          (let ((switch-to-buffer-obey-display-actions nil)
+                (window (aw-select nil))
                 (buffer (current-buffer))
                 (new-buffer))
             (if (re-search-forward zk-id-regexp (line-end-position))
@@ -149,8 +154,7 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
          (dedicated . t)))
       (with-current-buffer new-buffer
         (setq-local link-hint-preview--origin-frame frame)
-        (link-hint-preview-mode))))
-  )
+        (link-hint-preview-mode)))))
 
 (provide 'zk-link-hint)
 
