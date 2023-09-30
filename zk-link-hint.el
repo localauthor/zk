@@ -106,9 +106,9 @@ Only search the range between just after the point and BOUND."
   (link-hint-define-type 'zk-link
     :preview #'link-hint-preview-zk-link)
 
-  (defun link-hint-preview-zk-link (&optional id)
+  (defun link-hint-preview-zk-link (&optional _id)
     "Pop up a frame containing zk-file for ID at point.
-Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
+Set pop-up frame parameters in `link-hint-preview-frame-parameters'."
     (interactive)
     (let* ((id (or (zk--id-at-point)
                    (zk-index--button-at-point-p)))
@@ -127,7 +127,7 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
         (setq-local link-hint-preview--origin-frame frame)
         (link-hint-preview-mode))))
 
-  (defalias 'zk-preview 'link-hint-preview-zk-link)
+  (defalias 'zk-preview #'link-hint-preview-zk-link)
 
   (link-hint-define-type 'button
     :preview #'link-hint-preview-button)

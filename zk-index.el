@@ -239,11 +239,11 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
                      (setq zk-index-last-sort-function nil)))
         (buf-name (or buf-name
                       zk-index-buffer-name))
-        (line))
+        (pos))
     (setq zk-index-last-format-function format-fn)
     (setq zk-index-last-sort-function sort-fn)
     (with-current-buffer buf-name
-      (setq line (line-number-at-pos))
+      (setq pos (point))
       (erase-buffer)
       (zk-index--reset-mode-name)
       (zk-index--sort files format-fn sort-fn)
@@ -252,7 +252,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
       (unless (zk-index-narrowed-p buf-name)
         (progn
           (zk-index--reset-mode-line)
-          (goto-line line))))))
+          (goto-char pos))))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
   "Sort FILES, with option FORMAT-FN and SORT-FN."
