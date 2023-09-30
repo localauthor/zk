@@ -576,7 +576,8 @@ with query term STRING."
   "View note in `zk-index-view-mode'."
   (interactive)
   (beginning-of-line)
-  (let* ((id (zk-index--button-at-point-p))
+  (let* ((zk-enable-link-buttons nil)
+         (id (zk-index--button-at-point-p))
          (file (zk--parse-id 'file-path id))
          (kill (unless (get-file-buffer file)
                  t))
@@ -638,6 +639,8 @@ Takes an option POS position argument."
             (setq-local cursor-type nil))))
     (read-only-mode -1)
     (use-local-map nil)
+    (when zk-enable-link-buttons
+      (zk-make-link-buttons))
     (when zk-index-view-hide-cursor
       (scroll-lock-mode -1)
       (setq-local cursor-type (or zk-index-view--cursor
