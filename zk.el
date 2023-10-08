@@ -117,16 +117,21 @@ rendered with spaces."
 
 (defcustom zk-id-time-string-format "%Y%m%d%H%M"
   "Format for new zk IDs.
-For supported options, please consult `format-time-string'.
-Note: the regexp to find zk IDs is set separately.
-If you change this value, set `zk-id-regexp' so that
-the zk IDs can be found."
+For supported options,  consult `format-time-string'.
+
+Note: The regexp to find zk IDs is set separately. If you change
+this value, set `zk-id-regexp' so that the zk IDs can be found."
   :type 'string)
 
 (defcustom zk-id-regexp "\\([0-9]\\{12\\}\\)"
   "The regular expression used to search for zk IDs.
 Set it so that it matches strings generated with
-`zk-id-format'."
+`zk-id-time-string-format'."
+  :type 'regexp)
+
+(defcustom zk-title-regexp ".*?"
+  "The regular expression used to match the zk note's title.
+This is only relevant if `zk-link-format' includes the title."
   :type 'regexp)
 
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
@@ -160,7 +165,7 @@ Must take a single STRING argument."
   :type 'function)
 
 (make-obsolete-variable 'zk-grep-function "The use of the
-  'zk-grep-function' variable is deprecated.
+ 'zk-grep-function' variable is deprecated.
  'zk-search-function' should be used instead"
                         "0.5")
 
@@ -181,30 +186,31 @@ See `zk-current-notes' for details."
 
 (defcustom zk-format-function #'zk-format-id-and-title
   "Function for formatting zk file information.
-It should accept three variables: FORMAT-SPEC, ID, and TITLE. See
-`zk--format' for details."
+It should accept three variables: FORMAT-SPEC, ID, and TITLE.
+See `zk-format-id-and-title' for an example."
   :type 'function)
 
 ;; Format variables
 
-(defcustom zk-link-format "[[%s]]"
+(defcustom zk-link-format "[[%i]]"
   "Format for inserted links.
-Used in conjunction with `format', the string `%s' will be
-replaced by a note's ID."
+
+See `zk-format-id-and-title' for what the default control
+sequences mean."
   :type 'string)
 
 (defcustom zk-link-and-title-format "%t [[%i]]"
   "Format for link and title when inserted to together.
 
-By default (when `zk-format-function' is nil), the string `%t' will be
-replaced by the note's title and `%i' will be replaced by its ID."
+See `zk-format-id-and-title' for what the default control
+sequences mean."
   :type 'string)
 
 (defcustom zk-completion-at-point-format "[[%i]] %t"
   "Format for completion table used by `zk-completion-at-point'.
 
-By default (when `zk-format-function' is nil), the string `%t' will be
-replaced by the note's title and `%i' will be replaced by its ID."
+See `zk-format-id-and-title' for what the default control
+sequences mean."
   :type 'string)
 
 ;; Link variables
@@ -308,15 +314,23 @@ Group 1 is the zk ID.
 Group 2 is the title."
   (concat "\\(?1:" zk-id-regexp "\\)"
           "."
-          "\\(?2:.*?\\)"
+          "\\(?2:" zk-title-regexp "\\)"
           "\\."
           zk-file-extension
           ".*"))
 
-(defun zk-link-regexp ()
-  "Return the correct regexp for zk links.
-The value is based on `zk-link-format' and `zk-id-regexp'."
-  (format (regexp-quote zk-link-format) zk-id-regexp))
+(defun zk-link-regexp (&optional id title)
+  "Return the correct regexp matching zk links.
+If ID and/or TITLE are given, use those, generating a regexp
+that specifically matches them. Othewrise use `zk-id-regexp'
+and `zk-title-regexp', respectively.
+The regexp captures these groups:
+
+Group 1 is the zk ID.
+Group 2 is the title."
+  (zk--format (regexp-quote zk-link-format)
+              (concat "\\(?1:" (or id zk-id-regexp) "\\)")
+              (concat "\\(?2:" (or title zk-title-regexp) "\\)")))
 
 (defun zk--file-id (file)
   "Return the ID of the given zk FILE."
@@ -419,6 +433,29 @@ file-paths."
              (buffer-file-name x)))
          (buffer-list))))
 
+(defun zk--posix-regexp (regexp &optional basic)
+  "Convert Elisp-style REGEXP to extended POSIX 1003.2 regexp.
+If BASIC is non-nil, convert as much as possible to basic
+regexp instead. See manual page `re_format(7)' for details."
+  (let (result)
+    ;; 1. For basic REs, warn the user about lack of \| (or) operator
+    (when (and basic (string-match "\\\\|" regexp))
+      ;; FIXME: Basic REs don't have or (\|) operator, as in \(one\|two\); one
+      ;; would need to pass multiple -e command line args to grep. So, just
+      ;; treat the operator as normal text, but let the user know.
+      (warn "Operator \\| (or) cannot be used with basic regexps: %s" regexp)
+      (setq result regexp))
+    ;; 2. Strip numbered groups for extended REs, numbered and shy groups for basic
+    (setq result
+      (if basic
+          (replace-regexp-in-string "\\\\(\\?[0-9]?:" "\\(" regexp nil 'literal)
+        (replace-regexp-in-string "\\\\(\\?[0-9]:" "\\(" regexp nil 'literal)))
+    ;; 3. Un-escape special characters (){}|+ for extended REs
+    (unless basic
+      (setq result
+        (replace-regexp-in-string "\\\\\\([(){}+|]\\)" "\\1" result)))
+    result))
+
 (defun zk--grep-file-list (str &optional extended invert)
   "Return a list of files containing regexp STR.
 If EXTENDED is non-nil, use egrep. If INVERT is non-nil,
@@ -430,7 +467,8 @@ return list of files not matching the regexp."
             " --recursive"
             " --ignore-case"
             " --include=\\*." zk-file-extension
-            " --regexp=" (shell-quote-argument str)
+            " --regexp=" (shell-quote-argument
+                          (zk--posix-regexp str (not extended)))
             " " zk-directory
             " 2>/dev/null"))
    "\n" t))
@@ -443,14 +481,15 @@ return list of files not matching the regexp."
 
 (defun zk--grep-tag-list ()
   "Return list of tags from all notes in zk directory."
-  (let* ((files (shell-command-to-string (concat
-                                          "grep -ohir --include \\*."
-                                          zk-file-extension
-                                          " -e "
-                                          (shell-quote-argument
-                                           zk-tag-regexp)
-                                          " "
-                                          zk-directory " 2>/dev/null")))
+  (let* ((files
+          (shell-command-to-string (concat
+                                    "grep -ohir --include \\*."
+                                    zk-file-extension
+                                    " -e "
+                                    (shell-quote-argument
+                                     (zk--posix-regexp zk-tag-regexp 'basic))
+                                    " "
+                                    zk-directory " 2>/dev/null")))
          (list (split-string files "\n" t "\s")))
     (delete-dups list)))
 
@@ -610,17 +649,15 @@ When NO-PROC is non-nil, bypass `zk--processor'."
 
 (defun zk-format-id-and-title (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
-This is the default function set in `zk-format-function' and used by
-`zk--format' therwise, replace the sequence `%t' with the TITLE and
-`%i' with the ID."
+The sequence `%t' in FORMAT is replaced with the TITLE
+and `%i' with the ID. This is the default function
+that `zk-format-function' is set to."
   (format-spec format `((?i . ,id) (?t . ,title))))
 
 (defun zk--format (format id title)
-  "Format ID and TITLE based on the `format-spec' FORMAT."
-  (if (eq format zk-link-format)
-      (format zk-link-format id)
-    (funcall zk-format-function format id title)))
-
+  "Format ID and TITLE based on the `format-spec' FORMAT.
+This is a wrapper around `zk-format-function', which see."
+  (funcall zk-format-function format id title))
 
 ;;; Buttons
 
@@ -954,7 +991,7 @@ brackets \"[[\" initiates completion."
 
 (defun zk--backlinks-list (id)
   "Return list of notes that link to note with ID."
-  (zk--grep-file-list (regexp-quote (format zk-link-format id))))
+  (zk--grep-file-list (zk-link-regexp id)))
 
 ;;;###autoload
 (defun zk-backlinks ()
@@ -1010,12 +1047,13 @@ Select TAG, with completion, from list of all tags in zk notes."
 
 (defun zk--grep-link-id-list ()
   "Return list of all ids that appear as links in `zk-directory' files."
-  (let* ((files (shell-command-to-string (concat
-                                          "grep -ohir -e "
-                                          (shell-quote-argument
-                                           (zk-link-regexp))
-                                          " "
-                                          zk-directory " 2>/dev/null")))
+  (let* ((files (shell-command-to-string
+                 (concat
+                  "grep -ohir -e "
+                  (shell-quote-argument
+                   (zk--posix-regexp (zk-link-regexp) 'basic))
+                  " "
+                  zk-directory " 2>/dev/null")))
          (list (split-string files "\n" t))
          (ids (mapcar
                (lambda (x)
