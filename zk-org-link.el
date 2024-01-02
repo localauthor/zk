@@ -1,6 +1,6 @@
 ;;; zk-org-link.el --- Org-link integration for zk        -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2023 Grant Rosson
+;; Copyright (C) 2022-2024 Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: June 25, 2022
