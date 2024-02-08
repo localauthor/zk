@@ -570,8 +570,10 @@ with query term STRING."
          (file (zk--parse-id 'file-path id))
          (kill (unless (get-file-buffer file)
                  t))
-         (buffer (find-file-noselect file)))
+         (buffer (find-file-noselect file))
+         (index-name (buffer-name)))
     (funcall zk-index-button-display-function file buffer)
+    (setq-local zk-index-buffer-name index-name)
     (setq-local zk-index-view--kill kill)
     (zk-index-view-mode)))
 
@@ -639,18 +641,19 @@ Takes an option POS position argument."
   "Move to next line.
 If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((split-width-threshold nil))
+  (let ((split-width-threshold nil)
+        (index-name zk-index-buffer-name))
     (if zk-index-auto-scroll
         (progn
           (cond ((not (zk-file-p)))
                 (zk-index-view--kill
                  (kill-buffer)
                  (select-window (get-buffer-window
-                                 zk-index-buffer-name)))
+                                 index-name)))
                 ((not zk-index-view--kill)
                  (zk-index-view-mode)
                  (select-window (get-buffer-window
-                                 zk-index-buffer-name))))
+                                 index-name))))
           (forward-button 1)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
@@ -661,18 +664,19 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
   "Move to previous line.
 If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((split-width-threshold nil))
+  (let ((split-width-threshold nil)
+        (index-name zk-index-buffer-name))
     (if zk-index-auto-scroll
         (progn
           (cond ((not (zk-file-p)))
                 (zk-index-view--kill
                  (kill-buffer)
                  (select-window (get-buffer-window
-                                 zk-index-buffer-name)))
+                                 index-name)))
                 ((not zk-index-view--kill)
                  (zk-index-view-mode)
                  (select-window (get-buffer-window
-                                 zk-index-buffer-name))))
+                                 index-name))))
           (forward-button -1)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
