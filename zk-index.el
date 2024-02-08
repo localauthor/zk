@@ -637,10 +637,9 @@ Takes an option POS position argument."
       (setq-local cursor-type (or zk-index-view--cursor
                                   t)))))
 
-(defun zk-index-next-line ()
-  "Move to next line.
+(defun zk-index-forward-button (N)
+  "Move to the Nth next button, or Nth previous button if N is negative.
 If `zk-index-auto-scroll' is non-nil, show note in other window."
-  (interactive)
   (let ((split-width-threshold nil)
         (index-name zk-index-buffer-name))
     (if zk-index-auto-scroll
@@ -654,34 +653,23 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                  (zk-index-view-mode)
                  (select-window (get-buffer-window
                                  index-name))))
-          (forward-button 1)
+          (forward-button N)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
             (zk-index-view-note)))
-      (forward-button 1))))
+      (forward-button N))))
+
+(defun zk-index-next-line ()
+  "Move to next line.
+If `zk-index-auto-scroll' is non-nil, show note in other window."
+  (interactive)
+  (zk-index-forward-button 1))
 
 (defun zk-index-previous-line ()
   "Move to previous line.
 If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((split-width-threshold nil)
-        (index-name zk-index-buffer-name))
-    (if zk-index-auto-scroll
-        (progn
-          (cond ((not (zk-file-p)))
-                (zk-index-view--kill
-                 (kill-buffer)
-                 (select-window (get-buffer-window
-                                 index-name)))
-                ((not zk-index-view--kill)
-                 (zk-index-view-mode)
-                 (select-window (get-buffer-window
-                                 index-name))))
-          (forward-button -1)
-          (hl-line-highlight)
-          (unless (looking-at-p "[[:space:]]*$")
-            (zk-index-view-note)))
-      (forward-button -1))))
+  (zk-index-forward-button -1))
 
 ;;;###autoload
 (defun zk-index-switch-to-index ()
