@@ -477,46 +477,35 @@ with query term STRING."
 
 ;;; Index Sort Functions
 
+(defun zk-index--sort-call (sort-fn mode-string)
+  "Call SORT-FN with MODE-STRING."
+  (if (eq major-mode 'zk-index-mode)
+      (zk-index-refresh (zk-index--current-file-list)
+                        zk-index-last-format-function
+                        sort-fn
+                        (buffer-name))
+    (zk-index--set-mode-name mode-string))
+  (user-error "Not in a ZK-Index")))
+
 (defun zk-index-sort-modified ()
   "Sort index by last modified."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
-      (progn
-        (zk-index-refresh (zk-index--current-file-list)
-                          zk-index-last-format-function
-                          #'zk-index--sort-modified
-                          (buffer-name))
-        (zk-index--set-mode-name " by modified"))
-    (user-error "Not in a ZK-Index")))
+  (zk-index--sort-call #'zk-index--sort-modified "by modified"))
 
 (defun zk-index-sort-created ()
   "Sort index by date created."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
-      (progn
-        (zk-index-refresh (zk-index--current-file-list)
-                          zk-index-last-format-function
-                          #'zk-index--sort-created
-                          (buffer-name))
-        (zk-index--set-mode-name " by created"))
-    (user-error "Not in a ZK-Index")))
+  (zk-index--sort-call #'zk-index--sort-created "by created"))
 
 (defun zk-index-sort-size ()
   "Sort index by size."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
-      (progn
-        (zk-index-refresh (zk-index--current-file-list)
-                          zk-index-last-format-function
-                          #'zk-index--sort-size
-                          (buffer-name))
-        (zk-index--set-mode-name " by size"))
-    (user-error "Not in a ZK-Index")))
+  (zk-index--sort-call #'zk-index--sort-size "by size"))
 
 (defun zk-index--set-mode-name (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
   (when (eq major-mode 'zk-index-mode)
-    (setq mode-name (concat mode-name string))))
+    (setq mode-name (concat mode-name " " string))))
 
 (defun zk-index--reset-mode-name ()
   "Reset `mode-name' in `zk-index-mode'."
