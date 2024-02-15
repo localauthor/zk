@@ -284,6 +284,7 @@ See `zk-new-note' for details."
 Adds zk-id as an Embark target, and adds `zk-id-map' and
 `zk-file-map' to `embark-keymap-alist'."
   (with-eval-after-load 'embark
+    (add-to-list 'embark--associated-file-fn-alist '(zk-file . identity))
     (add-to-list 'embark-multitarget-actions 'zk-copy-link-and-title)
     (add-to-list 'embark-multitarget-actions 'zk-insert-link)
     (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
