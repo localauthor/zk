@@ -1079,7 +1079,7 @@ Backlinks and Links-in-Note are grouped separately."
   (let* ((id (zk--file-id buffer-file-name))
          (backlinks (ignore-errors (zk--backlinks-list id)))
          (links-in-note (ignore-errors (zk--links-in-note-list)))
-         (resources))
+         (resources nil))
     (if (or backlinks links-in-note)
         (progn
           (dolist (file links-in-note)
