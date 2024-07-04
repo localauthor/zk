@@ -107,14 +107,14 @@ Select TAG, with completion, from list of all tags in zk notes."
 ;;; Current Notes Consult Source
 
 (defvar zk-consult-source
-  `(:name "zk"
-          :narrow (?z . "zk - current notes")
-          :hidden n
-          :category buffer
-          :history zk-history
-          :state ,#'consult--buffer-state
-          :items ,(lambda ()
-                    (remq nil
+  `( :name     "zk"
+     :narrow   (?z . "zk - current notes")
+     :category zk-file
+     :history  zk-history
+     :new      ,#'zk-new-note
+     :state    ,#'consult--buffer-state
+     :items    ,(lambda ()
+                  (remq nil
                         (mapcar
                          (lambda (x)
                            (when
