@@ -163,8 +163,7 @@ example."
     (add-to-list 'embark-exporters-alist '(zk-file . zk-index-narrow))
     (add-to-list 'embark-exporters-alist '(zk-id . zk-index-narrow))
     (define-key zk-file-map (kbd "n")  #'zk-index-narrow)
-    (define-key zk-id-map (kbd "n") #'zk-index-narrow)
-    (define-key zk-id-map (kbd "i") #'zk-index-insert-link)))
+    (define-key zk-file-map (kbd "i") #'zk-index-insert-link)))
 
 (defun zk-index-embark-target ()
   "Target zk-id of button at point in ZK-Index."
@@ -172,8 +171,9 @@ example."
     (save-excursion
       (beginning-of-line)
       (re-search-forward zk-id-regexp (line-end-position)))
-    (let ((zk-id (match-string-no-properties 1)))
-      `(zk-id ,zk-id . ,(cons (line-beginning-position) (line-end-position))))))
+    (let* ((zk-id (match-string-no-properties 1))
+           (zk-file (zk--parse-id 'file-path zk-id)))
+      `(zk-file ,zk-file . ,(cons (line-beginning-position) (line-end-position))))))
 
 (defun zk-index-narrow (arg)
   "Produce a ZK-Index narrowed to notes listed in ARG.
