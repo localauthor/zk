@@ -76,6 +76,20 @@ Set to nil to inhibit help-echo."
   "Hide cursor in `zk-index-view-mode'."
   :type 'boolean)
 
+(defcustom zk-index-cursor nil
+  "Cursor to use when zk-index is in the selected window.
+See `cursor-type’ for description of possible values."
+  :type
+  '(choice (const :tag "Frame default" t)
+           (const :tag "Filled box" box)
+           (cons :tag "Box with specified size" (const box) integer)
+           (const :tag "Hollow cursor" hollow)
+           (const :tag "Vertical bar" bar)
+           (cons :tag "Vertical bar with specified height" (const bar) integer)
+           (const :tag "Horizontal bar" hbar)
+           (cons :tag "Horizontal bar with specified width" (const hbar) integer)
+           (const :tag "None " nil)))
+
 (defcustom zk-index-button-display-function 'zk-index-button-display-action
   "Function called when buttons pressed in ZK-Index.
 The function is called by `zk-index-button-action'. A custom
@@ -116,7 +130,7 @@ example."
   (hl-line-mode)
   (make-local-variable 'show-paren-mode)
   (setq-local show-paren-mode nil)
-  (setq cursor-type nil))
+  (setq cursor-type zk-index-cursor))
 
 
 ;;; Declarations
