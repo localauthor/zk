@@ -135,6 +135,7 @@ example."
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-query-terms nil)
 (defvar zk-search-history)
+(defvar zk--no-gc)
 
 (declare-function zk-file-p zk)
 (declare-function zk--grep-id-list zk)
@@ -240,15 +241,16 @@ all files in `zk-directory' will be returned as formatted candidates."
   "Refresh the index.
 Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive)
-  (let ((inhibit-message t)
-        (inhibit-read-only t)
-        (files (or files
-                   (zk--directory-files t)))
-        (sort-fn (or sort-fn
-                     (setq zk-index-last-sort-function nil)))
-        (buf-name (or buf-name
-                      zk-index-buffer-name))
-        (pos))
+  (let* ((zk--no-gc t)
+         (inhibit-message t)
+         (inhibit-read-only t)
+         (files (or files
+                    (zk--directory-files t)))
+         (sort-fn (or sort-fn
+                      (setq zk-index-last-sort-function nil)))
+         (buf-name (or buf-name
+                       zk-index-buffer-name))
+         (pos))
     (setq zk-index-last-format-function format-fn)
     (setq zk-index-last-sort-function sort-fn)
     (with-current-buffer buf-name
@@ -384,7 +386,8 @@ items listed first.")
 
 (defun zk-index-query-files ()
   "Return narrowed list of notes, based on focus or search query."
-  (let* ((command this-command)
+  (let* ((zk--no-gc t)
+         (command this-command)
          (scope (if (zk-index-narrowed-p (buffer-name))
                     (zk-index--current-id-list (buffer-name))
                   (setq zk-index-query-terms nil)
@@ -488,12 +491,13 @@ with query term STRING."
 (defun zk-index--sort-call (sort-fn mode-string)
   "Call SORT-FN with MODE-STRING."
   (if (eq major-mode 'zk-index-mode)
-      (zk-index-refresh (zk-index--current-file-list)
-                        zk-index-last-format-function
-                        sort-fn
-                        (buffer-name))
-    (zk-index--set-mode-name mode-string))
-  (user-error "Not in a ZK-Index")))
+      (let ((zk--no-gc t))
+        (zk-index-refresh (zk-index--current-file-list)
+                          zk-index-last-format-function
+                          sort-fn
+                          (buffer-name))
+        (zk-index--set-mode-name mode-string))
+    (user-error "Not in a ZK-Index")))
 
 (defun zk-index-sort-modified ()
   "Sort index by last modified."

@@ -252,6 +252,7 @@ See `zk-new-note' for details."
 
 (defvar zk-file-history nil)
 (defvar zk-search-history nil)
+(defvar zk--no-gc nil)
 
 ;;; Embark Integration
 
@@ -388,7 +389,7 @@ When `zk-directory-recursive' is non-nil, searches recursively in
 subdirectories of `zk-directory' (except those matching
 `zk-directory-recursive-ignore-dir-regexp') and returns full
 file-paths."
-  (garbage-collect) ;; prevents eventual slowdown
+  ;;  (unless zk--no-gc (garbage-collect)) ;; prevents eventual slowdown
   (let* ((regexp (or regexp zk-id-regexp))
          (list
           (if (not zk-directory-recursive)
