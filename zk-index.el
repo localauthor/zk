@@ -622,14 +622,15 @@ Takes an option POS position argument."
   "Minor mode for `zk-index-auto-scroll'."
   :init-value nil
   :global nil
+  :lighter " ZK-View"
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
+            ([return] . zk-index-view-mode)
             ([remap read-only-mode] . zk-index-view-mode)
             ((kbd "q") . quit-window))
   (if zk-index-view-mode
       (progn
         (read-only-mode)
-        (use-local-map zk-index-mode-map)
         (when zk-index-view-hide-cursor
           (progn
             (scroll-lock-mode 1)
@@ -637,7 +638,6 @@ Takes an option POS position argument."
                         cursor-type)
             (setq-local cursor-type nil))))
     (read-only-mode -1)
-    (use-local-map nil)
     (when zk-enable-link-buttons
       (zk-make-link-buttons))
     (when zk-index-view-hide-cursor
@@ -689,7 +689,6 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
         (generate-new-buffer buffer)
         (zk-index-refresh)))
     (switch-to-buffer buffer)))
-
 
 (provide 'zk-index)
 
