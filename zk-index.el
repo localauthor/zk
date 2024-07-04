@@ -77,7 +77,7 @@ Set to nil to inhibit help-echo."
   :type 'boolean)
 
 (defcustom zk-index-cursor nil
-  "Cursor to use when zk-index is in the selected window.
+  "Cursor to use when `zk-index’ is in the selected window.
 See `cursor-type’ for description of possible values."
   :type
   '(choice (const :tag "Frame default" t)
@@ -488,11 +488,12 @@ with query term STRING."
 (defun zk-index--sort-call (sort-fn mode-string)
   "Call SORT-FN with MODE-STRING."
   (if (eq major-mode 'zk-index-mode)
+      (progn
       (zk-index-refresh (zk-index--current-file-list)
                         zk-index-last-format-function
                         sort-fn
                         (buffer-name))
-    (zk-index--set-mode-name mode-string))
+      (zk-index--set-mode-name mode-string))
   (user-error "Not in a ZK-Index")))
 
 (defun zk-index-sort-modified ()
