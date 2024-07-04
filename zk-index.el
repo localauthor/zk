@@ -100,9 +100,6 @@ example."
 
 ;;; ZK-Index Major Mode Settings
 
-(defvar zk-index-mode-line-orig nil
-  "Value of `mode-line-misc-info' at the start of mode.")
-
 (defvar zk-index-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "n") #'zk-index-next-line)
@@ -125,10 +122,8 @@ example."
 (define-derived-mode zk-index-mode nil "ZK-Index"
   "Mode for `zk-index'.
 \\{zk-index-mode-map}"
-  (setq zk-index-mode-line-orig mode-line-misc-info)
   (read-only-mode)
   (hl-line-mode)
-  (make-local-variable 'show-paren-mode)
   (setq-local show-paren-mode nil)
   (setq cursor-type zk-index-cursor))
 
@@ -409,10 +404,10 @@ items listed first.")
          (files (zk--parse-id 'file-path (remq nil ids))))
     (add-to-history 'zk-search-history string)
     (when files
-      (let ((mode-line (zk-index-query-mode-line command string)))
-        (setq zk-index-query-mode-line mode-line)
-        (zk-index--set-mode-line mode-line)
-        (zk-index--reset-mode-name)))
+      (setq zk-index-query-mode-line
+            (zk-index-query-mode-line command string))
+      (add-to-list 'mode-line-misc-info '(:eval (zk-index--query-mode-line)))
+      (force-mode-line-update t))
     (when (stringp files)
       (setq files (list files)))
     (or files
@@ -466,14 +461,13 @@ with query term STRING."
                          "\" | ")
               "\"]"))))
 
-(defun zk-index--set-mode-line (string)
+(defun zk-index--query-mode-line ()
   "Add STRING to mode-line in `zk-index-mode'."
   (when (eq major-mode 'zk-index-mode)
-    (setq-local mode-line-misc-info string)))
+    zk-index-query-mode-line))
 
 (defun zk-index--reset-mode-line ()
   "Reset mode-line in `zk-index-mode'."
-  (setq-local mode-line-misc-info zk-index-mode-line-orig)
   (setq zk-index-query-mode-line nil
         zk-index-query-terms nil))
 
