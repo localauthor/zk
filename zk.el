@@ -590,7 +590,7 @@ ARG can be zk-file or zk-id as string or list, single or multiple."
 
 (defun zk--formatter (arg format &optional no-proc)
   "Return formatted list from FILES, according to FORMAT.
-ARG can be zk-file or zk-id as string or list, or single or multiple.
+ARG can be zk-file or zk-id as string or list, single or multiple.
 When NO-PROC is non-nil, bypass `zk--processor'."
   (let ((files (if no-proc
                    arg
@@ -605,14 +605,15 @@ When NO-PROC is non-nil, bypass `zk--processor'."
     items))
 
 (defun zk--formatted-string (arg format)
-  "Format a multi-line string from items in ARG, following FORMAT."
+  "Format a multi-line string from items in ARG, following FORMAT.
+ARG can be zk-file or zk-id as string or list, single or multiple."
   (let ((items (zk--formatter arg format)))
     (mapconcat #'identity items "\n\n")))
 
 (defun zk-format-id-and-title (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
 This is the default function set in `zk-format-function' and used by
-`zk--format' therwise, replace the sequence `%t' with the TITLE and
+`zk--format' otherwise, replace the sequence `%t' with the TITLE and
 `%i' with the ID."
   (format-spec format `((?i . ,id) (?t . ,title))))
 
@@ -850,7 +851,6 @@ Optionally call a custom function by setting the variable
           (t
            (error "No zk-links in note")))))
 
-
 ;;;###autoload
 (defun zk-links-in-note ()
   "Select from list of notes linked to in the current note."
@@ -865,6 +865,7 @@ Optionally call a custom function by setting the variable
 ;;;###autoload
 (defun zk-insert-link (arg &optional title)
   "Insert link to note, from ARG.
+ARG can be zk-file or zk-id as string or list, single or multiple.
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable `zk-link-and-title'
 for additional configurations. Optional TITLE."
@@ -944,7 +945,8 @@ brackets \"[[\" initiates completion."
 
 ;;;###autoload
 (defun zk-copy-link-and-title (arg)
-  "Copy link and title for id or file ARG."
+  "Copy link and title from ARG.
+ARG can be zk-file or zk-id as string or list, single or multiple."
   (interactive (list (funcall zk-select-file-function "Copy link: ")))
   (let ((links (zk--formatted-string arg zk-link-and-title-format)))
     (kill-new links)
@@ -1002,7 +1004,7 @@ Defaults to `zk-grep'."
   "Insert TAG at point.
 Select TAG, with completion, from list of all tags in zk notes."
   (interactive (list (completing-read "Insert tag: " (zk--grep-tag-list))))
-  (if (eq zk-tag-insert-function nil)
+  (if (not zk-tag-insert-function)
       (insert tag)
     (save-excursion
       (funcall zk-tag-insert-function tag))))
