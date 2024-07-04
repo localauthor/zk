@@ -72,10 +72,6 @@ Set to nil to inhibit help-echo."
   "Enable automatically showing note at point in ZK-Index."
   :type 'boolean)
 
-(defcustom zk-index-view-hide-cursor t
-  "Hide cursor in `zk-index-view-mode'."
-  :type 'boolean)
-
 (defcustom zk-index-cursor nil
   "Cursor to use when `zk-index’ is in the selected window.
 See `cursor-type’ for description of possible values."
@@ -97,6 +93,14 @@ function must take two arguments, FILE and BUFFER respectively.
 See the default function `zk-index-button-display-action' for an
 example."
   :type 'function)
+
+(defcustom zk-index-view-hide-cursor t
+  "Hide cursor in `zk-index-view-mode'."
+  :type 'boolean)
+
+(defcustom zk-index-view-mode-lighter " ZK-View"
+  "Lighter for `zk-view-mode’."
+  :type 'string)
 
 ;;; ZK-Index Major Mode Settings
 
@@ -125,7 +129,7 @@ example."
   (read-only-mode)
   (hl-line-mode)
   (setq-local show-paren-mode nil)
-  (setq cursor-type zk-index-cursor))
+  (setq-local cursor-type zk-index-cursor))
 
 
 ;;; Declarations
@@ -623,7 +627,7 @@ Takes an option POS position argument."
   "Minor mode for `zk-index-auto-scroll'."
   :init-value nil
   :global nil
-  :lighter " ZK-View"
+  :lighter (:eval zk-index-view-mode-lighter)
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
             ([return] . zk-index-view-mode)
