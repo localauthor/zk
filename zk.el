@@ -724,7 +724,7 @@ Optional TITLE argument."
               (and (eq zk-new-note-link-insert 'ask)
                    (y-or-n-p "Insert link at point? ")))
       (unless buffer-read-only
-        (zk-insert-link new-id title)))
+        (zk-insert-link file-name)))
     (when buffer-file-name
       (save-buffer))
     (find-file file-name)
@@ -740,7 +740,7 @@ Optionally use ORIG-ID for backlink."
   (when (ignore-errors (zk--parse-id 'title orig-id)) ;; check for file
     (progn
       (insert "===\n<- ")
-      (zk--insert-link-and-title orig-id (zk--parse-id 'title orig-id))
+      (zk--insert-link-and-title orig-id)
       (newline)))
   (insert "===\n\n"))
 
@@ -863,12 +863,12 @@ Optionally call a custom function by setting the variable
 ;;; Insert Link
 
 ;;;###autoload
-(defun zk-insert-link (arg &optional title)
+(defun zk-insert-link (arg)
   "Insert link to note, from ARG.
 ARG can be zk-file or zk-id as string or list, single or multiple.
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable `zk-link-and-title'
-for additional configurations. Optional TITLE."
+for additional configurations."
   (interactive
    (list (list (funcall zk-select-file-function "Insert link: "))))
   (if (zk--id-at-point)
@@ -877,27 +877,25 @@ for additional configurations. Optional TITLE."
       (cond
        ((or (and (not pref) (eq 't zk-link-and-title))
             (and pref (not zk-link-and-title)))
-        (zk--insert-link-and-title arg title))
+        (zk--insert-link-and-title arg))
        ((and (not pref) (eq 'ask zk-link-and-title))
         (if (y-or-n-p "Include title? ")
-            (zk--insert-link-and-title arg title)
+            (zk--insert-link-and-title arg)
           (zk--insert-link arg)))
        ((or t
             (and pref (eq 't zk-link-and-title)))
         (zk--insert-link arg))))))
 
-(defun zk--insert-link-and-title (arg &optional title)
-  "Insert link from ARG according to `zk-link-and-title-format'.
-Optional TITLE."
-  (if title
-      (insert (zk--format zk-link-and-title-format arg title))
-    (insert (zk--formatted-string arg zk-link-and-title-format))
-    (when zk-enable-link-buttons
-      (zk-make-link-buttons))))
+(defun zk--insert-link-and-title (arg)
+  "Insert link from ARG according to `zk-link-and-title-format'."
+  (insert (zk--formatted-string arg zk-link-and-title-format))
+  (when zk-enable-link-buttons
+    (zk-make-link-buttons)))
 
-(defun zk--insert-link (id)
-  "Insert link to note with ID, with button optional."
-  (insert (zk--formatted-string id zk-link-format))
+(defun zk--insert-link (arg)
+  "Insert link to note from ARG, with button optional.
+ARG can be zk-file or zk-id as string or list, single or multiple."
+  (insert (zk--formatted-string arg zk-link-format))
   (when zk-enable-link-buttons
     (zk-make-link-buttons)))
 
