@@ -475,17 +475,26 @@ with query term STRING."
   (setq zk-index-query-mode-line nil
         zk-index-query-terms nil))
 
-(defun zk-index--current-id-list (buf-name)
-  "Return list of IDs for index in BUF-NAME, as filepaths."
-  (let (ids)
-    (with-current-buffer (or buf-name
-                             zk-index-buffer-name)
+(defun zk-index--current-id-list (buf-name &optional beg end)
+  "Return list of IDs for index in BUF-NAME.
+If BEG and END are given, only return the IDs in the lines
+between those positions, inclusive."
+  (with-current-buffer buf-name
+    (let ((beg (if (not beg)
+                   (point-min)
+                 (goto-char beg)
+                 (line-beginning-position)))
+          (end (if (not end)
+                   (point-max)
+                 (goto-char end)
+                 (line-end-position)))
+          ids)
       (save-excursion
-        (goto-char (point-min))
+        (goto-char beg)
         (save-match-data
-          (while (re-search-forward zk-id-regexp nil t)
-            (push (match-string-no-properties 0) ids)))
-        ids))))
+          (while (re-search-forward zk-id-regexp end t)
+            (push (match-string-no-properties 0) ids))))
+      (nreverse ids))))
 
 ;;; Index Sort Functions
 
