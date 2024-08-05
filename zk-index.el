@@ -72,12 +72,8 @@ Set to nil to inhibit help-echo."
   "Enable automatically showing note at point in ZK-Index."
   :type 'boolean)
 
-(defcustom zk-index-view-hide-cursor t
-  "Hide cursor in `zk-index-view-mode'."
-  :type 'boolean)
-
 (defcustom zk-index-cursor nil
-  "Cursor to use when zk-index is in the selected window.
+  "Cursor to use when `zk-index’ is in the selected window.
 See `cursor-type’ for description of possible values."
   :type
   '(choice (const :tag "Frame default" t)
@@ -97,6 +93,14 @@ function must take two arguments, FILE and BUFFER respectively.
 See the default function `zk-index-button-display-action' for an
 example."
   :type 'function)
+
+(defcustom zk-index-view-hide-cursor t
+  "Hide cursor in `zk-index-view-mode'."
+  :type 'boolean)
+
+(defcustom zk-index-view-mode-lighter " ZK-View"
+  "Lighter for `zk-view-mode’."
+  :type 'string)
 
 ;;; ZK-Index Major Mode Settings
 
@@ -125,7 +129,7 @@ example."
   (read-only-mode)
   (hl-line-mode)
   (setq-local show-paren-mode nil)
-  (setq cursor-type zk-index-cursor))
+  (setq-local cursor-type zk-index-cursor))
 
 
 ;;; Declarations
@@ -537,11 +541,9 @@ with query term STRING."
       (puthash x (zk--parse-file 'id x) ht))
     (sort list
           (lambda (a b)
-            (let ((one
-                   (gethash a ht))
-                  (two
-                   (gethash b ht)))
-              (string< two one))))))
+            (string>
+             (gethash a ht)
+             (gethash b ht))))))
 
 (defun zk-index--sort-modified (list)
   "Sort LIST for latest modification."
@@ -550,18 +552,20 @@ with query term STRING."
       (puthash x (file-attribute-modification-time (file-attributes x)) ht))
     (sort list
           (lambda (a b)
-            (let ((one
-                   (gethash a ht))
-                  (two
-                   (gethash b ht)))
-              (time-less-p two one))))))
+            (time-less-p
+             (gethash b ht)
+             (gethash a ht))))))
 
 (defun zk-index--sort-size (list)
   "Sort LIST for latest modification."
-  (sort list
-        (lambda (a b)
-          (> (file-attribute-size (file-attributes a))
-             (file-attribute-size (file-attributes b))))))
+  (let ((ht (make-hash-table :test #'equal :size 5000)))
+    (dolist (x list)
+      (puthash x (file-attribute-size (file-attributes x)) ht))
+    (sort list
+          (lambda (a b)
+            (>
+             (gethash a ht)
+             (gethash b ht))))))
 
 ;;; ZK-Index Keymap Commands
 
@@ -626,7 +630,7 @@ Takes an option POS position argument."
   "Minor mode for `zk-index-auto-scroll'."
   :init-value nil
   :global nil
-  :lighter " ZK-View"
+  :lighter (:eval zk-index-view-mode-lighter)
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
             ([return] . zk-index-view-mode)
