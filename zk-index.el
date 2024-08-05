@@ -538,11 +538,9 @@ with query term STRING."
       (puthash x (zk--parse-file 'id x) ht))
     (sort list
           (lambda (a b)
-            (let ((one
-                   (gethash a ht))
-                  (two
-                   (gethash b ht)))
-              (string< two one))))))
+            (string>
+             (gethash a ht)
+             (gethash b ht))))))
 
 (defun zk-index--sort-modified (list)
   "Sort LIST for latest modification."
@@ -551,18 +549,20 @@ with query term STRING."
       (puthash x (file-attribute-modification-time (file-attributes x)) ht))
     (sort list
           (lambda (a b)
-            (let ((one
-                   (gethash a ht))
-                  (two
-                   (gethash b ht)))
-              (time-less-p two one))))))
+            (time-less-p
+             (gethash b ht)
+             (gethash a ht))))))
 
 (defun zk-index--sort-size (list)
   "Sort LIST for latest modification."
-  (sort list
-        (lambda (a b)
-          (> (file-attribute-size (file-attributes a))
-             (file-attribute-size (file-attributes b))))))
+  (let ((ht (make-hash-table :test #'equal :size 5000)))
+    (dolist (x list)
+      (puthash x (file-attribute-size (file-attributes x)) ht))
+    (sort list
+          (lambda (a b)
+            (>
+             (gethash a ht)
+             (gethash b ht))))))
 
 ;;; ZK-Index Keymap Commands
 
