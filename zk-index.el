@@ -265,9 +265,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
       (goto-char (point-min))
       (setq truncate-lines t)
       (unless (zk-index-narrowed-p buf-name)
-        (progn
-          (zk-index--reset-mode-line)
-          (goto-char pos))))))
+        (zk-index--reset-mode-line)
+        (goto-char pos)))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
   "Sort FILES, with option FORMAT-FN and SORT-FN."
@@ -693,9 +692,8 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
   (let ((buffer zk-index-buffer-name))
     (unless (get-buffer buffer)
-      (progn
-        (generate-new-buffer buffer)
-        (zk-index-refresh)))
+      (generate-new-buffer buffer)
+      (zk-index-refresh))
     (switch-to-buffer buffer)))
 
 (provide 'zk-index)

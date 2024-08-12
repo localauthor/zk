@@ -253,9 +253,8 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
               (beginning-of-line)
               (if new-title
                   (unless (string= title new-title)
-                    (progn
-                      (search-forward title end)
-                      (replace-match new-title)))
+                    (search-forward title end)
+                    (replace-match new-title))
                 (progn
                   (search-forward title end)
                   (replace-match (propertize title 'face 'error))))

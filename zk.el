@@ -69,6 +69,7 @@
 (defvar embark-multitarget-actions)
 (defvar embark-general-map)
 (defvar embark-file-map)
+(defvar embark--associated-file-fn-alist)
 
 ;;; Variables
 
