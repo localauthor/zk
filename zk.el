@@ -389,7 +389,10 @@ When `zk-directory-recursive' is non-nil, searches recursively in
 subdirectories of `zk-directory' (except those matching
 `zk-directory-recursive-ignore-dir-regexp') and returns full
 file-paths."
-  ;;  (unless zk--no-gc (garbage-collect)) ;; prevents eventual slowdown
+  (unless zk--no-gc (garbage-collect))
+  ;; note: this call to gc prevents eventual slowdown,
+  ;; but gc is expensive for certain operations in zk-index and zk-luhmann,
+  ;; so we let-bind zk--no-gc there to prevent it
   (let* ((regexp (or regexp zk-id-regexp))
          (list
           (if (not zk-directory-recursive)

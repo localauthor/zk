@@ -298,7 +298,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
       (dolist (file candidates)
         (insert zk-index-prefix file "\n"))
       (zk-index--make-buttons)
-      (zk-index--set-mode-name (format " [%s]" (length candidates))))))
+      (zk-index--set-mode-name (format "[%s]" (length candidates))))))
 
 (defun zk-index--make-buttons ()
   "Make buttons in ZK-Index buffer."
