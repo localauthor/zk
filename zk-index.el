@@ -297,7 +297,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
       (dolist (file candidates)
         (insert zk-index-prefix file "\n"))
       (zk-index--make-buttons)
-      (zk-index--set-mode-name (format "[%s]" (length candidates))))))
+      (zk-index--set-mode-name (format " [%s]" (length candidates))))))
 
 (defun zk-index--make-buttons ()
   "Make buttons in ZK-Index buffer."
@@ -505,22 +505,22 @@ with query term STRING."
 (defun zk-index-sort-modified ()
   "Sort index by last modified."
   (interactive)
-  (zk-index--sort-call #'zk-index--sort-modified "by modified"))
+  (zk-index--sort-call #'zk-index--sort-modified " by modified"))
 
 (defun zk-index-sort-created ()
   "Sort index by date created."
   (interactive)
-  (zk-index--sort-call #'zk-index--sort-created "by created"))
+  (zk-index--sort-call #'zk-index--sort-created " by created"))
 
 (defun zk-index-sort-size ()
   "Sort index by size."
   (interactive)
-  (zk-index--sort-call #'zk-index--sort-size "by size"))
+  (zk-index--sort-call #'zk-index--sort-size " by size"))
 
 (defun zk-index--set-mode-name (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
   (when (eq major-mode 'zk-index-mode)
-    (setq mode-name (concat mode-name " " string))))
+    (setq mode-name (concat mode-name string))))
 
 (defun zk-index--reset-mode-name ()
   "Reset `mode-name' in `zk-index-mode'."
