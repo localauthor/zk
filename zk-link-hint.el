@@ -6,8 +6,8 @@
 ;; Created: January 4, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
-;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "24.4") (link-hint "0.1") (zk "0.4"))
+;; URL: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "25.1") (link-hint "0.1") (zk "0.4"))
 
 
 ;; This program is free software; you can redistribute it and/or modify

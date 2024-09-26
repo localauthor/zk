@@ -6,7 +6,7 @@
 ;; Created: June 25, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
-;; Homepage: https://github.com/localauthor/zk
+;; URL: https://github.com/localauthor/zk
 ;; Package-Requires: ((emacs "27.1"))
 
 
