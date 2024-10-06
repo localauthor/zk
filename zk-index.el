@@ -656,18 +656,16 @@ Takes an option POS position argument."
   "Move to the Nth next button, or Nth previous button if N is negative.
 If `zk-index-auto-scroll' is non-nil, show note in other window."
   (let ((split-width-threshold nil)
-        (index-name zk-index-buffer-name))
+        (index-window (get-buffer-window
+                       zk-index-buffer-name)))
     (if zk-index-auto-scroll
         (progn
-          (cond ((not (zk-file-p)))
-                (zk-index-view--kill
-                 (kill-buffer)
-                 (select-window (get-buffer-window
-                                 index-name)))
-                ((not zk-index-view--kill)
-                 (zk-index-view-mode)
-                 (select-window (get-buffer-window
-                                 index-name))))
+          (when (and (zk-file-p)
+                     index-window)
+            (if zk-index-view--kill
+                (kill-buffer)
+              (zk-index-view-mode -1))
+            (select-window index-window))
           (forward-button N)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
