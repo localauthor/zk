@@ -341,7 +341,7 @@ on zk-id at point."
         (items
          (cond
           (arg (zk--formatted-string arg zk-index-format))
-          ((eq major-mode 'zk-index-mode)
+          ((derived-mode-p 'zk-index-mode)
            (if (use-region-p)
                (buffer-substring
                 (save-excursion
@@ -382,7 +382,7 @@ on zk-id at point."
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (zk-desktop-mode))
-    (if (eq major-mode 'zk-index-mode)
+    (if (derived-mode-p 'zk-index-mode)
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
 

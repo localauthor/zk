@@ -292,7 +292,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index--insert (candidates)
   "Insert CANDIDATES into ZK-Index."
-  (when (eq major-mode 'zk-index-mode)
+  (when (derived-mode-p 'zk-index-mode)
     (save-excursion
       (dolist (file candidates)
         (insert zk-index-prefix file "\n"))
@@ -356,7 +356,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-search ()
   "Narrow index based on regexp search of note contents."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
+  (if (derived-mode-p 'zk-index-mode)
       (zk-index-refresh
        (zk-index-query-files)
        zk-index-last-format-function
@@ -371,7 +371,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-focus ()
   "Narrow index based on regexp search of note titles."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
+  (if (derived-mode-p 'zk-index-mode)
       (zk-index-refresh
        (zk-index-query-files)
        zk-index-last-format-function
@@ -469,7 +469,7 @@ with query term STRING."
 
 (defun zk-index--query-mode-line ()
   "Add STRING to mode-line in `zk-index-mode'."
-  (when (eq major-mode 'zk-index-mode)
+  (when (derived-mode-p 'zk-index-mode)
     zk-index-query-mode-line))
 
 (defun zk-index--reset-mode-line ()
@@ -493,7 +493,7 @@ with query term STRING."
 
 (defun zk-index--sort-call (sort-fn mode-string)
   "Call SORT-FN with MODE-STRING."
-  (if (eq major-mode 'zk-index-mode)
+  (if (derived-mode-p 'zk-index-mode)
       (let ((zk--no-gc t))
         (zk-index-refresh (zk-index--current-file-list)
                           zk-index-last-format-function
@@ -519,7 +519,7 @@ with query term STRING."
 
 (defun zk-index--set-mode-name (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
-  (when (eq major-mode 'zk-index-mode)
+  (when (derived-mode-p 'zk-index-mode)
     (setq mode-name (concat mode-name string))))
 
 (defun zk-index--reset-mode-name ()
