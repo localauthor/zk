@@ -113,15 +113,16 @@ Select TAG, with completion, from list of all tags in zk notes."
      :history  zk-history
      :new      ,#'zk-new-note
      :state    ,#'consult--buffer-state
-     :items    ,(lambda ()
-                  (remq nil
-                        (mapcar
-                         (lambda (x)
-                           (when
-                               (and (buffer-file-name x)
-                                    (zk-file-p (buffer-file-name x)))
-                             (buffer-name x)))
-                         (buffer-list))))))
+     :items
+     ,(lambda ()
+        (consult--buffer-query :sort 'visibility
+                               :as #'consult--buffer-pair
+                               :predicate
+                               (lambda (buf)
+                                 (and (buffer-file-name buf)
+                                      (zk-file-p
+                                       (buffer-file-name buf))))))))
+
 
 (defun zk-consult-current-notes ()
   "Select a currently open note using `consult-buffer'.
