@@ -5,9 +5,9 @@
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 4, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.7
+;; Version: 0.8
 ;; URL: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "25.1"))
+;; Package-Requires: ((emacs "28.1"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -366,7 +366,7 @@ an internal loop."
                 (push (car item) ids))
             (push (car item) ids)))
         ids)
-    (zk--parse-file 'id (zk--directory-files t))))
+    (ensure-list (zk--parse-file 'id (zk--directory-files t)))))
 
 (defun zk-id-p (id)
   "Return t if ID is already in use as a zk-id."
