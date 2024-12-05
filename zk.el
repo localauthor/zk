@@ -5,9 +5,9 @@
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 4, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.7
+;; Version: 0.8
 ;; URL: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "25.1"))
+;; Package-Requires: ((emacs "28.1"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -302,15 +302,6 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
   (and list
        (listp list)
        (null (cdr list))))
-
-(when (version< emacs-version "28.1")
-  (defun ensure-list (object)
-    "Return OBJECT as a list.
-If OBJECT is already a list, return OBJECT itself.  If it's
-not a list, return a one-element list containing OBJECT."
-    (if (listp object)
-	object
-      (list object))))
 
 (defun zk-file-name-regexp ()
   "Return the correct regexp matching zk file names.
