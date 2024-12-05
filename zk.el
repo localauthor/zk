@@ -565,9 +565,7 @@ file extension."
                                 (match-string 2 file)))
                        (_ (signal 'wrong-type-argument
                                   `((or 'id 'title) ,target))))))
-                 (if (listp files)
-                     files
-                   (list files)))))
+                 (ensure-list files))))
     (if (zk--singleton-p result)
         (car result)
       result)))
