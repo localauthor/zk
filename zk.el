@@ -303,6 +303,15 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
        (listp list)
        (null (cdr list))))
 
+(when (version< emacs-version "28.1")
+  (defun ensure-list (object)
+    "Return OBJECT as a list.
+If OBJECT is already a list, return OBJECT itself.  If it's
+not a list, return a one-element list containing OBJECT."
+    (if (listp object)
+	object
+      (list object))))
+
 (defun zk-file-name-regexp ()
   "Return the correct regexp matching zk file names.
 The regexp captures these groups:
