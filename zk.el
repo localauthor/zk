@@ -366,7 +366,7 @@ an internal loop."
                 (push (car item) ids))
             (push (car item) ids)))
         ids)
-    (zk--parse-file 'id (zk--directory-files t))))
+    (ensure-list (zk--parse-file 'id (zk--directory-files t)))))
 
 (defun zk-id-p (id)
   "Return t if ID is already in use as a zk-id."
