@@ -1,13 +1,13 @@
 ;;; zk-index.el --- Index for zk   -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2023  Grant Rosson
+;; Copyright (C) 2022-2024  Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 25, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.9
-;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "27.1")(zk "0.3"))
+;; Version: 0.10
+;; URL: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "27.1")(zk "0.7"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -72,9 +72,19 @@ Set to nil to inhibit help-echo."
   "Enable automatically showing note at point in ZK-Index."
   :type 'boolean)
 
-(defcustom zk-index-view-hide-cursor t
-  "Hide cursor in `zk-index-view-mode'."
-  :type 'boolean)
+(defcustom zk-index-cursor nil
+  "Cursor to use when `zk-index’ is in the selected window.
+See `cursor-type’ for description of possible values."
+  :type
+  '(choice (const :tag "Frame default" t)
+           (const :tag "Filled box" box)
+           (cons :tag "Box with specified size" (const box) integer)
+           (const :tag "Hollow cursor" hollow)
+           (const :tag "Vertical bar" bar)
+           (cons :tag "Vertical bar with specified height" (const bar) integer)
+           (const :tag "Horizontal bar" hbar)
+           (cons :tag "Horizontal bar with specified width" (const hbar) integer)
+           (const :tag "None " nil)))
 
 (defcustom zk-index-button-display-function 'zk-index-button-display-action
   "Function called when buttons pressed in ZK-Index.
@@ -84,10 +94,15 @@ See the default function `zk-index-button-display-action' for an
 example."
   :type 'function)
 
-;;; ZK-Index Major Mode Settings
+(defcustom zk-index-view-hide-cursor t
+  "Hide cursor in `zk-index-view-mode'."
+  :type 'boolean)
 
-(defvar zk-index-mode-line-orig nil
-  "Value of `mode-line-misc-info' at the start of mode.")
+(defcustom zk-index-view-mode-lighter " ZK-View"
+  "Lighter for `zk-view-mode’."
+  :type 'string)
+
+;;; ZK-Index Major Mode Settings
 
 (defvar zk-index-mode-map
   (let ((map (make-sparse-keymap)))
@@ -111,12 +126,10 @@ example."
 (define-derived-mode zk-index-mode nil "ZK-Index"
   "Mode for `zk-index'.
 \\{zk-index-mode-map}"
-  (setq zk-index-mode-line-orig mode-line-misc-info)
   (read-only-mode)
   (hl-line-mode)
-  (make-local-variable 'show-paren-mode)
   (setq-local show-paren-mode nil)
-  (setq cursor-type nil))
+  (setq-local cursor-type zk-index-cursor))
 
 
 ;;; Declarations
@@ -126,6 +139,7 @@ example."
 (defvar zk-index-query-mode-line nil)
 (defvar zk-index-query-terms nil)
 (defvar zk-search-history)
+(defvar zk--no-gc)
 
 (declare-function zk-file-p zk)
 (declare-function zk--grep-id-list zk)
@@ -149,8 +163,7 @@ example."
     (add-to-list 'embark-exporters-alist '(zk-file . zk-index-narrow))
     (add-to-list 'embark-exporters-alist '(zk-id . zk-index-narrow))
     (define-key zk-file-map (kbd "n")  #'zk-index-narrow)
-    (define-key zk-id-map (kbd "n") #'zk-index-narrow)
-    (define-key zk-id-map (kbd "i") #'zk-index-insert-link)))
+    (define-key zk-file-map (kbd "i") #'zk-index-insert-link)))
 
 (defun zk-index-embark-target ()
   "Target zk-id of button at point in ZK-Index."
@@ -158,8 +171,9 @@ example."
     (save-excursion
       (beginning-of-line)
       (re-search-forward zk-id-regexp (line-end-position)))
-    (let ((zk-id (match-string-no-properties 0)))
-      `(zk-id ,zk-id . ,(cons (line-beginning-position) (line-end-position))))))
+    (let* ((zk-id (match-string-no-properties 1))
+           (zk-file (zk--parse-id 'file-path zk-id)))
+      `(zk-file ,zk-file . ,(cons (line-beginning-position) (line-end-position))))))
 
 (defun zk-index-narrow (arg)
   "Produce a ZK-Index narrowed to notes listed in ARG.
@@ -231,28 +245,28 @@ all files in `zk-directory' will be returned as formatted candidates."
   "Refresh the index.
 Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive)
-  (let ((inhibit-message t)
-        (inhibit-read-only t)
-        (files (or files
-                   (zk--directory-files t)))
-        (sort-fn (or sort-fn
-                     (setq zk-index-last-sort-function nil)))
-        (buf-name (or buf-name
-                      zk-index-buffer-name))
-        (line))
+  (let* ((zk--no-gc t)
+         (inhibit-message t)
+         (inhibit-read-only t)
+         (files (or files
+                    (zk--directory-files t)))
+         (sort-fn (or sort-fn
+                      (setq zk-index-last-sort-function nil)))
+         (buf-name (or buf-name
+                       zk-index-buffer-name))
+         (pos))
     (setq zk-index-last-format-function format-fn)
     (setq zk-index-last-sort-function sort-fn)
     (with-current-buffer buf-name
-      (setq line (line-number-at-pos))
+      (setq pos (point))
       (erase-buffer)
       (zk-index--reset-mode-name)
       (zk-index--sort files format-fn sort-fn)
       (goto-char (point-min))
       (setq truncate-lines t)
       (unless (zk-index-narrowed-p buf-name)
-        (progn
-          (zk-index--reset-mode-line)
-          (goto-line line))))))
+        (zk-index--reset-mode-line)
+        (goto-char pos)))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
   "Sort FILES, with option FORMAT-FN and SORT-FN."
@@ -278,7 +292,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index--insert (candidates)
   "Insert CANDIDATES into ZK-Index."
-  (when (eq major-mode 'zk-index-mode)
+  (when (derived-mode-p 'zk-index-mode)
     (save-excursion
       (dolist (file candidates)
         (insert zk-index-prefix file "\n"))
@@ -342,7 +356,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-search ()
   "Narrow index based on regexp search of note contents."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
+  (if (derived-mode-p 'zk-index-mode)
       (zk-index-refresh
        (zk-index-query-files)
        zk-index-last-format-function
@@ -357,7 +371,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-focus ()
   "Narrow index based on regexp search of note titles."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
+  (if (derived-mode-p 'zk-index-mode)
       (zk-index-refresh
        (zk-index-query-files)
        zk-index-last-format-function
@@ -375,7 +389,8 @@ items listed first.")
 
 (defun zk-index-query-files ()
   "Return narrowed list of notes, based on focus or search query."
-  (let* ((command this-command)
+  (let* ((zk--no-gc t)
+         (command this-command)
          (scope (if (zk-index-narrowed-p (buffer-name))
                     (zk-index--current-id-list (buffer-name))
                   (setq zk-index-query-terms nil)
@@ -395,10 +410,10 @@ items listed first.")
          (files (zk--parse-id 'file-path (remq nil ids))))
     (add-to-history 'zk-search-history string)
     (when files
-      (let ((mode-line (zk-index-query-mode-line command string)))
-        (setq zk-index-query-mode-line mode-line)
-        (zk-index--set-mode-line mode-line)
-        (zk-index--reset-mode-name)))
+      (setq zk-index-query-mode-line
+            (zk-index-query-mode-line command string))
+      (add-to-list 'mode-line-misc-info '(:eval (zk-index--query-mode-line)))
+      (force-mode-line-update t))
     (when (stringp files)
       (setq files (list files)))
     (or files
@@ -452,14 +467,13 @@ with query term STRING."
                          "\" | ")
               "\"]"))))
 
-(defun zk-index--set-mode-line (string)
+(defun zk-index--query-mode-line ()
   "Add STRING to mode-line in `zk-index-mode'."
-  (when (eq major-mode 'zk-index-mode)
-    (setq-local mode-line-misc-info string)))
+  (when (derived-mode-p 'zk-index-mode)
+    zk-index-query-mode-line))
 
 (defun zk-index--reset-mode-line ()
   "Reset mode-line in `zk-index-mode'."
-  (setq-local mode-line-misc-info zk-index-mode-line-orig)
   (setq zk-index-query-mode-line nil
         zk-index-query-terms nil))
 
@@ -477,45 +491,35 @@ with query term STRING."
 
 ;;; Index Sort Functions
 
+(defun zk-index--sort-call (sort-fn mode-string)
+  "Call SORT-FN with MODE-STRING."
+  (if (derived-mode-p 'zk-index-mode)
+      (let ((zk--no-gc t))
+        (zk-index-refresh (zk-index--current-file-list)
+                          zk-index-last-format-function
+                          sort-fn
+                          (buffer-name))
+        (zk-index--set-mode-name mode-string))
+    (user-error "Not in a ZK-Index")))
+
 (defun zk-index-sort-modified ()
   "Sort index by last modified."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
-      (progn
-        (zk-index-refresh (zk-index--current-file-list)
-                          zk-index-last-format-function
-                          #'zk-index--sort-modified
-                          (buffer-name))
-        (zk-index--set-mode-name " by modified"))
-    (user-error "Not in a ZK-Index")))
+  (zk-index--sort-call #'zk-index--sort-modified " by modified"))
 
 (defun zk-index-sort-created ()
   "Sort index by date created."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
-      (progn
-        (zk-index-refresh (zk-index--current-file-list)
-                          zk-index-last-format-function
-                          #'zk-index--sort-created
-                          (buffer-name))
-        (zk-index--set-mode-name " by created"))
-    (user-error "Not in a ZK-Index")))
+  (zk-index--sort-call #'zk-index--sort-created " by created"))
 
 (defun zk-index-sort-size ()
   "Sort index by size."
   (interactive)
-  (if (eq major-mode 'zk-index-mode)
-      (progn
-        (zk-index-refresh (zk-index--current-file-list)
-                          zk-index-last-format-function
-                          #'zk-index--sort-size
-                          (buffer-name))
-        (zk-index--set-mode-name " by size"))
-    (user-error "Not in a ZK-Index")))
+  (zk-index--sort-call #'zk-index--sort-size " by size"))
 
 (defun zk-index--set-mode-name (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
-  (when (eq major-mode 'zk-index-mode)
+  (when (derived-mode-p 'zk-index-mode)
     (setq mode-name (concat mode-name string))))
 
 (defun zk-index--reset-mode-name ()
@@ -536,11 +540,9 @@ with query term STRING."
       (puthash x (zk--parse-file 'id x) ht))
     (sort list
           (lambda (a b)
-            (let ((one
-                   (gethash a ht))
-                  (two
-                   (gethash b ht)))
-              (string< two one))))))
+            (string>
+             (gethash a ht)
+             (gethash b ht))))))
 
 (defun zk-index--sort-modified (list)
   "Sort LIST for latest modification."
@@ -549,18 +551,20 @@ with query term STRING."
       (puthash x (file-attribute-modification-time (file-attributes x)) ht))
     (sort list
           (lambda (a b)
-            (let ((one
-                   (gethash a ht))
-                  (two
-                   (gethash b ht)))
-              (time-less-p two one))))))
+            (time-less-p
+             (gethash b ht)
+             (gethash a ht))))))
 
 (defun zk-index--sort-size (list)
   "Sort LIST for latest modification."
-  (sort list
-        (lambda (a b)
-          (> (file-attribute-size (file-attributes a))
-             (file-attribute-size (file-attributes b))))))
+  (let ((ht (make-hash-table :test #'equal :size 5000)))
+    (dolist (x list)
+      (puthash x (file-attribute-size (file-attributes x)) ht))
+    (sort list
+          (lambda (a b)
+            (>
+             (gethash a ht)
+             (gethash b ht))))))
 
 ;;; ZK-Index Keymap Commands
 
@@ -576,12 +580,15 @@ with query term STRING."
   "View note in `zk-index-view-mode'."
   (interactive)
   (beginning-of-line)
-  (let* ((id (zk-index--button-at-point-p))
+  (let* ((zk-enable-link-buttons nil)
+         (id (zk-index--button-at-point-p))
          (file (zk--parse-id 'file-path id))
          (kill (unless (get-file-buffer file)
                  t))
-         (buffer (find-file-noselect file)))
+         (buffer (find-file-noselect file))
+         (index-name (buffer-name)))
     (funcall zk-index-button-display-function file buffer)
+    (setq-local zk-index-buffer-name index-name)
     (setq-local zk-index-view--kill kill)
     (zk-index-view-mode)))
 
@@ -621,14 +628,15 @@ Takes an option POS position argument."
   "Minor mode for `zk-index-auto-scroll'."
   :init-value nil
   :global nil
+  :lighter (:eval zk-index-view-mode-lighter)
   :keymap '(((kbd "n") . zk-index-next-line)
             ((kbd "p") . zk-index-previous-line)
+            ([return] . zk-index-view-mode)
             ([remap read-only-mode] . zk-index-view-mode)
             ((kbd "q") . quit-window))
   (if zk-index-view-mode
       (progn
         (read-only-mode)
-        (use-local-map zk-index-mode-map)
         (when zk-index-view-hide-cursor
           (progn
             (scroll-lock-mode 1)
@@ -636,51 +644,44 @@ Takes an option POS position argument."
                         cursor-type)
             (setq-local cursor-type nil))))
     (read-only-mode -1)
-    (use-local-map nil)
+    (when zk-enable-link-buttons
+      (zk-make-link-buttons))
     (when zk-index-view-hide-cursor
       (scroll-lock-mode -1)
       (setq-local cursor-type (or zk-index-view--cursor
                                   t)))))
 
+(defun zk-index-forward-button (N)
+  "Move to the Nth next button, or Nth previous button if N is negative.
+If `zk-index-auto-scroll' is non-nil, show note in other window."
+  (let ((split-width-threshold nil)
+        (index-window (get-buffer-window
+                       zk-index-buffer-name)))
+    (if zk-index-auto-scroll
+        (progn
+          (when (and (zk-file-p)
+                     index-window)
+            (if zk-index-view--kill
+                (kill-buffer)
+              (zk-index-view-mode -1))
+            (select-window index-window))
+          (forward-button N)
+          (hl-line-highlight)
+          (unless (looking-at-p "[[:space:]]*$")
+            (zk-index-view-note)))
+      (forward-button N))))
+
 (defun zk-index-next-line ()
   "Move to next line.
 If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((split-width-threshold nil))
-    (if zk-index-auto-scroll
-        (progn
-          (cond ((not (zk-file-p)))
-                (zk-index-view--kill
-                 (kill-buffer)
-                 (other-window -1))
-                ((not zk-index-view--kill)
-                 (zk-index-view-mode)
-                 (other-window -1)))
-          (forward-button 1)
-          (hl-line-highlight)
-          (unless (looking-at-p "[[:space:]]*$")
-            (zk-index-view-note)))
-      (forward-button 1))))
+  (zk-index-forward-button 1))
 
 (defun zk-index-previous-line ()
   "Move to previous line.
 If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
-  (let ((split-width-threshold nil))
-    (if zk-index-auto-scroll
-        (progn
-          (cond ((not (zk-file-p)))
-                (zk-index-view--kill
-                 (kill-buffer)
-                 (other-window -1))
-                ((not zk-index-view--kill)
-                 (zk-index-view-mode)
-                 (other-window -1)))
-          (forward-button -1)
-          (hl-line-highlight)
-          (unless (looking-at-p "[[:space:]]*$")
-            (zk-index-view-note)))
-      (forward-button -1))))
+  (zk-index-forward-button -1))
 
 ;;;###autoload
 (defun zk-index-switch-to-index ()
@@ -688,11 +689,9 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
   (interactive)
   (let ((buffer zk-index-buffer-name))
     (unless (get-buffer buffer)
-      (progn
-        (generate-new-buffer buffer)
-        (zk-index-refresh)))
+      (generate-new-buffer buffer)
+      (zk-index-refresh))
     (switch-to-buffer buffer)))
-
 
 (provide 'zk-index)
 

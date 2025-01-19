@@ -1,13 +1,13 @@
 ;;; zk-link-hint.el --- Link-Hint integration for zk  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2023 Grant Rosson
+;; Copyright (C) 2022-2024 Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 4, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
-;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "24.4") (link-hint "0.1") (zk "0.4"))
+;; URL: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "25.1") (link-hint "0.1") (zk "0.4"))
 
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,9 @@
 
 (require 'zk)
 (require 'link-hint)
+
+
+(defvar zk-link-hint-preview--kill-last)
 
 (defun zk-link-hint--zk-link-at-point-p ()
   "Return the ID for the zk-link at the point or nil."
@@ -66,7 +69,8 @@ Only search the range between just after the point and BOUND."
   (defun link-hint--aw-select-zk-link (id)
     (with-demoted-errors "%s"
       (if (> (length (aw-window-list)) 1)
-          (let ((window (aw-select nil))
+          (let ((switch-to-buffer-obey-display-actions nil)
+                (window (aw-select nil))
                 (buffer (current-buffer))
                 (new-buffer))
             (zk-follow-link-at-point id)
@@ -81,7 +85,8 @@ Only search the range between just after the point and BOUND."
   (defun link-hint--aw-select-button (_link)
     (with-demoted-errors "%s"
       (if (> (length (aw-window-list)) 1)
-          (let ((window (aw-select nil))
+          (let ((switch-to-buffer-obey-display-actions nil)
+                (window (aw-select nil))
                 (buffer (current-buffer))
                 (new-buffer))
             (if (re-search-forward zk-id-regexp (line-end-position))
@@ -101,9 +106,9 @@ Only search the range between just after the point and BOUND."
   (link-hint-define-type 'zk-link
     :preview #'link-hint-preview-zk-link)
 
-  (defun link-hint-preview-zk-link (&optional id)
+  (defun link-hint-preview-zk-link (&optional _id)
     "Pop up a frame containing zk-file for ID at point.
-Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
+Set pop-up frame parameters in `link-hint-preview-frame-parameters'."
     (interactive)
     (let* ((id (or (zk--id-at-point)
                    (zk-index--button-at-point-p)))
@@ -122,7 +127,7 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
         (setq-local link-hint-preview--origin-frame frame)
         (link-hint-preview-mode))))
 
-  (defalias 'zk-preview 'link-hint-preview-zk-link)
+  (defalias 'zk-preview #'link-hint-preview-zk-link)
 
   (link-hint-define-type 'button
     :preview #'link-hint-preview-button)
@@ -149,8 +154,7 @@ Set pop-up frame parameters in 'link-hint-preview-frame-parameters'."
          (dedicated . t)))
       (with-current-buffer new-buffer
         (setq-local link-hint-preview--origin-frame frame)
-        (link-hint-preview-mode))))
-  )
+        (link-hint-preview-mode)))))
 
 (provide 'zk-link-hint)
 

@@ -1,12 +1,12 @@
 ;;; zk-consult.el --- Consult integration for zk  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2023 Grant Rosson
+;; Copyright (C) 2022-2024 Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 4, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.2
-;; Homepage: https://github.com/localauthor/zk
+;; URL: https://github.com/localauthor/zk
 ;; Package-Requires: ((emacs "27.1") (zk "0.4") (consult "0.14"))
 
 
@@ -107,21 +107,22 @@ Select TAG, with completion, from list of all tags in zk notes."
 ;;; Current Notes Consult Source
 
 (defvar zk-consult-source
-  `(:name "zk"
-          :narrow (?z . "zk - current notes")
-          :hidden n
-          :category buffer
-          :history zk-history
-          :state ,#'consult--buffer-state
-          :items ,(lambda ()
-                    (remq nil
-                        (mapcar
-                         (lambda (x)
-                           (when
-                               (and (buffer-file-name x)
-                                    (zk-file-p (buffer-file-name x)))
-                             (buffer-name x)))
-                         (buffer-list))))))
+  `( :name     "zk"
+     :narrow   (?z . "zk - current notes")
+     :category zk-file
+     :history  zk-history
+     :new      ,#'zk-new-note
+     :state    ,#'consult--buffer-state
+     :items
+     ,(lambda ()
+        (consult--buffer-query :sort 'visibility
+                               :as #'consult--buffer-pair
+                               :predicate
+                               (lambda (buf)
+                                 (and (buffer-file-name buf)
+                                      (zk-file-p
+                                       (buffer-file-name buf))))))))
+
 
 (defun zk-consult-current-notes ()
   "Select a currently open note using `consult-buffer'.

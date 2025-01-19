@@ -1,12 +1,12 @@
 ;;; zk-citar.el --- Citar integration for zk                -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2023  Grant Rosson
+;; Copyright (C) 2022-2024  Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: July 7, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
-;; Homepage: https://github.com/localauthor/zk
+;; URL: https://github.com/localauthor/zk
 ;; Package-Requires: ((emacs "27.1") (citar "0.9.7") (zk "0.4"))
 ;; Keywords: tools, extensions
 
@@ -78,12 +78,11 @@ Must include \"${=key=}\"."
   (let* ((files (make-hash-table :test 'equal))
          (key-string (string-join keys "\\|"))
          (filematch (or key-string zk-citar-citekey-regexp)))
-    (prog1 files
-      (dolist (file (zk--directory-files t filematch))
-        (let ((key (or (car keys)
-                       (and (string-match zk-citar-citekey-regexp file)
-                            (match-string 0 file)))))
-          (push file (gethash key files)))))))
+    (dolist (file (zk--directory-files t filematch) files)
+      (let ((key (or (car keys)
+                     (and (string-match zk-citar-citekey-regexp file)
+                          (match-string 0 file)))))
+        (push file (gethash key files))))))
 
 
 ;;;; hasitems
@@ -110,13 +109,13 @@ Must include \"${=key=}\"."
 
 ;;;; Register citar-note-source
 
-(citar-register-notes-source 'zk '(:name "zk"
-                                   :category zk-file
-                                   :items zk-citar--get-notes
-                                   :hasitems zk-citar--has-notes
-                                   :open find-file
-                                   :create zk-citar--create-note
-                                   :transform file-name-nondirectory))
+(citar-register-notes-source 'zk '( :name "zk"
+                                    :category zk-file
+                                    :items zk-citar--get-notes
+                                    :hasitems zk-citar--has-notes
+                                    :open find-file
+                                    :create zk-citar--create-note
+                                    :transform file-name-nondirectory))
 
 (provide 'zk-citar)
 ;;; zk-citar.el ends here

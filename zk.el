@@ -1,13 +1,13 @@
 ;;; zk.el --- Functions for working with Zettelkasten-style linked notes -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2023 Grant Rosson
+;; Copyright (C) 2022-2024 Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 4, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.6
-;; Homepage: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "25.1"))
+;; Version: 0.8
+;; URL: https://github.com/localauthor/zk
+;; Package-Requires: ((emacs "28.1"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -69,6 +69,7 @@
 (defvar embark-multitarget-actions)
 (defvar embark-general-map)
 (defvar embark-file-map)
+(defvar embark--associated-file-fn-alist)
 
 ;;; Variables
 
@@ -150,6 +151,12 @@ insertion. See `zk-new-note-header' for an example."
 (defcustom zk-select-file-function #'zk--select-file
   "Function for performing completing read.
 Must take an optional prompt and a list of files"
+  :type 'function)
+
+(defcustom zk-tag-insert-function nil
+  "Function for inserting tag.
+Function must take a single argument TAG, as a string.
+If nil, tag will be inserted at point."
   :type 'function)
 
 (defcustom zk-search-function #'zk-grep
@@ -250,6 +257,7 @@ See `zk-new-note' for details."
 
 (defvar zk-file-history nil)
 (defvar zk-search-history nil)
+(defvar zk--no-gc nil)
 
 ;;; Embark Integration
 
@@ -282,6 +290,7 @@ See `zk-new-note' for details."
 Adds zk-id as an Embark target, and adds `zk-id-map' and
 `zk-file-map' to `embark-keymap-alist'."
   (with-eval-after-load 'embark
+    (add-to-list 'embark--associated-file-fn-alist '(zk-file . identity))
     (add-to-list 'embark-multitarget-actions 'zk-copy-link-and-title)
     (add-to-list 'embark-multitarget-actions 'zk-insert-link)
     (add-to-list 'embark-target-finders 'zk-embark-target-zk-id-at-point)
@@ -361,7 +370,7 @@ an internal loop."
                 (push (car item) ids))
             (push (car item) ids)))
         ids)
-    (zk--parse-file 'id (zk--directory-files t))))
+    (ensure-list (zk--parse-file 'id (zk--directory-files t)))))
 
 (defun zk-id-p (id)
   "Return t if ID is already in use as a zk-id."
@@ -385,7 +394,10 @@ When `zk-directory-recursive' is non-nil, searches recursively in
 subdirectories of `zk-directory' (except those matching
 `zk-directory-recursive-ignore-dir-regexp') and returns full
 file-paths."
-  (garbage-collect) ;; prevents eventual slowdown
+  (unless zk--no-gc (garbage-collect))
+  ;; note: this call to gc prevents eventual slowdown,
+  ;; but gc is expensive for certain operations in zk-index and zk-luhmann,
+  ;; so we let-bind zk--no-gc there to prevent it
   (let* ((regexp (or regexp zk-id-regexp))
          (list
           (if (not zk-directory-recursive)
@@ -557,9 +569,7 @@ file extension."
                                 (match-string 2 file)))
                        (_ (signal 'wrong-type-argument
                                   `((or 'id 'title) ,target))))))
-                 (if (listp files)
-                     files
-                   (list files)))))
+                 (ensure-list files))))
     (if (zk--singleton-p result)
         (car result)
       result)))
@@ -587,7 +597,7 @@ ARG can be zk-file or zk-id as string or list, single or multiple."
 
 (defun zk--formatter (arg format &optional no-proc)
   "Return formatted list from FILES, according to FORMAT.
-ARG can be zk-file or zk-id as string or list, or single or multiple.
+ARG can be zk-file or zk-id as string or list, single or multiple.
 When NO-PROC is non-nil, bypass `zk--processor'."
   (let ((files (if no-proc
                    arg
@@ -602,14 +612,15 @@ When NO-PROC is non-nil, bypass `zk--processor'."
     items))
 
 (defun zk--formatted-string (arg format)
-  "Format a multi-line string from items in ARG, following FORMAT."
+  "Format a multi-line string from items in ARG, following FORMAT.
+ARG can be zk-file or zk-id as string or list, single or multiple."
   (let ((items (zk--formatter arg format)))
     (mapconcat #'identity items "\n\n")))
 
 (defun zk-format-id-and-title (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
 This is the default function set in `zk-format-function' and used by
-`zk--format' therwise, replace the sequence `%t' with the TITLE and
+`zk--format' otherwise, replace the sequence `%t' with the TITLE and
 `%i' with the ID."
   (format-spec format `((?i . ,id) (?t . ,title))))
 
@@ -720,7 +731,7 @@ Optional TITLE argument."
               (and (eq zk-new-note-link-insert 'ask)
                    (y-or-n-p "Insert link at point? ")))
       (unless buffer-read-only
-        (zk-insert-link new-id title)))
+        (zk-insert-link file-name)))
     (when buffer-file-name
       (save-buffer))
     (find-file file-name)
@@ -736,7 +747,7 @@ Optionally use ORIG-ID for backlink."
   (when (ignore-errors (zk--parse-id 'title orig-id)) ;; check for file
     (progn
       (insert "===\n<- ")
-      (zk--insert-link-and-title orig-id (zk--parse-id 'title orig-id))
+      (zk--insert-link-and-title orig-id)
       (newline)))
   (insert "===\n\n"))
 
@@ -847,7 +858,6 @@ Optionally call a custom function by setting the variable
           (t
            (error "No zk-links in note")))))
 
-
 ;;;###autoload
 (defun zk-links-in-note ()
   "Select from list of notes linked to in the current note."
@@ -860,11 +870,12 @@ Optionally call a custom function by setting the variable
 ;;; Insert Link
 
 ;;;###autoload
-(defun zk-insert-link (arg &optional title)
+(defun zk-insert-link (arg)
   "Insert link to note, from ARG.
+ARG can be zk-file or zk-id as string or list, single or multiple.
 By default, only a link is inserted. With prefix-argument, both
 link and title are inserted. See variable `zk-link-and-title'
-for additional configurations. Optional TITLE."
+for additional configurations."
   (interactive
    (list (list (funcall zk-select-file-function "Insert link: "))))
   (if (zk--id-at-point)
@@ -873,27 +884,25 @@ for additional configurations. Optional TITLE."
       (cond
        ((or (and (not pref) (eq 't zk-link-and-title))
             (and pref (not zk-link-and-title)))
-        (zk--insert-link-and-title arg title))
+        (zk--insert-link-and-title arg))
        ((and (not pref) (eq 'ask zk-link-and-title))
         (if (y-or-n-p "Include title? ")
-            (zk--insert-link-and-title arg title)
+            (zk--insert-link-and-title arg)
           (zk--insert-link arg)))
        ((or t
             (and pref (eq 't zk-link-and-title)))
         (zk--insert-link arg))))))
 
-(defun zk--insert-link-and-title (arg &optional title)
-  "Insert link from ARG according to `zk-link-and-title-format'.
-Optional TITLE."
-  (if title
-      (insert (zk--format zk-link-and-title-format arg title))
-    (insert (zk--formatted-string arg zk-link-and-title-format))
-    (when zk-enable-link-buttons
-      (zk-make-link-buttons))))
+(defun zk--insert-link-and-title (arg)
+  "Insert link from ARG according to `zk-link-and-title-format'."
+  (insert (zk--formatted-string arg zk-link-and-title-format))
+  (when zk-enable-link-buttons
+    (zk-make-link-buttons)))
 
-(defun zk--insert-link (id)
-  "Insert link to note with ID, with button optional."
-  (insert (zk--formatted-string id zk-link-format))
+(defun zk--insert-link (arg)
+  "Insert link to note from ARG, with button optional.
+ARG can be zk-file or zk-id as string or list, single or multiple."
+  (insert (zk--formatted-string arg zk-link-format))
   (when zk-enable-link-buttons
     (zk-make-link-buttons)))
 
@@ -941,7 +950,8 @@ brackets \"[[\" initiates completion."
 
 ;;;###autoload
 (defun zk-copy-link-and-title (arg)
-  "Copy link and title for id or file ARG."
+  "Copy link and title from ARG.
+ARG can be zk-file or zk-id as string or list, single or multiple."
   (interactive (list (funcall zk-select-file-function "Copy link: ")))
   (let ((links (zk--formatted-string arg zk-link-and-title-format)))
     (kill-new links)
@@ -999,7 +1009,10 @@ Defaults to `zk-grep'."
   "Insert TAG at point.
 Select TAG, with completion, from list of all tags in zk notes."
   (interactive (list (completing-read "Insert tag: " (zk--grep-tag-list))))
-  (insert tag))
+  (if (not zk-tag-insert-function)
+      (insert tag)
+    (save-excursion
+      (funcall zk-tag-insert-function tag))))
 
 ;;; Find Dead Links and Unlinked Notes
 

@@ -1,12 +1,12 @@
 ;;; zk-org-link.el --- Org-link integration for zk        -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2023 Grant Rosson
+;; Copyright (C) 2022-2024 Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: June 25, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
-;; Homepage: https://github.com/localauthor/zk
+;; URL: https://github.com/localauthor/zk
 ;; Package-Requires: ((emacs "27.1"))
 
 

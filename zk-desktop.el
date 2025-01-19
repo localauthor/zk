@@ -1,12 +1,12 @@
 ;;; zk-desktop.el --- Desktop environment for zk   -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2023  Grant Rosson
+;; Copyright (C) 2022-2024  Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: November 4, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
-;; Homepage: https://github.com/localauthor/zk
+;; URL: https://github.com/localauthor/zk
 ;; Package-Requires: ((emacs "27.1")(zk "0.6")(zk-index "0.9"))
 
 ;; This program is free software; you can redistribute it and/or modify it
@@ -253,9 +253,8 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
               (beginning-of-line)
               (if new-title
                   (unless (string= title new-title)
-                    (progn
-                      (search-forward title end)
-                      (replace-match new-title)))
+                    (search-forward title end)
+                    (replace-match new-title))
                 (progn
                   (search-forward title end)
                   (replace-match (propertize title 'face 'error))))
@@ -342,7 +341,7 @@ on zk-id at point."
         (items
          (cond
           (arg (zk--formatted-string arg zk-index-format))
-          ((eq major-mode 'zk-index-mode)
+          ((derived-mode-p 'zk-index-mode)
            (if (use-region-p)
                (buffer-substring
                 (save-excursion
@@ -383,7 +382,7 @@ on zk-id at point."
       (unless (bound-and-true-p truncate-lines)
         (toggle-truncate-lines))
       (zk-desktop-mode))
-    (if (eq major-mode 'zk-index-mode)
+    (if (derived-mode-p 'zk-index-mode)
         (message "Sent to %s - press D to switch" buffer)
       (message "Sent to %s" buffer))))
 
