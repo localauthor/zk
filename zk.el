@@ -124,10 +124,14 @@ If you change this value, set `zk-id-regexp' so that
 the zk IDs can be found."
   :type 'string)
 
-(defcustom zk-id-regexp "\\([0-9]\\{12\\}\\)"
+(defcustom zk-id-regexp "[0-9]\\{12\\}"
   "The regular expression used to search for zk IDs.
 Set it so that it matches strings generated with
-`zk-id-format'."
+`zk-id-format'. The expression should not capture any
+explicitly numbered groups.
+
+See `zk-file-name-regexp' and `zk-link-regexp' functions for
+how this regexp is used."
   :type 'regexp)
 
 (defcustom zk-tag-regexp "\\s#[a-zA-Z0-9]\\+"
@@ -1023,8 +1027,8 @@ Select TAG, with completion, from list of all tags in zk notes."
          (list (split-string files "\n" t))
          (ids (mapcar
                (lambda (x)
-                 (string-match zk-id-regexp x)
-                 (match-string 0 x))
+                 (when (string-match zk-id-regexp x)
+                   (match-string 0 x)))
                list)))
     (delete-dups ids)))
 

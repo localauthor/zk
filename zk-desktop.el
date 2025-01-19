@@ -245,7 +245,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
                               (replace-match ""))
                             (when (re-search-forward "]]" end t)
                               (replace-match "")))
-                          (match-string-no-properties 1)))
+                          (match-string-no-properties 0)))
                    (title (buffer-substring-no-properties beg (match-beginning 0)))
                    (new-title (when (member id ids)
                                 (concat zk-desktop-prefix
@@ -264,7 +264,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
           (while (re-search-forward zk-id-regexp nil t)
             (let* ((beg (line-beginning-position))
                    (end (line-end-position))
-                   (id (match-string-no-properties 1)))
+                   (id (match-string-no-properties 0)))
               (if (member id ids)
                   (progn
                     (make-text-button beg end
