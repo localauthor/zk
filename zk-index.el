@@ -699,10 +699,9 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
   "Switch to ZK-Index buffer."
   (interactive)
   (let ((buffer zk-index-buffer-name))
-    (unless (get-buffer buffer)
-      (generate-new-buffer buffer)
-      (zk-index-refresh))
-    (switch-to-buffer buffer)))
+    (if (get-buffer buffer)
+        (pop-to-buffer zk-index-buffer-name)
+      (zk-index))))
 
 (provide 'zk-index)
 
