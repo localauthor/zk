@@ -652,7 +652,8 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
   (interactive)
   (when (and (zk-file-p)
              zk-enable-link-buttons)
-    (let ((ids (zk--id-list)))
+    (let* ((zk--no-gc t)
+           (ids (zk--id-list)))
       (save-excursion
         (goto-char (point-min))
         (while (re-search-forward (zk-link-regexp) nil t)
