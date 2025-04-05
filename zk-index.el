@@ -603,13 +603,15 @@ with query term STRING."
 (defun zk-index--button-at-point-p (&optional pos)
   "Return zk-id when `zk-index' button is at point.
 Takes an option POS position argument."
-  (let ((button (or pos
-                    (button-at (point)))))
-    (when (and button
-               (button-has-type-p button 'zk-index))
-      (save-excursion
-        (re-search-forward zk-id-regexp)
-        (match-string-no-properties 1)))))
+  (save-excursion
+    (beginning-of-line)
+    (let ((button (or pos
+                      (button-at (point)))))
+      (when (and button
+                 (button-has-type-p button 'zk-index))
+        (save-excursion
+          (when (re-search-forward zk-id-regexp)
+            (match-string-no-properties 1)))))))
 
 (defun zk-index-insert-link (&optional id)
   "Insert zk-link in `other-window' for button ID at point."
