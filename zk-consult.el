@@ -89,6 +89,7 @@
 
 ;;; Consult-Grep Functions
 
+;;;###autoload
 (defun zk-consult-grep (&optional initial)
   "Search `zk-directory' with `consult-grep'.
 With option for INITIAL input when called non-interactively."
@@ -98,6 +99,7 @@ With option for INITIAL input when called non-interactively."
         (consult-grep zk-directory (format "%s" initial))
       (consult-grep zk-directory))))
 
+;;;###autoload
 (defun zk-consult-grep-tag-search (tag)
   "Search for TAG in `zk-directory' using `consult-grep'.
 Select TAG, with completion, from list of all tags in zk notes."
