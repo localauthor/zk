@@ -285,9 +285,17 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
     (zk-index--insert candidates)))
 
 (eval-and-compile
+  (defvar zk-index-button-map
+    (let ((map (make-sparse-keymap)))
+      (set-keymap-parent map button-map)
+      map)
+    "Keymap for ZK-Index buttons."))
+
+(eval-and-compile
   (define-button-type 'zk-index
     'follow-link t
     'action 'zk-index-button-action
+    'keymap 'zk-index-button-map
     'face 'default))
 
 (defun zk-index--insert (candidates)
