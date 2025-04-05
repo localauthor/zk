@@ -222,6 +222,8 @@ all files in `zk-directory' will be returned as formatted candidates."
                       zk-index-buffer-name))
         (list (or files
                   (zk--directory-files t))))
+  (when sort-fn
+    (setq zk-index-last-sort-function sort-fn))
     (if (not (get-buffer buf-name))
         (progn
           (when zk-default-backlink
