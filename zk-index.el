@@ -635,6 +635,7 @@ Takes an option POS position argument."
             ([return] . zk-index-view-mode)
             ([remap read-only-mode] . zk-index-view-mode)
             ((kbd "q") . quit-window))
+            ((kbd "q") . zk-index-view-quit-window))
   (if zk-index-view-mode
       (progn
         (read-only-mode)
@@ -651,6 +652,12 @@ Takes an option POS position argument."
       (scroll-lock-mode -1)
       (setq-local cursor-type (or zk-index-view--cursor
                                   t)))))
+
+(defun zk-index-view-quit-window ()
+  "Quit `zk-index-view-mode’ window and select `zk-index’ buffer."
+  (interactive)
+  (quit-window)
+  (zk-index))
 
 (defun zk-index-forward-button (N)
   "Move to the Nth next button, or Nth previous button if N is negative.
