@@ -378,7 +378,6 @@ an internal loop."
   "Return the ID of zk note in current buffer."
   (or (zk--file-id buffer-file-name)
       (user-error "Not a zk file")))
-(make-obsolete 'zk--current-id 'zk--file-id "0.5")
 
 (defun zk--directory-files (&optional full regexp)
   "Return list of zk-files in `zk-directory'.
@@ -703,6 +702,13 @@ Optional TITLE argument."
                       ((use-region-p)
                        (with-temp-buffer
                          (insert text)
+                         (format-replace-strings
+                          '(("\x201C" . "\"")
+                            ("\x201D" . "\"")
+                            ("\x2018" . "'")
+                            ("\x2019" . "'")
+                            (":" . "-"))
+                          nil (point-min) (line-end-position))
                          (goto-char (point-min))
                          (buffer-substring
                           (point)
