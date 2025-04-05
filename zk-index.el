@@ -215,17 +215,15 @@ all files in `zk-directory' will be returned as formatted candidates."
   "Open ZK-Index, with optional FILES, FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive)
   (setq zk-index-last-format-function format-fn)
-  (setq zk-index-last-sort-function sort-fn)
-  (let ((inhibit-message nil)
-        (inhibit-read-only t)
-        (buf-name (or buf-name
-                      zk-index-buffer-name))
-        (list (or files
-                  (zk--directory-files t))))
   (when sort-fn
     (setq zk-index-last-sort-function sort-fn))
   (let* ((zk--no-gc t)
          (inhibit-message nil)
+         (inhibit-read-only t)
+         (buf-name (or buf-name
+                       zk-index-buffer-name))
+         (files (or files
+                    (zk--directory-files t))))
     (if (not (get-buffer buf-name))
         (progn
           (when zk-default-backlink
@@ -235,7 +233,7 @@ all files in `zk-directory' will be returned as formatted candidates."
           (with-current-buffer buf-name
             (setq default-directory (expand-file-name zk-directory))
             (zk-index-mode)
-            (zk-index--sort list format-fn sort-fn)
+            (zk-index--sort files format-fn sort-fn)
             (setq truncate-lines t)
             (goto-char (point-min)))
           (pop-to-buffer buf-name
@@ -258,7 +256,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
                       (setq zk-index-last-sort-function nil)))
          (buf-name (or buf-name
                        zk-index-buffer-name))
-         (pos))
+         pos)
     (setq zk-index-last-format-function format-fn)
     (setq zk-index-last-sort-function sort-fn)
     (with-current-buffer buf-name
@@ -498,7 +496,7 @@ with query term STRING."
         (goto-char (point-min))
         (save-match-data
           (while (re-search-forward zk-id-regexp nil t)
-            (push (match-string-no-properties 0) ids)))
+            (push (match-string-no-properties 1) ids)))
         ids))))
 
 ;;; Index Sort Functions
@@ -531,8 +529,7 @@ with query term STRING."
 
 (defun zk-index--set-mode-name (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
-  (when (derived-mode-p 'zk-index-mode)
-    (setq mode-name (concat mode-name string))))
+  (setq mode-name (concat mode-name string)))
 
 (defun zk-index--reset-mode-name ()
   "Reset `mode-name' in `zk-index-mode'."
