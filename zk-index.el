@@ -224,6 +224,8 @@ all files in `zk-directory' will be returned as formatted candidates."
                   (zk--directory-files t))))
   (when sort-fn
     (setq zk-index-last-sort-function sort-fn))
+  (let* ((zk--no-gc t)
+         (inhibit-message nil)
     (if (not (get-buffer buf-name))
         (progn
           (when zk-default-backlink
@@ -590,7 +592,8 @@ with query term STRING."
   "View note in `zk-index-view-mode'."
   (interactive)
   (beginning-of-line)
-  (let* ((zk-enable-link-buttons nil)
+  (let* ((zk--no-gc t)
+         (zk-enable-link-buttons nil)
          (id (zk-index--button-at-point-p))
          (file (zk--parse-id 'file-path id))
          (kill (unless (get-file-buffer file)
