@@ -634,17 +634,18 @@ Takes an option POS position argument."
             ((kbd "p") . zk-index-previous-line)
             ([return] . zk-index-view-mode)
             ([remap read-only-mode] . zk-index-view-mode)
-            ((kbd "q") . quit-window))
             ((kbd "q") . zk-index-view-quit-window))
   (if zk-index-view-mode
-      (progn
-        (read-only-mode)
-        (when zk-index-view-hide-cursor
+      (if (zk-file-p)
           (progn
-            (scroll-lock-mode 1)
-            (setq-local zk-index-view--cursor
-                        cursor-type)
-            (setq-local cursor-type nil))))
+            (read-only-mode)
+            (when zk-index-view-hide-cursor
+              (progn
+                (scroll-lock-mode 1)
+                (setq-local zk-index-view--cursor
+                            cursor-type)
+                (setq-local cursor-type nil))))
+        (error "Not a zk file"))
     (read-only-mode -1)
     (when zk-enable-link-buttons
       (zk-make-link-buttons))
