@@ -416,6 +416,7 @@ Optional STRING arg."
                   (zk--id-list string))
                  (t
                   (zk--grep-id-list string))))
+         (mode-line (zk-index-query-mode-line command string))
          (ids (mapcar (lambda (x) (when (member x scope) x))
                       query))
          (files (ensure-list (zk--parse-id 'file-path (remq nil ids)))))
@@ -427,7 +428,8 @@ Optional STRING arg."
                     zk-index-last-sort-function
                     index-buf)
           (setq zk-index-query-mode-line
-                (zk-index-query-mode-line command string))
+                (propertize mode-line
+                            'help-echo mode-line))
           (add-to-list 'mode-line-misc-info '(:eval (zk-index--query-mode-line)))
           (force-mode-line-update t))
       (error "No matches for \"%s\"" string))))
