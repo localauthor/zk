@@ -653,6 +653,8 @@ Takes an option POS position argument."
             ((kbd "p") . zk-index-previous-line)
             ([return] . zk-index-view-mode)
             ([remap read-only-mode] . zk-index-view-mode)
+            ((kbd "s") . zk-index-search)
+            ((kbd "/") . zk-index-focus)
             ((kbd "q") . zk-index-view-quit-window))
   (if zk-index-view-mode
       (if (zk-file-p)
