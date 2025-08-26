@@ -693,7 +693,7 @@ Optional TITLE argument."
   (interactive)
   (let* ((pref-arg current-prefix-arg)
          (new-id (zk--generate-id))
-         (orig-id (ignore-errors (zk--file-id buffer-file-name)))
+         (orig-id (ignore-errors (zk--current-id)))
          (text (when (use-region-p)
                  (buffer-substring
                   (region-beginning)
@@ -763,7 +763,7 @@ header title in buffer. If yes, file name changed to header
 title."
   (interactive)
   (read-only-mode -1)
-  (let* ((id (zk--file-id buffer-file-name))
+  (let* ((id (zk--current-id))
          (file-title (zk--parse-id 'title id))
          (header-title (progn
                          (save-excursion
@@ -969,13 +969,11 @@ ARG can be zk-file or zk-id as string or list, single or multiple."
 
 ;;;###autoload
 (defun zk-backlinks ()
-  "Select from list of all notes that link to the current note."
+  "Select from list of all notes that link to current note."
   (interactive)
-  (let* ((id (zk--file-id buffer-file-name))
-         (files (zk--backlinks-list id)))
-    (if files
-        (find-file (funcall zk-select-file-function "Backlinks: " files))
-      (user-error "No backlinks found"))))
+  (if-let ((files (zk--backlinks-list (zk--current-id))))
+      (find-file (funcall zk-select-file-function "Backlinks: " files))
+    (user-error "No backlinks found")))
 
 ;;; Search
 
@@ -1085,9 +1083,7 @@ Select TAG, with completion, from list of all tags in zk notes."
   "Find `zk-backlinks' and `zk-links-in-note' for current or selected note.
 Backlinks and Links-in-Note are grouped separately."
   (interactive)
-  (unless (zk-file-p)
-    (user-error "Not a zk file"))
-  (let* ((id (zk--file-id buffer-file-name))
+  (let* ((id (zk--current-id))
          (backlinks (ignore-errors (zk--backlinks-list id)))
          (links-in-note (ignore-errors (zk--links-in-note-list)))
          (resources))
