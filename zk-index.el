@@ -7,7 +7,7 @@
 ;; License: GPL-3.0-or-later
 ;; Version: 0.10
 ;; URL: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "27.1")(zk "0.7"))
+;; Package-Requires: ((emacs "28.1")(zk "0.7"))
 
 ;; This program is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by the Free
@@ -352,27 +352,24 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed in buffer BUF-NAME."
-  (with-current-buffer (or buf-name
-                           zk-index-buffer-name)
-    (if (< (count-lines (point-min) (point-max))
-           (length (zk--directory-files)))
-        t nil)))
+  (when (derived-mode-p 'zk-index-mode)
+    (with-current-buffer (or buf-name
+                             zk-index-buffer-name)
+      (if (< (count-lines (point-min) (point-max))
+             (length (zk--directory-files)))
+          t nil))))
 
 ;;; Index Search and Focus Functions
 
 ;;;; Index Search
 ;; narrow index based on search of notes' full text
 
-(defun zk-index-search ()
-  "Narrow index based on regexp search of note contents."
-  (interactive)
-  (if (derived-mode-p 'zk-index-mode)
-      (zk-index-refresh
-       (zk-index-query-files)
-       zk-index-last-format-function
-       zk-index-last-sort-function
-       (buffer-name))
-    (user-error "Not in a ZK-Index")))
+(defun zk-index-search (&optional string)
+  "Narrow index to notes containing STRING."
+  (interactive (list
+                (read-string "Search: "
+                             nil 'zk-search-history)))
+  (zk-index-query-files string))
 
 ;;;; Index Focus
 ;; narrow index based on search of note titles (case sensitive)
@@ -382,11 +379,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   "Narrow index based on regexp search of note titles."
   (interactive)
   (if (derived-mode-p 'zk-index-mode)
-      (zk-index-refresh
-       (zk-index-query-files)
-       zk-index-last-format-function
-       zk-index-last-sort-function
-       (buffer-name))
+      (zk-index-query-files)
     (user-error "Not in a ZK-Index")))
 
 ;;;; Low-level Query Functions
@@ -397,37 +390,42 @@ Takes form of (COMMAND . TERM), where COMMAND is `ZK-INDEX-FOCUS
 or `ZK-INDEX-SEARCH, and TERM is the query string. Recent
 items listed first.")
 
-(defun zk-index-query-files ()
-  "Return narrowed list of notes, based on focus or search query."
+(defun zk-index-query-files (&optional string)
+  "Return narrowed list of notes, based on focus or search query.
+Optional STRING arg."
   (let* ((zk--no-gc t)
-         (command this-command)
-         (scope (if (zk-index-narrowed-p (buffer-name))
-                    (zk-index--current-id-list (buffer-name))
+         (command (if (eq this-command 'zk-index-focus)
+                      'zk-index-focus
+                    'zk-index-search))
+         (index-buf (when (derived-mode-p 'zk-index-mode)
+                      (buffer-name)))
+         (scope (if (zk-index-narrowed-p index-buf)
+                    (zk-index--current-id-list index-buf)
                   (setq zk-index-query-terms nil)
                   (zk--id-list)))
-         (string (read-string (cond ((eq command 'zk-index-focus)
-                                     "Focus: ")
-                                    ((eq command 'zk-index-search)
-                                     "Search: "))
-                              nil 'zk-search-history))
+         (string (or string
+                     (read-string "Focus: "
+                                  nil 'zk-search-history)))
          (query (cond
                  ((eq command 'zk-index-focus)
                   (zk--id-list string))
-                 ((eq command 'zk-index-search)
+                 (t
                   (zk--grep-id-list string))))
          (ids (mapcar (lambda (x) (when (member x scope) x))
                       query))
-         (files (zk--parse-id 'file-path (remq nil ids))))
+         (files (ensure-list (zk--parse-id 'file-path (remq nil ids)))))
     (add-to-history 'zk-search-history string)
-    (when files
-      (setq zk-index-query-mode-line
-            (zk-index-query-mode-line command string))
-      (add-to-list 'mode-line-misc-info '(:eval (zk-index--query-mode-line)))
-      (force-mode-line-update t))
-    (when (stringp files)
-      (setq files (list files)))
-    (or files
-        (error "No matches for \"%s\"" string))))
+    (if files
+        (progn
+          (zk-index files
+                    zk-index-last-format-function
+                    zk-index-last-sort-function
+                    index-buf)
+          (setq zk-index-query-mode-line
+                (zk-index-query-mode-line command string))
+          (add-to-list 'mode-line-misc-info '(:eval (zk-index--query-mode-line)))
+          (force-mode-line-update t))
+      (error "No matches for \"%s\"" string))))
 
 (defun zk-index-query-refresh ()
   "Refresh narrowed index, based on last focus or search query."
