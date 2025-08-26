@@ -668,6 +668,26 @@ Takes an option POS position argument."
   (quit-window)
   (zk-index-switch-to-index))
 
+(defvar zk-index--debounce-timer nil)
+(defvar zk-index--debounce-delay 0.40)
+
+(defun zk-index--view-note-debounce ()
+  (if (timerp zk-index--debounce-timer)
+      (timer-set-idle-time zk-index--debounce-timer
+                           zk-index--debounce-delay)
+    (setq zk-index--debounce-timer
+          (run-with-idle-timer
+           zk-index--debounce-delay nil
+           (lambda ()
+             (setq zk-index--debounce-timer nil)
+             (other-window 1)
+             (when (zk-file-p)
+               (if zk-index-view--kill
+                   (kill-buffer)
+                 (zk-index-view-mode -1)))
+             (other-window 1)
+             (zk-index-view-note))))))
+
 (defun zk-index-forward-button (N)
   "Move to the Nth next button, or Nth previous button if N is negative.
 If `zk-index-auto-scroll' is non-nil, show note in other window."
@@ -676,16 +696,13 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
                        zk-index-buffer-name)))
     (if zk-index-auto-scroll
         (progn
-          (when (and (zk-file-p)
-                     index-window)
-            (if zk-index-view--kill
-                (kill-buffer)
-              (zk-index-view-mode -1))
-            (select-window index-window))
+          (if (and (zk-file-p)
+                   index-window)
+              (select-window index-window))
           (forward-button N)
           (hl-line-highlight)
           (unless (looking-at-p "[[:space:]]*$")
-            (zk-index-view-note)))
+            (zk-index--view-note-debounce)))
       (forward-button N))))
 
 (defun zk-index-next-line ()
