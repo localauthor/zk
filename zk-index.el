@@ -372,7 +372,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-search (&optional string)
   "Narrow index to notes containing STRING."
   (interactive (list
-                (read-string "Search: "
+                (read-string "Narrow index by content: "
                              nil 'zk-search-history)))
   (zk-index-query-files string))
 
@@ -409,7 +409,7 @@ Optional STRING arg."
                   (setq zk-index-query-terms nil)
                   (zk--id-list)))
          (string (or string
-                     (read-string "Focus: "
+                     (read-string "Narrow by title: "
                                   nil 'zk-search-history)))
          (query (cond
                  ((string-empty-p string)
@@ -472,9 +472,11 @@ with query term STRING."
               (mapconcat (lambda (query)
                            (when query
                              (concat
-                              (capitalize
-                               (caddr
-                                (split-string (symbol-name (car query)) "-")))
+                              (cond
+                               ((eq (car query) 'zk-index-focus)
+                                "Title")
+                               ((eq (car query) 'zk-index-search)
+                                "Content"))
                               ": \""
                               (cdr query))))
                          ;; Put the last query type at the end
