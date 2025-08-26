@@ -380,7 +380,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 ;; an alternative to consult-focus-lines
 
 (defun zk-index-focus (&optional string)
-  "Narrow index based on regexp search of note titles."
+  "Narrow index to notes with STRING in title."
   (interactive (list
                 (read-string "Narrow index by title: "
                              nil 'zk-search-history)))
@@ -684,6 +684,7 @@ Takes an option POS position argument."
 (defvar zk-index--debounce-timer nil)
 
 (defun zk-index--view-note-debounce ()
+  "Delay calling of `zk-index-view-note’ by."
   (if (timerp zk-index--debounce-timer)
       (timer-set-idle-time zk-index--debounce-timer
                            zk-index-view-debounce-delay)
