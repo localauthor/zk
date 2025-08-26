@@ -535,10 +535,8 @@ with query term STRING."
 
 (defun zk-index--current-file-list ()
   "Return list files in current index."
-  (let* ((ids (zk-index--current-id-list (buffer-name)))
-         (files (zk--parse-id 'file-path ids)))
-    (when files
-      files)))
+  (let ((ids (zk-index--current-id-list (buffer-name))))
+    (zk--parse-id 'file-path ids)))
 
 (defun zk-index--sort-created (list)
   "Sort LIST for latest created."
@@ -668,7 +666,7 @@ Takes an option POS position argument."
   "Quit `zk-index-view-mode’ window and select `zk-index’ buffer."
   (interactive)
   (quit-window)
-  (zk-index))
+  (zk-index-switch-to-index))
 
 (defun zk-index-forward-button (N)
   "Move to the Nth next button, or Nth previous button if N is negative.
