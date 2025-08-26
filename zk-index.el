@@ -72,6 +72,11 @@ Set to nil to inhibit help-echo."
   "Enable automatically showing note at point in ZK-Index."
   :type 'boolean)
 
+(defcustom zk-index-view-debounce-delay 0.40
+  "Seconds to wait before auto viewing note at point in ZK-Index.
+Only relevant when `zk-index-auto-scroll’ is non-nil."
+  :type 'number)
+
 (defcustom zk-index-cursor nil
   "Cursor to use when `zk-index’ is in the selected window.
 See `cursor-type’ for description of possible values."
@@ -669,15 +674,14 @@ Takes an option POS position argument."
   (zk-index-switch-to-index))
 
 (defvar zk-index--debounce-timer nil)
-(defvar zk-index--debounce-delay 0.40)
 
 (defun zk-index--view-note-debounce ()
   (if (timerp zk-index--debounce-timer)
       (timer-set-idle-time zk-index--debounce-timer
-                           zk-index--debounce-delay)
+                           zk-index-view-debounce-delay)
     (setq zk-index--debounce-timer
           (run-with-idle-timer
-           zk-index--debounce-delay nil
+           zk-index-view-debounce-delay nil
            (lambda ()
              (setq zk-index--debounce-timer nil)
              (other-window 1)
