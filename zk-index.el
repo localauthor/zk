@@ -412,6 +412,8 @@ Optional STRING arg."
                      (read-string "Focus: "
                                   nil 'zk-search-history)))
          (query (cond
+                 ((string-empty-p string)
+                  (user-error "Must enter a search string"))
                  ((eq command 'zk-index-focus)
                   (zk--id-list string))
                  (t
