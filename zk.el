@@ -686,6 +686,24 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
                                       zk-file-name-separator
                                       base-name))))
 
+(defun zk--replace-title-chars (title)
+  "Replace special characters in TITLE.
+Changes curly quotes to straight, colon to dash."
+  (with-temp-buffer
+    (insert title)
+    (format-replace-strings
+     '(("\x201C" . "\"")
+       ("\x201D" . "\"")
+       ("\x2018" . "'")
+       ("\x2019" . "'")
+       ("\n" . "")
+       (":" . "-"))
+     nil (point-min) (line-end-position))
+    (goto-char (point-min))
+    (buffer-substring
+     (point)
+     (line-end-position))))
+
 ;;;###autoload
 (defun zk-new-note (&optional title)
   "Create a new note, insert link at point of creation.
@@ -700,20 +718,9 @@ Optional TITLE argument."
                   (region-end))))
          (title (cond (title title)
                       ((use-region-p)
-                       (with-temp-buffer
-                         (insert text)
-                         (format-replace-strings
-                          '(("\x201C" . "\"")
-                            ("\x201D" . "\"")
-                            ("\x2018" . "'")
-                            ("\x2019" . "'")
-                            (":" . "-"))
-                          nil (point-min) (line-end-position))
-                         (goto-char (point-min))
-                         (buffer-substring
-                          (point)
-                          (line-end-position))))
-                      (t (read-string "Note title: "))))
+                       (zk--replace-title-chars text))
+                      (t (zk--replace-title-chars
+                          (read-string "Note title: ")))))
          (body (when (use-region-p)
                  (with-temp-buffer
                    (insert text)
@@ -772,16 +779,20 @@ title."
                            (buffer-substring-no-properties
                             (point)
                             (line-end-position)))))
+         (clean-file (zk--replace-title-chars file-title))
+         (clean-header (zk--replace-title-chars header-title))
          (new-title))
     (unless id
       (user-error "Not a zk file"))
-    (if (not (string= file-title header-title))
-        (if (y-or-n-p (format "Change from \"%s\" to \"%s\"? " file-title header-title))
-            (setq new-title header-title)
-          (setq new-title (read-string "New title: " file-title)))
-      (setq new-title (read-string "New title: " file-title)))
-    (when (string-match "\n" new-title)
-      (setq new-title (replace-regexp-in-string "\n" "" new-title)))
+    (setq new-title
+          (zk--replace-title-chars
+           (if (not (string= file-title header-title))
+               (if (y-or-n-p (format "Change from \"%s\" to \"%s\"? "
+                                     file-title
+                                     clean-header))
+                   clean-header
+                 (read-string "New title: " clean-file))
+             (read-string "New title: " clean-file))))
     (save-excursion
       (goto-char (point-min))
       (re-search-forward id)
