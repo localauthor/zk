@@ -357,12 +357,11 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed in buffer BUF-NAME."
-  (when (derived-mode-p 'zk-index-mode)
-    (with-current-buffer (or buf-name
-                             zk-index-buffer-name)
-      (if (< (count-lines (point-min) (point-max))
-             (length (zk--directory-files)))
-          t nil))))
+  (with-current-buffer (or buf-name
+                           zk-index-buffer-name)
+    (if (< (count-lines (point-min) (point-max))
+           (length (zk--directory-files)))
+        t nil)))
 
 ;;; Index Search and Focus Functions
 
@@ -380,12 +379,12 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 ;; narrow index based on search of note titles (case sensitive)
 ;; an alternative to consult-focus-lines
 
-(defun zk-index-focus ()
+(defun zk-index-focus (&optional string)
   "Narrow index based on regexp search of note titles."
-  (interactive)
-  (if (derived-mode-p 'zk-index-mode)
-      (zk-index-query-files)
-    (user-error "Not in a ZK-Index")))
+  (interactive (list
+                (read-string "Narrow index by title: "
+                             nil 'zk-search-history)))
+  (zk-index-query-files string))
 
 ;;;; Low-level Query Functions
 
@@ -402,8 +401,9 @@ Optional STRING arg."
          (command (if (eq this-command 'zk-index-focus)
                       'zk-index-focus
                     'zk-index-search))
-         (index-buf (when (derived-mode-p 'zk-index-mode)
-                      (buffer-name)))
+         (index-buf (if (derived-mode-p 'zk-index-mode)
+                        (buffer-name)
+                      zk-index-buffer-name)) ;; DEFAULT TO GENERAL INDEX?
          (scope (if (zk-index-narrowed-p index-buf)
                     (zk-index--current-id-list index-buf)
                   (setq zk-index-query-terms nil)
