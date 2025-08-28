@@ -357,11 +357,11 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed in buffer BUF-NAME."
-  (with-current-buffer (or buf-name
-                           zk-index-buffer-name)
-    (if (< (count-lines (point-min) (point-max))
-           (length (zk--directory-files)))
-        t nil)))
+  (when (bufferp buf-name)
+    (with-current-buffer buf-name
+      (if (< (count-lines (point-min) (point-max))
+             (length (zk--directory-files)))
+          t nil))))
 
 ;;; Index Search and Focus Functions
 
