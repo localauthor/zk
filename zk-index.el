@@ -745,6 +745,13 @@ Will switch to local value of `zk-index-buffer-name’."
       (pop-to-buffer buffer)
     (zk-index)))
 
+(defun zk-index-rename (buf-name)
+  "Rename current ZK-Index buffer to BUF-NAME."
+  (interactive (list (read-string "Rename index: " (buffer-name))))
+  (when (derived-mode-p 'zk-index-mode)
+    (rename-buffer buf-name)
+    (setq-local zk-index-buffer-name buf-name)))
+
 (provide 'zk-index)
 
 ;;; zk-index.el ends here
