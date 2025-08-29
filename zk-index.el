@@ -736,13 +736,14 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
   (zk-index-forward-button -1))
 
 ;;;###autoload
-(defun zk-index-switch-to-index ()
-  "Switch to ZK-Index buffer."
+(defun zk-index-switch-to-index (&optional index)
+  "Switch to ZK-Index buffer INDEX.
+Will switch to local value of `zk-index-buffer-name’."
   (interactive)
-  (let ((buffer zk-index-buffer-name))
-    (if (get-buffer buffer)
-        (pop-to-buffer zk-index-buffer-name)
-      (zk-index))))
+  (if-let ((buffer (get-buffer (or index
+                                   zk-index-buffer-name))))
+      (pop-to-buffer buffer)
+    (zk-index)))
 
 (provide 'zk-index)
 
