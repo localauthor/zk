@@ -45,6 +45,7 @@
 
 (defcustom zk-index-buffer-name "*ZK-Index*"
   "Name for ZK-Index buffer."
+  :local t
   :type 'string)
 
 (defcustom zk-index-format-function 'zk-index--format-candidates
@@ -133,6 +134,7 @@ example."
 \\{zk-index-mode-map}"
   (read-only-mode)
   (hl-line-mode)
+  (setq-local zk-index-buffer-name (buffer-name))
   (setq-local show-paren-mode nil)
   (setq-local cursor-type zk-index-cursor))
 
@@ -357,7 +359,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed in buffer BUF-NAME."
-  (when (bufferp buf-name)
+  (when (get-buffer buf-name)
     (with-current-buffer buf-name
       (if (< (count-lines (point-min) (point-max))
              (length (zk--directory-files)))
@@ -401,9 +403,7 @@ Optional STRING arg."
          (command (if (eq this-command 'zk-index-focus)
                       'zk-index-focus
                     'zk-index-search))
-         (index-buf (if (derived-mode-p 'zk-index-mode)
-                        (buffer-name)
-                      zk-index-buffer-name)) ;; DEFAULT TO GENERAL INDEX?
+         (index-buf zk-index-buffer-name)
          (scope (if (zk-index-narrowed-p index-buf)
                     (zk-index--current-id-list index-buf)
                   (setq zk-index-query-terms nil)
@@ -434,7 +434,7 @@ Optional STRING arg."
                             'help-echo mode-line))
           (add-to-list 'mode-line-misc-info '(:eval (zk-index--query-mode-line)))
           (force-mode-line-update t))
-      (error "No matches for \"%s\"" string))))
+      (error "No matches for \"%s\" in %s" string zk-index-buffer-name))))
 
 (defun zk-index-query-refresh ()
   "Refresh narrowed index, based on last focus or search query."
@@ -668,6 +668,7 @@ Takes an option POS position argument."
                 (setq-local cursor-type nil))))
         (error "Not a zk file"))
     (read-only-mode -1)
+    (kill-local-variable 'zk-index-buffer-name)
     (when zk-enable-link-buttons
       (zk-make-link-buttons))
     (when zk-index-view-hide-cursor
@@ -678,8 +679,12 @@ Takes an option POS position argument."
 (defun zk-index-view-quit-window ()
   "Quit `zk-index-view-mode’ window and select `zk-index’ buffer."
   (interactive)
-  (quit-window)
-  (zk-index-switch-to-index))
+  (let ((index zk-index-buffer-name))
+    ;; mode-off kills local value of zk-index-buffer-name,
+    ;; so need to let bind it, to avoid switching to default index
+    (zk-index-view-mode -1)
+    (quit-window zk-index-view--kill)
+    (zk-index-switch-to-index index)))
 
 (defvar zk-index--debounce-timer nil)
 
