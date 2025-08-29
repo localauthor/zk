@@ -374,6 +374,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive (list
                 (read-string "Narrow index by content: "
                              nil 'zk-search-history)))
+  (zk-index-switch-to-index)
   (zk-index-query-files string))
 
 ;;;; Index Focus
@@ -385,6 +386,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive (list
                 (read-string "Narrow index by title: "
                              nil 'zk-search-history)))
+  (zk-index-switch-to-index)
   (zk-index-query-files string))
 
 ;;;; Low-level Query Functions
