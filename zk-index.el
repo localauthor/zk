@@ -143,8 +143,7 @@ example."
 
 (defvar zk-index-last-sort-function nil)
 (defvar zk-index-last-format-function nil)
-(defvar zk-index-query-mode-line nil)
-(defvar zk-index-query-terms nil)
+(defvar-local zk-index-query-mode-line nil)
 (defvar zk-search-history)
 (defvar zk--no-gc)
 
@@ -390,7 +389,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 ;;;; Low-level Query Functions
 
-(defvar zk-index-query-terms nil
+(defvar-local zk-index-query-terms nil
   "Ordered list of current query terms.
 Takes form of (COMMAND . TERM), where COMMAND is `ZK-INDEX-FOCUS
 or `ZK-INDEX-SEARCH, and TERM is the query string. Recent
@@ -406,7 +405,7 @@ Optional STRING arg."
          (index-buf zk-index-buffer-name)
          (scope (if (zk-index-narrowed-p index-buf)
                     (zk-index--current-id-list index-buf)
-                  (setq zk-index-query-terms nil)
+                  (setq-local zk-index-query-terms nil)
                   (zk--id-list)))
          (string (or string
                      (read-string "Narrow by title: "
@@ -418,20 +417,21 @@ Optional STRING arg."
                   (zk--id-list string))
                  (t
                   (zk--grep-id-list string))))
-         (mode-line (zk-index-query-mode-line command string))
+         (zk-mode-line)
          (ids (mapcar (lambda (x) (when (member x scope) x))
                       query))
          (files (ensure-list (zk--parse-id 'file-path (remq nil ids)))))
     (add-to-history 'zk-search-history string)
     (if files
         (progn
+          (setq zk-mode-line (zk-index-query-mode-line command string))
           (zk-index files
                     zk-index-last-format-function
                     zk-index-last-sort-function
                     index-buf)
           (setq zk-index-query-mode-line
-                (propertize mode-line
-                            'help-echo mode-line))
+                (propertize zk-mode-line
+                            'help-echo zk-mode-line))
           (add-to-list 'mode-line-misc-info '(:eval (zk-index--query-mode-line)))
           (force-mode-line-update t))
       (error "No matches for \"%s\" in %s" string zk-index-buffer-name))))
@@ -493,8 +493,8 @@ with query term STRING."
 
 (defun zk-index--reset-mode-line ()
   "Reset mode-line in `zk-index-mode'."
-  (setq zk-index-query-mode-line nil
-        zk-index-query-terms nil))
+  (setq-local zk-index-query-mode-line nil
+              zk-index-query-terms nil))
 
 (defun zk-index--current-id-list (buf-name)
   "Return list of IDs for index in BUF-NAME, as filepaths."
