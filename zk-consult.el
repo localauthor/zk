@@ -150,7 +150,7 @@ supplied. Can take a PROMPT argument."
      files
      :prompt prompt
      :sort (if sort nil t)
-     :require-match t
+     :require-match nil
      :group (or group 'zk--group-function)
      :category 'zk-file
      :state (consult--file-preview)

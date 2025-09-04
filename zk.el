@@ -477,7 +477,7 @@ supplied. Can take a PROMPT argument."
              (display-sort-function . ,sort)
              (category . zk-file))
          (complete-with-action action files string predicate)))
-     nil t nil 'zk-file-history)))
+     nil nil nil 'zk-file-history)))
 
 (defun zk--group-function (file transform)
   "TRANSFORM completion candidate FILE to note title."
@@ -808,9 +808,17 @@ title."
 
 ;;;###autoload
 (defun zk-find-file ()
-  "Find file in `zk-directory'."
+  "Find or create a note in `zk-directory'.
+Prompts for a file using `zk-select-file-function'.
+If the selected file exists, opens it.
+If it doesn't exist, creates a new note with that title."
   (interactive)
-  (find-file (funcall zk-select-file-function "Find file: ")))
+  (unless (and zk-directory (file-directory-p zk-directory))
+    (user-error "Please set `zk-directory' to a valid directory"))
+  (let ((file (funcall zk-select-file-function "Find file: ")))
+    (if (file-exists-p file)
+        (find-file file)
+      (zk-new-note file))))
 
 ;;;###autoload
 (defun zk-find-file-by-id (id)
