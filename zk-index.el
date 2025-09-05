@@ -551,34 +551,34 @@ with query term STRING."
   (let ((ids (zk-index--current-id-list (buffer-name))))
     (zk--parse-id 'file-path ids)))
 
-(defun zk-index--sort-created (list)
-  "Sort LIST for latest created."
+(defun zk-index--sort-created (files)
+  "Sort list of FILES by latest created."
   (let ((ht (make-hash-table :test #'equal :size 5000)))
-    (dolist (x list)
+    (dolist (x files)
       (puthash x (zk--parse-file 'id x) ht))
-    (sort list
+    (sort files
           (lambda (a b)
             (string>
              (gethash a ht)
              (gethash b ht))))))
 
-(defun zk-index--sort-modified (list)
-  "Sort LIST for latest modification."
+(defun zk-index--sort-modified (files)
+  "Sort list of FILES by latest modification."
   (let ((ht (make-hash-table :test #'equal :size 5000)))
-    (dolist (x list)
+    (dolist (x files)
       (puthash x (file-attribute-modification-time (file-attributes x)) ht))
-    (sort list
+    (sort files
           (lambda (a b)
             (time-less-p
              (gethash b ht)
              (gethash a ht))))))
 
-(defun zk-index--sort-size (list)
-  "Sort LIST for latest modification."
+(defun zk-index--sort-size (files)
+  "Sort list of FILES by latest modification."
   (let ((ht (make-hash-table :test #'equal :size 5000)))
-    (dolist (x list)
+    (dolist (x files)
       (puthash x (file-attribute-size (file-attributes x)) ht))
-    (sort list
+    (sort files
           (lambda (a b)
             (>
              (gethash a ht)
