@@ -138,15 +138,16 @@ Set pop-up frame parameters in `link-hint-preview-frame-parameters'."
     (let ((buffer (current-buffer))
           (frame (selected-frame))
           (new-buffer))
-      (if-let (id (zk-index--button-at-point-p))
-          (progn
-            (if (get-file-buffer (zk--parse-id 'file-path id))
-                (setq link-hint-preview--kill-last nil)
-              (setq link-hint-preview--kill-last t))
-            (zk-follow-link-at-point id))
-        (push-button))
-      (setq new-buffer
-            (current-buffer))
+      (save-window-excursion
+        (if-let* ((id (zk-index--button-at-point-p)))
+            (progn
+              (if (get-file-buffer (zk--parse-id 'file-path id))
+                  (setq link-hint-preview--kill-last nil)
+                (setq link-hint-preview--kill-last t))
+              (zk-follow-link-at-point id))
+          (push-button))
+        (setq new-buffer
+              (current-buffer)))
       (switch-to-buffer buffer)
       (display-buffer-pop-up-frame
        new-buffer
