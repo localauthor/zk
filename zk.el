@@ -353,7 +353,7 @@ The ID is created using `zk-id-time-string-format'."
 
 (defun zk--id-list (&optional str zk-alist)
   "Return a list of zk IDs for notes in `zk-directory'.
-Optional search for STR in note title, case-insenstive. Takes an
+Optional search for STR in note title, case-insensitive. Takes an
 optional ZK-ALIST, for efficiency if `zk--id-list' is called in
 an internal loop."
   (if str
@@ -366,7 +366,8 @@ an internal loop."
                 (push (car item) ids))
             (push (car item) ids)))
         ids)
-    (ensure-list (zk--parse-file 'id (zk--directory-files t)))))
+    (let ((zk--no-gc t))
+      (ensure-list (zk--parse-file 'id (zk--directory-files t))))))
 
 (defun zk-id-p (id)
   "Return t if ID is already in use as a zk-id."
@@ -504,7 +505,7 @@ supplied. Can take a PROMPT argument."
          ,(replace-regexp-in-string zk-file-name-separator " "
                                     (match-string-no-properties 2 file))
          ,file)))
-   (zk--directory-files t)))
+   (let ((zk--no-gc t)) (zk--directory-files t))))
 
 (defun zk--parse-id (target ids &optional zk-alist)
   "Return TARGET, either `file-path or `title, from files with IDS.
@@ -574,7 +575,8 @@ file extension."
 (defun zk--processor (arg)
   "Return list of files.
 ARG can be zk-file or zk-id as string or list, single or multiple."
-  (let* ((zk-alist (zk--alist))
+  (let* ((zk--no-gc t)
+         (zk-alist (zk--alist))
          (files (cond
                  ((stringp arg)
                   (if (zk-file-p arg)
@@ -864,7 +866,8 @@ Optionally call a custom function by setting the variable
 
 (defun zk--links-in-note-list ()
   "Return list of zk files that are linked from the current buffer."
-  (let* ((zk-alist (zk--alist))
+  (let* ((zk--no-gc t)
+         (zk-alist (zk--alist))
          (zk-ids (zk--id-list))
          id-list)
     (save-buffer)
