@@ -361,9 +361,7 @@ an internal loop."
             (case-fold-search t)
             (ids))
         (dolist (item zk-alist)
-          (if str
-              (when (string-match str (cadr item))
-                (push (car item) ids))
+          (when (string-match-p str (cadr item))
             (push (car item) ids)))
         ids)
     (let ((zk--no-gc t))
@@ -371,9 +369,10 @@ an internal loop."
 
 (defun zk-id-p (id)
   "Return t if ID is already in use as a zk-id."
-  (when (and (listp (zk--id-list))
-             (member id (zk--id-list)))
-    t))
+  (let ((zk-id-list (zk--id-list)))
+    (when (and (listp zk-id-list)
+               (member id zk-id-list))
+      t)))
 
 (defun zk--current-id ()
   "Return the ID of zk note in current buffer."
