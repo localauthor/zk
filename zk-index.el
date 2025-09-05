@@ -369,7 +369,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 ;;;; Index Search
 ;; narrow index based on search of notes' full text
 
-(defun zk-index-search (&optional string)
+(defun zk-index-search (string)
   "Narrow index to notes containing STRING."
   (interactive (list
                 (read-string "Narrow index by content: "
@@ -381,7 +381,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 ;; narrow index based on search of note titles (case sensitive)
 ;; an alternative to consult-focus-lines
 
-(defun zk-index-focus (&optional string)
+(defun zk-index-focus (string)
   "Narrow index to notes with STRING in title."
   (interactive (list
                 (read-string "Narrow index by title: "
@@ -397,9 +397,8 @@ Takes form of (COMMAND . TERM), where COMMAND is `ZK-INDEX-FOCUS
 or `ZK-INDEX-SEARCH, and TERM is the query string. Recent
 items listed first.")
 
-(defun zk-index-query-files (&optional string)
-  "Return narrowed list of notes, based on focus or search query.
-Optional STRING arg."
+(defun zk-index-query-files (string)
+  "Return narrowed list of notes, based on focus or search query for STRING."
   (let* ((zk--no-gc t)
          (command (if (eq this-command 'zk-index-focus)
                       'zk-index-focus
