@@ -25,7 +25,7 @@
 ;;; Commentary:
 
 ;; ZK-Desktop: A place (or places) for collecting, grouping, arranging, and
-;; saving curated selections of notes (also in txhe form of clickable links).
+;; saving curated selections of notes (also in the form of clickable links).
 
 ;; To enable integration with Embark, include '(zk-desktop-setup-embark)' in
 ;; your init config.
@@ -292,7 +292,7 @@ To quickly change this setting, call `zk-desktop-add-toggle'."
                 (end-of-line)
                 (overlay-put (make-overlay (point) (point))
                              'before-string
-                             (propertize" <- ID NOT FOUND" 'font-lock-face 'error))))
+                             (propertize " <- ID NOT FOUND" 'font-lock-face 'error))))
             (end-of-line)))))))
 
 ;;; Utilities
