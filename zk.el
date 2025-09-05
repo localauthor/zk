@@ -878,14 +878,12 @@ Optionally call a custom function by setting the variable
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward (zk-link-regexp) nil t)
-        (if (member (match-string-no-properties 1) zk-ids)
-            (push (match-string-no-properties 1) id-list))))
+        (when (member (match-string-no-properties 1) zk-ids)
+          (push (match-string-no-properties 1) id-list))))
     (cond ((zk--singleton-p id-list)
            (list (zk--parse-id 'file-path id-list zk-alist)))
           (id-list
-           (zk--parse-id 'file-path (delete-dups id-list) zk-alist))
-          (t
-           (error "No zk-links in note")))))
+           (zk--parse-id 'file-path (delete-dups id-list) zk-alist)))))
 
 ;;;###autoload
 (defun zk-links-in-note ()
@@ -894,7 +892,7 @@ Optionally call a custom function by setting the variable
   (let* ((files (zk--links-in-note-list)))
     (if files
         (find-file (funcall zk-select-file-function "Links: " files))
-      (user-error "No links found"))))
+      (user-error "No zk links found"))))
 
 ;;; Insert Link
 
@@ -1110,8 +1108,8 @@ Select TAG, with completion, from list of all tags in zk notes."
 Backlinks and Links-in-Note are grouped separately."
   (interactive)
   (let* ((id (zk--current-id))
-         (backlinks (ignore-errors (zk--backlinks-list id)))
-         (links-in-note (ignore-errors (zk--links-in-note-list)))
+         (backlinks (zk--backlinks-list id))
+         (links-in-note (zk--links-in-note-list))
          (resources))
     (if (or backlinks links-in-note)
         (progn
