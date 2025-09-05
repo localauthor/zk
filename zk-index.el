@@ -374,8 +374,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive (list
                 (read-string "Narrow index by content: "
                              nil 'zk-search-history)))
-  (zk-index-switch-to-index)
-  (zk-index-query-files string))
+  (when (zk-index-query-files string)
+    (zk-index-switch-to-index)))
 
 ;;;; Index Focus
 ;; narrow index based on search of note titles (case sensitive)
@@ -386,8 +386,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   (interactive (list
                 (read-string "Narrow index by title: "
                              nil 'zk-search-history)))
-  (zk-index-switch-to-index)
-  (zk-index-query-files string))
+  (when (zk-index-query-files string)
+    (zk-index-switch-to-index)))
 
 ;;;; Low-level Query Functions
 
@@ -421,7 +421,8 @@ items listed first.")
          (zk-mode-line)
          (ids (mapcar (lambda (x) (when (member x scope) x))
                       query))
-         (files (ensure-list (zk--parse-id 'file-path (remq nil ids)))))
+         (files
+          (ensure-list (zk--parse-id 'file-path (remq nil ids)))))
     (add-to-history 'zk-search-history string)
     (if files
         (progn
@@ -741,8 +742,9 @@ If `zk-index-auto-scroll' is non-nil, show note in other window."
   "Switch to ZK-Index buffer INDEX.
 Will switch to local value of `zk-index-buffer-name’."
   (interactive)
-  (if-let ((buffer (get-buffer (or index
-                                   zk-index-buffer-name))))
+  (if-let ((buffer (get-buffer
+                    (or index
+                        zk-index-buffer-name))))
       (pop-to-buffer buffer)
     (zk-index)))
 
