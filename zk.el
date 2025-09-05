@@ -720,9 +720,14 @@ Optional TITLE argument."
                   (region-end))))
          (title (cond (title title)
                       ((use-region-p)
-                       (zk--replace-title-chars text))
-                      (t (zk--replace-title-chars
-                          (read-string "Note title: ")))))
+                       (with-temp-buffer
+                         (insert text)
+                         (goto-char (point-min))
+                         (buffer-substring
+                          (point)
+                          (line-end-position))))
+                      (t (read-string "Note title: "))))
+         (clean-title (zk--replace-title-chars title))
          (body (when (use-region-p)
                  (with-temp-buffer
                    (insert text)
@@ -731,7 +736,7 @@ Optional TITLE argument."
                    (buffer-substring
                     (point)
                     (point-max)))))
-         (file-name (zk--note-file-path new-id title)))
+         (file-name (zk--note-file-path new-id clean-title)))
     (unless orig-id
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
@@ -747,7 +752,7 @@ Optional TITLE argument."
     (when buffer-file-name
       (save-buffer))
     (find-file file-name)
-    (funcall zk-new-note-header-function title new-id orig-id)
+    (funcall zk-new-note-header-function clean-title new-id orig-id)
     (when body (insert body))
     (when zk-enable-link-buttons (zk-make-link-buttons))
     (save-buffer)))
