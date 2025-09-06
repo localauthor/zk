@@ -303,23 +303,31 @@ Adds zk-id as an Embark target, and adds `zk-id-map' and
        (listp list)
        (null (cdr list))))
 
+(defvar zk--file-name-regexp-cache nil)
+
 (defun zk-file-name-regexp ()
   "Return the correct regexp matching zk file names.
 The regexp captures these groups:
 
 Group 1 is the zk ID.
 Group 2 is the title."
-  (concat "\\(?1:" zk-id-regexp "\\)"
-          "."
-          "\\(?2:.*?\\)"
-          "\\."
-          zk-file-extension
-          ".*"))
+  (or zk--file-name-regexp-cache
+      (setq zk--file-name-regexp-cache
+            (concat "\\(?1:" zk-id-regexp "\\)"
+                    "."
+                    "\\(?2:.*?\\)"
+                    "\\."
+                    zk-file-extension
+                    ".*"))))
+
+(defvar zk--link-regexp-cache nil)
 
 (defun zk-link-regexp ()
   "Return the correct regexp for zk links.
 The value is based on `zk-link-format' and `zk-id-regexp'."
-  (format (regexp-quote zk-link-format) zk-id-regexp))
+  (or zk--link-regexp-cache
+      (setq zk--link-regexp-cache
+            (format (regexp-quote zk-link-format) zk-id-regexp))))
 
 (defun zk--file-id (file)
   "Return the ID of the given zk FILE."
@@ -511,41 +519,42 @@ supplied. Can take a PROMPT argument."
 Takes a single ID, as a string, or a list of IDs. Takes an
 optional ZK-ALIST, for efficiency if `zk--parse-id' is called
 in an internal loop."
-  (cond
-   ((and (eq target 'file-path)
-         (stringp ids))
-    (car (zk--directory-files t ids)))
-   ((and (eq target 'file-path)
-         (zk--singleton-p ids))
-    (car (zk--directory-files t (car ids))))
-   (t
-    (let* ((zk-alist (or zk-alist
-                         (zk--alist)))
-           (zk-id-list (zk--id-list))
-           (return
-            (cond ((eq target 'file-path)
-                   (cond ((stringp ids)
-                          (if (member ids zk-id-list)
-                              (cddr (assoc ids zk-alist))
-                            (user-error "No file associated with %s" ids)))
-                         ((listp ids)
-                          (mapcar
-                           (lambda (x)
-                             (caddr (assoc x zk-alist)))
-                           ids))))
-                  ((eq target 'title)
-                   (cond ((stringp ids)
-                          (if (member ids zk-id-list)
-                              (cadr (assoc ids zk-alist))
-                            (user-error "No file associated with %s" ids)))
-                         ((listp ids)
-                          (mapcar
-                           (lambda (x)
-                             (cadr (assoc x zk-alist)))
-                           ids)))))))
-      (if (zk--singleton-p return)
-          (car return)
-        return)))))
+  (let ((zk--no-gc t))
+    (cond
+     ((and (eq target 'file-path)
+           (stringp ids))
+      (car (zk--directory-files t ids)))
+     ((and (eq target 'file-path)
+           (zk--singleton-p ids))
+      (car (zk--directory-files t (car ids))))
+     (t
+      (let* ((zk-alist (or zk-alist
+                           (zk--alist)))
+             (zk-id-list (zk--id-list))
+             (return
+              (cond ((eq target 'file-path)
+                     (cond ((stringp ids)
+                            (if (member ids zk-id-list)
+                                (cddr (assoc ids zk-alist))
+                              (user-error "No file associated with %s" ids)))
+                           ((listp ids)
+                            (mapcar
+                             (lambda (x)
+                               (caddr (assoc x zk-alist)))
+                             ids))))
+                    ((eq target 'title)
+                     (cond ((stringp ids)
+                            (if (member ids zk-id-list)
+                                (cadr (assoc ids zk-alist))
+                              (user-error "No file associated with %s" ids)))
+                           ((listp ids)
+                            (mapcar
+                             (lambda (x)
+                               (cadr (assoc x zk-alist)))
+                             ids)))))))
+        (if (zk--singleton-p return)
+            (car return)
+          return))))))
 
 (defun zk--parse-file (target files)
   "Return TARGET, either `id or `title, from FILES.
@@ -610,8 +619,7 @@ When NO-PROC is non-nil, bypass `zk--processor'."
 (defun zk--formatted-string (arg format)
   "Format a multi-line string from items in ARG, following FORMAT.
 ARG can be zk-file or zk-id as string or list, single or multiple."
-  (let ((items (zk--formatter arg format)))
-    (mapconcat #'identity items "\n\n")))
+  (mapconcat #'identity (zk--formatter arg format) "\n\n"))
 
 (defun zk-format-id-and-title (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
@@ -701,7 +709,7 @@ Changes curly quotes to straight, colon to dash."
        (":" . "-"))
      nil (point-min) (line-end-position))
     (goto-char (point-min))
-    (buffer-substring
+    (buffer-substring-no-properties
      (point)
      (line-end-position))))
 
@@ -714,7 +722,7 @@ Optional TITLE argument."
          (new-id (zk--generate-id))
          (orig-id (ignore-errors (zk--current-id)))
          (text (when (use-region-p)
-                 (buffer-substring
+                 (buffer-substring-no-properties
                   (region-beginning)
                   (region-end))))
          (title (cond (title title)
@@ -722,7 +730,7 @@ Optional TITLE argument."
                        (with-temp-buffer
                          (insert text)
                          (goto-char (point-min))
-                         (buffer-substring
+                         (buffer-substring-no-properties
                           (point)
                           (line-end-position))))
                       (t (read-string "Note title: "))))
@@ -732,7 +740,7 @@ Optional TITLE argument."
                    (insert text)
                    (goto-char (point-min))
                    (forward-line 2)
-                   (buffer-substring
+                   (buffer-substring-no-properties
                     (point)
                     (point-max)))))
          (file-name (zk--note-file-path new-id clean-title)))

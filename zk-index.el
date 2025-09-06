@@ -201,8 +201,8 @@ all files in `zk-directory' will be returned as formatted candidates."
   (let* ((format (or format zk-index-format))
          (list (or files
                    (zk--directory-files)))
-         (output))
-    (dolist (file list)
+         output)
+    (dolist (file list output)
       (when (string-match (zk-file-name-regexp) file)
         (let ((id (if zk-index-invisible-ids
                       (propertize (match-string 1 file) 'invisible t)
@@ -211,8 +211,7 @@ all files in `zk-directory' will be returned as formatted candidates."
                       zk-file-name-separator
                       " "
                       (match-string 2 file))))
-          (push (zk--format format id title) output))))
-    output))
+          (push (zk--format format id title) output))))))
 
 ;;; Main Stack
 
@@ -319,8 +318,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   "Make buttons in ZK-Index buffer."
   (goto-char (point-min))
   (while (re-search-forward zk-id-regexp nil t)
-    (let* ((beg (line-beginning-position))
-           (end (line-end-position)))
+    (let ((beg (line-beginning-position))
+          (end (line-end-position)))
       (beginning-of-line)
       (make-text-button beg end
                         'type 'zk-index
@@ -553,7 +552,7 @@ with query term STRING."
 
 (defun zk-index--sort-created (files)
   "Sort list of FILES by latest created."
-  (let ((ht (make-hash-table :test #'equal :size 5000)))
+  (let ((ht (make-hash-table :test #'equal :size (length files))))
     (dolist (x files)
       (puthash x (zk--parse-file 'id x) ht))
     (sort files
@@ -564,7 +563,7 @@ with query term STRING."
 
 (defun zk-index--sort-modified (files)
   "Sort list of FILES by latest modification."
-  (let ((ht (make-hash-table :test #'equal :size 5000)))
+  (let ((ht (make-hash-table :test #'equal :size (length files))))
     (dolist (x files)
       (puthash x (file-attribute-modification-time (file-attributes x)) ht))
     (sort files
@@ -575,7 +574,7 @@ with query term STRING."
 
 (defun zk-index--sort-size (files)
   "Sort list of FILES by latest modification."
-  (let ((ht (make-hash-table :test #'equal :size 5000)))
+  (let ((ht (make-hash-table :test #'equal :size (length files))))
     (dolist (x files)
       (puthash x (file-attribute-size (file-attributes x)) ht))
     (sort files
@@ -602,7 +601,8 @@ with query term STRING."
          (zk-enable-link-buttons nil)
          (id (zk-index--button-at-point-p))
          (file (zk--parse-id 'file-path id))
-         (kill (unless (get-file-buffer file)
+         (kill (unless (and file
+                            (get-file-buffer file))
                  t))
          (buffer (find-file-noselect file))
          (index-name (buffer-name)))
@@ -692,21 +692,20 @@ Takes an option POS position argument."
 
 (defun zk-index--view-note-debounce ()
   "Delay calling of `zk-index-view-note’ by."
-  (if (timerp zk-index--debounce-timer)
-      (timer-set-idle-time zk-index--debounce-timer
-                           zk-index-view-debounce-delay)
-    (setq zk-index--debounce-timer
-          (run-with-idle-timer
-           zk-index-view-debounce-delay nil
-           (lambda ()
-             (setq zk-index--debounce-timer nil)
-             (other-window 1)
-             (when (zk-file-p)
-               (if zk-index-view--kill
-                   (kill-buffer)
-                 (zk-index-view-mode -1)))
-             (other-window 1)
-             (zk-index-view-note))))))
+  (when (timerp zk-index--debounce-timer)
+    (cancel-timer zk-index--debounce-timer))
+  (setq zk-index--debounce-timer
+        (run-with-idle-timer
+         zk-index-view-debounce-delay nil
+         (lambda ()
+           (setq zk-index--debounce-timer nil)
+           (other-window 1)
+           (when (zk-file-p)
+             (if zk-index-view--kill
+                 (kill-buffer)
+               (zk-index-view-mode -1)))
+           (other-window 1)
+           (zk-index-view-note)))))
 
 (defun zk-index-forward-button (N)
   "Move to the Nth next button, or Nth previous button if N is negative.
