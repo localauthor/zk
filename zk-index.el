@@ -124,6 +124,9 @@ example."
     (define-key map (kbd "S") #'zk-index-sort-size)
     (define-key map (kbd "M") #'zk-index-sort-modified)
     (define-key map (kbd "C") #'zk-index-sort-created)
+    (define-key map (kbd "T") #'zk-index-modified-today)
+    (define-key map (kbd "Y") #'zk-index-modified-yesterday)
+    (define-key map (kbd "W") #'zk-index-modified-this-week)
     (define-key map (kbd "RET") #'zk-index-open-note)
     (define-key map (kbd "q") #'delete-window)
     (make-composed-keymap map tabulated-list-mode-map))
@@ -582,6 +585,36 @@ with query term STRING."
             (>
              (gethash a ht)
              (gethash b ht))))))
+
+;;; Modified on Date Functions
+
+(defun zk-index-modified-today ()
+  "Open ZK-Index with notes modified today."
+  (interactive)
+  (if-let ((files (zk--files-modified-today)))
+      (progn
+        (zk-index files)
+        (zk-index--set-mode-name " today"))
+    (user-error "No files modified today")))
+
+(defun zk-index-modified-yesterday ()
+  "Open ZK-Index with notes modified yesterday."
+  (interactive)
+  (if-let ((files (zk--files-modified-yesterday)))
+      (progn
+        (zk-index files)
+        (zk-index--set-mode-name " yesterday"))
+    (user-error "No files modified yesterday")))
+
+(defun zk-index-modified-this-week ()
+  "Open ZK-Index with notes modified this week."
+  (interactive)
+  (if-let ((files (zk--files-modified-this-week)))
+      (progn
+        (zk-index files)
+        (zk-index--set-mode-name " this week"))
+    (user-error "No files modified this week")))
+
 
 ;;; ZK-Index Keymap Commands
 

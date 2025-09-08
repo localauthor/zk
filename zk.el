@@ -1150,6 +1150,68 @@ Backlinks and Links-in-Note are grouped separately."
 ;;           (when (eq 'backlink (get-text-property 0 'type a))
 ;;               t))))
 
+
+;;; Modified on Date Functions
+
+(defun zk--files-modified-in-timespan (pred)
+  "Return list of files that satisfy the time PRED function."
+  (let* ((zk--no-gc t)
+         (files (zk--directory-files t))
+         (ht (make-hash-table :test #'equal :size (length files)))
+         list)
+    (dolist (x files ht)
+      (puthash x (file-attribute-modification-time
+                  (file-attributes x))
+               ht))
+    (dolist (x files list)
+      (when (funcall pred (gethash x ht))
+        (push x list)))))
+
+(defun zk--files-modified-this-week ()
+  "Return files modified in the last seven days."
+  (zk--files-modified-in-timespan
+   (lambda (mod-time)
+     (time-less-p
+      (time-subtract (current-time) (days-to-time 7))
+      mod-time))))
+
+(defun zk--files-modified-on-date (date)
+  "Return list of files modified on DATE.
+DATE must be a string in ISO 8601 date format: YYYY-MM-DD."
+  (zk--files-modified-in-timespan
+   (lambda (mod-time)
+     (equal date (format-time-string "%F" mod-time)))))
+
+(defun zk--files-modified-today ()
+  "Return files modified on today’s date."
+  (zk--files-modified-on-date
+   (format-time-string "%F" (current-time))))
+
+(defun zk--files-modified-yesterday ()
+  "Return files modified on yesterday’s date."
+  (zk--files-modified-on-date
+   (format-time-string "%F" (time-subtract
+                             (current-time)
+                             (days-to-time 1)))))
+
+(defun zk-files-modified-this-week ()
+  "Select from files modified in the last seven days."
+  (interactive)
+  (funcall zk-select-file-function "Mod’d This Week: "
+           (zk--files-modified-this-week)))
+
+(defun zk-files-modified-today ()
+  "Select from files modified on today’s date."
+  (interactive)
+  (funcall zk-select-file-function "Mod’d Today: "
+           (zk--files-modified-today)))
+
+(defun zk-files-modified-yesterday ()
+  "Select from files modified on yesterday’s date."
+  (interactive)
+  (funcall zk-select-file-function "Mod’d Yesterday: "
+           (zk--files-modified-yesterday)))
+
 (provide 'zk)
 
 ;;; zk.el ends here
