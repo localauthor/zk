@@ -585,27 +585,30 @@ with query term STRING."
 (defun zk-index-modified-today ()
   "Open ZK-Index with notes modified today."
   (interactive)
-  (if-let ((files (zk--files-modified-today)))
+  (if-let ((files (zk-files-modified-today)))
       (progn
         (zk-index files)
+        (zk-index--reset-mode-line)
         (zk-index--set-mode-name " today"))
     (user-error "No files modified today")))
 
 (defun zk-index-modified-yesterday ()
   "Open ZK-Index with notes modified yesterday."
   (interactive)
-  (if-let ((files (zk--files-modified-yesterday)))
+  (if-let ((files (zk-files-modified-yesterday)))
       (progn
         (zk-index files)
+        (zk-index--reset-mode-line)
         (zk-index--set-mode-name " yesterday"))
     (user-error "No files modified yesterday")))
 
 (defun zk-index-modified-this-week ()
   "Open ZK-Index with notes modified this week."
   (interactive)
-  (if-let ((files (zk--files-modified-this-week)))
+  (if-let ((files (zk-files-modified-this-week)))
       (progn
         (zk-index files)
+        (zk-index--reset-mode-line)
         (zk-index--set-mode-name " this week"))
     (user-error "No files modified this week")))
 
