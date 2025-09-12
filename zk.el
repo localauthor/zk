@@ -705,12 +705,12 @@ Changes curly quotes to straight, colon to dash."
        ("\x201D" . "\"")
        ("\x2018" . "'")
        ("\x2019" . "'")
+       ("\\" . "-")
        ("\n" . "")
        (":" . "-"))
      nil (point-min) (line-end-position))
-    (goto-char (point-min))
     (buffer-substring-no-properties
-     (point)
+     (point-min)
      (line-end-position))))
 
 ;;;###autoload
