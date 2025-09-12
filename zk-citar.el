@@ -1,13 +1,13 @@
 ;;; zk-citar.el --- Citar integration for zk                -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2024  Grant Rosson
+;; Copyright (C) 2022-2025  Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: July 7, 2022
 ;; License: GPL-3.0-or-later
 ;; Version: 0.1
 ;; URL: https://github.com/localauthor/zk
-;; Package-Requires: ((emacs "27.1") (citar "0.9.7") (zk "0.4"))
+;; Package-Requires: ((emacs "28.1") (citar "0.9.7") (zk "0.11"))
 ;; Keywords: tools, extensions
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -75,14 +75,15 @@ Must include \"${=key=}\"."
 
 (defun zk-citar--get-notes (&optional keys)
   "Return hash-table with KEYS with file notes."
-  (let* ((files (make-hash-table :test 'equal))
-         (key-string (string-join keys "\\|"))
+  (let* ((zk--no-gc t)
+         (files (make-hash-table :test 'equal))
+         (key-string (when keys (string-join keys "\\|")))
          (filematch (or key-string zk-citar-citekey-regexp)))
     (dolist (file (zk--directory-files t filematch) files)
       (let ((key (or (car keys)
                      (and (string-match zk-citar-citekey-regexp file)
                           (match-string 0 file)))))
-        (push file (gethash key files))))))
+        (puthash key file files)))))
 
 
 ;;;; hasitems
