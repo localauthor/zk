@@ -186,9 +186,8 @@ For details of ARG see `zk--processor'. When called on items
 selected by `embark-select', narrows index to selected
 candidates. Alternatively, `embark-export' exports candidates to
 a new index."
-  (let ((files (zk--processor arg)))
-    (zk-index files)
-    (zk-index--reset-mode-line)))
+  (zk-index (zk--processor arg))
+  (zk-index--reset-mode-line))
 
 ;;; Formatting
 
@@ -337,8 +336,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 
 (defun zk-index-button-action (_)
   "Action taken when `zk-index' button is pressed."
-  (let* ((id (zk-index--button-at-point-p))
-         (file (zk--parse-id 'file-path id))
+  (let* ((file (zk--parse-id 'file-path
+                             (zk-index--button-at-point-p)))
          (buffer (find-file-noselect file)))
     (funcall zk-index-button-display-function file buffer)))
 
@@ -346,11 +345,10 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
   "Generate help-echo for `zk-index' button in WIN at POS."
   (with-selected-window win
     (goto-char pos)
-    (let* ((beg (+ (line-beginning-position)
-                   (length zk-index-prefix)))
-           (end (line-end-position))
-           (title (buffer-substring beg end)))
-      (format "%s" title))))
+    (let ((beg (+ (line-beginning-position)
+                  (length zk-index-prefix)))
+          (end (line-end-position)))
+      (format "%s" (buffer-substring beg end)))))
 
 (defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed in buffer BUF-NAME."
@@ -544,8 +542,8 @@ with query term STRING."
 
 (defun zk-index--current-file-list ()
   "Return list files in current index."
-  (let ((ids (zk-index--current-id-list (buffer-name))))
-    (zk--parse-id 'file-path ids)))
+  (zk--parse-id 'file-path
+                (zk-index--current-id-list (buffer-name))))
 
 (defun zk-index--sort-created (files)
   "Sort list of FILES by latest created."
