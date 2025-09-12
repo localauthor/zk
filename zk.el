@@ -608,13 +608,12 @@ When NO-PROC is non-nil, bypass `zk--processor'."
                    arg
                  (zk--processor arg)))
         items)
-    (dolist (file files)
+    (dolist (file files items)
       (when (string-match (zk-file-name-regexp) file)
         (let ((id (match-string 1 file))
               (title (replace-regexp-in-string zk-file-name-separator " "
                                                (match-string 2 file))))
-          (push (zk--format format id title) items))))
-    items))
+          (push (zk--format format id title) items))))))
 
 (defun zk--formatted-string (arg format)
   "Format a multi-line string from items in ARG, following FORMAT.
@@ -845,11 +844,10 @@ If it doesn't exist, creates a new note with that title."
   (interactive
    (list (read-string "Search string: "
                       nil 'zk-search-history)))
-  (let ((files (zk--grep-file-list str)))
-    (if files
-        (find-file (funcall zk-select-file-function
-                            (format "Files containing \"%s\": " str) files))
-      (user-error "No results for \"%s\"" str))))
+  (if-let ((files (zk--grep-file-list str)))
+      (find-file (funcall zk-select-file-function
+                          (format "Files containing \"%s\": " str) files))
+    (user-error "No results for \"%s\"" str)))
 
 ;;;###autoload
 (defun zk-current-notes ()
@@ -870,11 +868,10 @@ Optionally call a custom function by setting the variable
 (defun zk-follow-link-at-point (&optional id)
   "Open note that corresponds with the zk ID at point."
   (interactive)
-  (let ((id (or (zk--id-at-point)
-                id)))
-    (if id
-        (find-file (zk--parse-id 'file-path id))
-      (error "No zk-link at point"))))
+  (if-let ((id (or (zk--id-at-point)
+                   id)))
+      (find-file (zk--parse-id 'file-path id))
+    (error "No zk-link at point")))
 
 (defun zk--links-in-note-list ()
   "Return list of zk files that are linked from the current buffer."
@@ -897,10 +894,9 @@ Optionally call a custom function by setting the variable
 (defun zk-links-in-note ()
   "Select from list of notes linked to in the current note."
   (interactive)
-  (let* ((files (zk--links-in-note-list)))
-    (if files
-        (find-file (funcall zk-select-file-function "Links: " files))
-      (user-error "No zk links found"))))
+  (if-let ((files (zk--links-in-note-list)))
+      (find-file (funcall zk-select-file-function "Links: " files))
+    (user-error "No zk links found")))
 
 ;;; Insert Link
 
@@ -951,8 +947,8 @@ See `zk--format' for details about FORMAT. If nil,
 
 FILES must be a list of filepaths. If nil, all files in `zk-directory'
 will be returned as formatted candidates."
-  (let* ((format (or format
-                     zk-completion-at-point-format)))
+  (let ((format (or format
+                    zk-completion-at-point-format)))
     (if files
         (zk--formatter files format)
       (zk--formatter (zk--directory-files) format t))))
@@ -1067,8 +1063,8 @@ Select TAG, with completion, from list of all tags in zk notes."
 
 (defun zk--dead-link-id-list ()
   "Return list of all links with no corresponding note."
-  (let* ((all-link-ids (zk--grep-link-id-list))
-         (all-ids (zk--id-list)))
+  (let ((all-link-ids (zk--grep-link-id-list))
+        (all-ids (zk--id-list)))
     (delete-dups (remq nil (mapcar
                             (lambda (x)
                               (string-match zk-id-regexp x)
@@ -1090,8 +1086,8 @@ Select TAG, with completion, from list of all tags in zk notes."
 
 (defun zk--unlinked-notes-list ()
   "Return list of IDs for notes that no notes link to."
-  (let* ((all-link-ids (zk--grep-link-id-list))
-         (all-ids (zk--id-list)))
+  (let ((all-link-ids (zk--grep-link-id-list))
+        (all-ids (zk--id-list)))
     (remq nil (mapcar
                (lambda (x)
                  (when (not (member x all-link-ids))
@@ -1102,11 +1098,9 @@ Select TAG, with completion, from list of all tags in zk notes."
 (defun zk-unlinked-notes ()
   "Find unlinked notes."
   (interactive)
-  (let* ((ids (zk--unlinked-notes-list))
-         (notes (zk--parse-id 'file-path ids)))
-    (if notes
-        (find-file (funcall zk-select-file-function "Unlinked notes: " notes))
-      (user-error "No unlinked notes found"))))
+  (if-let ((notes (zk--parse-id 'file-path (zk--unlinked-notes-list))))
+      (find-file (funcall zk-select-file-function "Unlinked notes: " notes))
+    (user-error "No unlinked notes found")))
 
 
 ;;; zk-network - Backlinks and Forward Links Together
@@ -1115,8 +1109,7 @@ Select TAG, with completion, from list of all tags in zk notes."
   "Find `zk-backlinks' and `zk-links-in-note' for current or selected note.
 Backlinks and Links-in-Note are grouped separately."
   (interactive)
-  (let* ((id (zk--current-id))
-         (backlinks (zk--backlinks-list id))
+  (let* ((backlinks (zk--backlinks-list (zk--current-id)))
          (links-in-note (zk--links-in-note-list))
          (resources))
     (if (or backlinks links-in-note)
