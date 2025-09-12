@@ -176,13 +176,9 @@ example."
 
 (defun zk-index-embark-target ()
   "Target zk-id of button at point in ZK-Index."
-  (when (zk-index--button-at-point-p)
-    (save-excursion
-      (beginning-of-line)
-      (re-search-forward zk-id-regexp (line-end-position)))
-    (let* ((zk-id (match-string-no-properties 1))
-           (zk-file (zk--parse-id 'file-path zk-id)))
-      `(zk-file ,zk-file . ,(cons (line-beginning-position) (line-end-position))))))
+  (when-let ((id (zk-index--button-at-point-p))
+             (zk-file (zk--parse-id 'file-path id)))
+    `(zk-file ,zk-file . ,(cons (line-beginning-position) (line-end-position)))))
 
 (defun zk-index-narrow (arg)
   "Produce a ZK-Index narrowed to notes listed in ARG.
