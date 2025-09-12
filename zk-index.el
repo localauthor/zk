@@ -316,14 +316,12 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index--make-buttons ()
   "Make buttons in ZK-Index buffer."
   (goto-char (point-min))
-  (while (re-search-forward zk-id-regexp nil t)
-    (let ((beg (line-beginning-position))
-          (end (line-end-position)))
-      (beginning-of-line)
-      (make-text-button beg end
-                        'type 'zk-index
-                        'help-echo zk-index-help-echo-function)
-      (end-of-line))))
+  (while (not (eobp))
+    (make-text-button (line-beginning-position)
+                      (line-end-position)
+                      'type 'zk-index
+                      'help-echo zk-index-help-echo-function)
+    (forward-line)))
 
 ;;; Utilities
 
