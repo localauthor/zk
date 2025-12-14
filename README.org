@@ -139,8 +139,8 @@ See [[#alternative-search-functions-using-consult-grep][Alternative Search Funct
   (require 'zk-consult)
   (zk-setup-auto-link-buttons)
   (zk-setup-embark)
-  (setq zk-tag-grep-function #'zk-consult-grep-tag-search
-        zk-grep-function #'zk-consult-grep))
+  (setq zk-tag-search-function #'zk-consult-grep-tag-search
+        zk-search-function #'zk-consult-grep))
 #+end_src
 
 * Features
