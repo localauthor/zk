@@ -29,7 +29,7 @@
 
 
 ;; 1. Two functions as alternatives to the default `zk-grep' functions:
-;; `zk-consult-grep' and `zk-consult-grep-tag-search'. Instead of displaying
+;; `zk-consult-grep' and `zk-consult-grep-tag-search'.  Instead of displaying
 ;; search results in a `grep' buffer, these functions display search results
 ;; using Consult.
 
@@ -141,7 +141,7 @@ name of this function."
 (defun zk-consult-select-file (&optional prompt list group sort)
   "Wrapper around `consult--read' to select a zk-file.
 Offers candidates from `zk--directory-files', or from LIST when
-supplied. Can take a PROMPT argument."
+supplied.  Can take a PROMPT argument."
   (let* ((files (if list list
                   (zk--directory-files t)))
          (prompt (if prompt prompt
