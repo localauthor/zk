@@ -704,6 +704,7 @@ Changes curly quotes to straight, colon to dash."
        ("\x2018" . "'")
        ("\x2019" . "'")
        ("\\" . "-")
+       ("/" . "-")
        ("\n" . "")
        (":" . "-"))
      nil (point-min) (line-end-position))
