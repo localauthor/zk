@@ -662,10 +662,11 @@ with query term STRING."
 (defun zk-index-current-notes ()
   "Open ZK-Index listing currently open notes."
   (interactive)
-  (zk-index
-   (zk--current-notes-list)
-   zk-index-last-format-function
-   zk-index-last-sort-function))
+  (if-let ((notes (zk--current-notes-list)))
+      (zk-index notes
+                zk-index-last-format-function
+                zk-index-last-sort-function)
+    (error "No current notes")))
 
 (defun zk-index--button-at-point-p (&optional pos)
   "Return zk-id when `zk-index' button is at point.
