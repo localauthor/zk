@@ -510,12 +510,15 @@ with query term STRING."
 (defun zk-index--sort-call (sort-fn mode-string)
   "Call SORT-FN with MODE-STRING."
   (if (derived-mode-p 'zk-index-mode)
-      (let ((zk--no-gc t))
-        (zk-index-refresh (zk-index--current-file-list)
-                          zk-index-last-format-function
-                          sort-fn
-                          (buffer-name))
-        (zk-index--set-mode-name mode-string))
+      (progn
+        (setq zk-index-sorting t)
+        (let ((zk--no-gc t))
+          (zk-index-refresh (zk-index--current-file-list)
+                            zk-index-last-format-function
+                            sort-fn
+                            (buffer-name))
+          (zk-index--set-mode-name mode-string))
+        (setq zk-index-sorting nil))
     (user-error "Not in a ZK-Index")))
 
 (defun zk-index-sort-modified ()
