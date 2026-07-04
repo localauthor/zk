@@ -220,7 +220,8 @@ all files in `zk-directory' will be returned as formatted candidates."
   (interactive)
   (setq zk-index-last-format-function format-fn)
   (when sort-fn
-    (setq zk-index-last-sort-function sort-fn))
+    (unless (eq zk-index-last-sort-function 'reverse)
+      (setq zk-index-last-sort-function sort-fn)))
   (let* ((zk--no-gc t)
          (inhibit-message nil)
          (inhibit-read-only t)
@@ -265,9 +266,10 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME, MODE-LINE."
                        zk-index-buffer-name))
          line)
     (setq zk-index-last-format-function format-fn)
-    (setq zk-index-last-sort-function sort-fn)
+    (unless (eq zk-index-last-sort-function 'reverse)
+      (setq zk-index-last-sort-function sort-fn))
     (with-current-buffer buf-name
-      (setq line (line-number-at-pos))
+      ;;(setq line (line-number-at-pos))
       (erase-buffer)
       (zk-index--reset-mode-name)
       (zk-index--sort files format-fn sort-fn)
@@ -289,7 +291,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME, MODE-LINE."
                       'zk-index--sort-modified))
          (files (if (zk--singleton-p files)
                     files
-                  (nreverse (funcall sort-fn files)))))
+                  (reverse (funcall sort-fn (ensure-list files)))))) ;; fix sorting calls on a single file
     (funcall #'zk-index--format files format-fn)))
 
 (defun zk-index--format (files &optional format-fn)
@@ -540,17 +542,32 @@ with query term STRING."
 (defun zk-index-sort-modified ()
   "Sort index by last modified."
   (interactive)
-  (zk-index--sort-call #'zk-index--sort-modified " by modified"))
+  (if (eq zk-index-last-sort-function 'zk-index--sort-modified)
+      (progn
+        (setq zk-index-last-sort-function 'reverse)
+        (zk-index--sort-call #'zk-index--sort-modified " by modified ^"))
+    (setq zk-index-last-sort-function 'zk-index--sort-modified)
+    (zk-index--sort-call #'zk-index--sort-modified " by modified v")))
 
 (defun zk-index-sort-created ()
   "Sort index by date created."
   (interactive)
-  (zk-index--sort-call #'zk-index--sort-created " by created"))
+  (if (eq zk-index-last-sort-function 'zk-index--sort-created)
+      (progn
+        (setq zk-index-last-sort-function 'reverse)
+        (zk-index--sort-call #'zk-index--sort-created " by created ^"))
+    (setq zk-index-last-sort-function 'zk-index--sort-created)
+    (zk-index--sort-call #'zk-index--sort-created " by created v")))
 
 (defun zk-index-sort-size ()
   "Sort index by size."
   (interactive)
-  (zk-index--sort-call #'zk-index--sort-size " by size"))
+  (if (eq zk-index-last-sort-function 'zk-index--sort-size)
+      (progn
+        (setq zk-index-last-sort-function 'reverse)
+        (zk-index--sort-call #'zk-index--sort-size " by size ^"))
+    (setq zk-index-last-sort-function 'zk-index--sort-size)
+    (zk-index--sort-call #'zk-index--sort-size " by size v")))
 
 (defun zk-index--set-mode-name (string)
   "Add STRING to `mode-name' in `zk-index-mode'."
@@ -567,36 +584,43 @@ with query term STRING."
 
 (defun zk-index--sort-created (files)
   "Sort list of FILES by latest created."
-  (let ((ht (make-hash-table :test #'equal :size (length files))))
+  (let ((ht (make-hash-table :test #'equal :size (length files)))
+        (reverse (eq zk-index-last-sort-function 'reverse)))
     (dolist (x files)
       (puthash x (zk--parse-file 'id x) ht))
     (sort files
-          (lambda (a b)
-            (string>
-             (gethash a ht)
-             (gethash b ht))))))
+          :lessp (lambda (a b)
+                   (string>
+                    (gethash a ht)
+                    (gethash b ht)))
+          :reverse reverse)))
 
 (defun zk-index--sort-modified (files)
-  "Sort list of FILES by latest modification."
-  (let ((ht (make-hash-table :test #'equal :size (length files))))
+  "Sort list of FILES by latest modification.
+Optional REVERSE."
+  (let ((ht (make-hash-table :test #'equal :size (length files)))
+        (reverse (eq zk-index-last-sort-function 'reverse)))
     (dolist (x files)
       (puthash x (file-attribute-modification-time (file-attributes x)) ht))
     (sort files
-          (lambda (a b)
-            (time-less-p
-             (gethash b ht)
-             (gethash a ht))))))
+          :lessp (lambda (a b)
+                   (time-less-p
+                    (gethash b ht)
+                    (gethash a ht)))
+          :reverse reverse)))
 
 (defun zk-index--sort-size (files)
   "Sort list of FILES by latest modification."
-  (let ((ht (make-hash-table :test #'equal :size (length files))))
+  (let ((ht (make-hash-table :test #'equal :size (length files)))
+        (reverse (eq zk-index-last-sort-function 'reverse)))
     (dolist (x files)
       (puthash x (file-attribute-size (file-attributes x)) ht))
     (sort files
-          (lambda (a b)
-            (>
-             (gethash a ht)
-             (gethash b ht))))))
+          :lessp (lambda (a b)
+                   (>
+                    (gethash a ht)
+                    (gethash b ht)))
+          :reverse reverse)))
 
 ;;; Modified on Date Functions
 
