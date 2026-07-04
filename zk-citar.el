@@ -83,7 +83,7 @@ Must include \"${=key=}\"."
       (let ((key (or (car keys)
                      (and (string-match zk-citar-citekey-regexp file)
                           (match-string 0 file)))))
-        (puthash key file files)))))
+        (push file (gethash key files))))))
 
 
 ;;;; hasitems
@@ -100,13 +100,11 @@ Must include \"${=key=}\"."
 (defun zk-citar--create-note (_key entry)
   "Create a note file from KEY and ENTRY."
   (when (y-or-n-p "No note associated - create one?")
-    (let* ((title
-            (subst-char-in-string ?: ?-
-                                  (citar-format--entry
-                                   zk-citar-title-template
-                                   entry))))
-      (zk-new-note title))))
-
+    (zk-new-note
+     (subst-char-in-string ?: ?-
+                           (citar-format--entry
+                            zk-citar-title-template
+                            entry)))))
 
 ;;;; Register citar-note-source
 
