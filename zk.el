@@ -746,13 +746,13 @@ Optional TITLE argument."
       (setq orig-id zk-default-backlink))
     (when (use-region-p)
       (kill-region (region-beginning) (region-end)))
-    (when (or pref-arg
-              (eq zk-new-note-link-insert 't)
-              (and (eq zk-new-note-link-insert 'zk)
-                   (zk-file-p))
-              (and (eq zk-new-note-link-insert 'ask)
-                   (y-or-n-p "Insert link at point? ")))
-      (unless buffer-read-only
+    (unless buffer-read-only
+      (when (or pref-arg
+                (eq zk-new-note-link-insert 't)
+                (and (eq zk-new-note-link-insert 'zk)
+                     (zk-file-p))
+                (and (eq zk-new-note-link-insert 'ask)
+                     (y-or-n-p "Insert link at point? ")))
         (zk-insert-link file-name)))
     (when buffer-file-name
       (save-buffer))
