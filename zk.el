@@ -470,7 +470,8 @@ return list of files not matching the regexp."
   "Wrapper around `completing-read' to select zk-file.
 Offers candidates from `zk--directory-files', or from LIST when
 supplied. Can take a PROMPT argument."
-  (let* ((files (or list
+  (let* ((zk--no-gc t)
+         (files (or list
                     (zk--directory-files t)))
          (group (or group 'zk--group-function))
          (sort (or sort nil)))
