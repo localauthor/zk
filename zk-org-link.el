@@ -48,12 +48,19 @@
                          :export #'zk-org-link--export
 			 :store #'zk-org-link--store
                          :complete #'zk-org-link--complete
+                         :insert-description #'zk-org-link--description
                          :help-echo #'zk-org-link--help-echo)
 
 ;; Set up org-style link format by setting variables
 (setq zk-link-format "[[zk:%s]]")
 (setq zk-link-and-title-format "[[zk:%i][%t]]")
 (setq zk-enable-link-buttons nil)
+
+(defun zk-org-link--description (location desc)
+  "Insert a description for zk-org-link. Region or note title."
+  (if desc desc
+    (string-match zk-id-regexp location)
+    (zk--parse-id 'title (match-string 1 location))))
 
 (defun zk-org-link--follow (id)
   "Follow an zk ID."
