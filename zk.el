@@ -372,7 +372,7 @@ an internal loop."
           (when (string-match-p str (cadr item))
             (push (car item) ids))))
     (let ((zk--no-gc t))
-      (ensure-list (zk--parse-file 'id (zk--directory-files t))))))
+      (ensure-list (zk--parse-file 'id (zk--directory-files))))))
 
 (defun zk-id-p (id)
   "Return t if ID is already in use as a zk-id."
