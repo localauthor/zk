@@ -311,8 +311,9 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME, MODE-LINE."
 (eval-and-compile
   (define-button-type 'zk-index
     'follow-link t
-    'action 'zk-index-button-action
+    'action #'zk-index-button-action
     'keymap 'zk-index-button-map
+    'mouse-face nil ;; no mouse-over face
     'face 'default))
 
 (defun zk-index--insert (candidates)
