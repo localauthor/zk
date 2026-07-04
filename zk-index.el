@@ -412,7 +412,7 @@ items listed first.")
          (command (if (eq this-command 'zk-index-focus)
                       'zk-index-focus
                     'zk-index-search))
-         (index-buf zk-index-buffer-name)
+         (index-buf (buffer-name)) ;; allows search in embark-exported index buffer
          (scope (if (zk-index-narrowed-p index-buf)
                     (zk-index--current-id-list index-buf)
                   (setq-local zk-index-query-terms nil)
