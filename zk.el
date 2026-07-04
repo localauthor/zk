@@ -314,8 +314,8 @@ Group 2 is the title."
   (or zk--file-name-regexp-cache
       (setq zk--file-name-regexp-cache
             (concat "\\(?1:" zk-id-regexp "\\)"
-                    "."
-                    "\\(?2:.*?\\)"
+                    ".?"  ;; allow notes with no title
+                    "\\(?2:.*?\\)?"
                     "\\."
                     zk-file-extension
                     ".*"))))
@@ -684,7 +684,9 @@ Adds `zk-make-link-buttons' to `find-file-hook.'"
   "Generate full file-path for note with given ID and TITLE."
   (let ((base-name (format "%s%s%s.%s"
                            id
-                           zk-file-name-separator
+                           (if (string-empty-p title) ;; allow notes with no title
+                               ""
+                             zk-file-name-separator)
                            title
                            zk-file-extension)))
     (concat (file-name-as-directory zk-directory)
