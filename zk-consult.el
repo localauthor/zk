@@ -110,31 +110,31 @@ Select TAG, with completion, from list of all tags in zk notes."
 
 (defvar zk-consult-source
   `( :name     "zk"
-     :narrow   (?z . "zk - current notes")
+     :narrow   ?z
      :category zk-file
      :history  zk-history
      :new      ,#'zk-new-note
-     :state    ,#'consult--buffer-state
+     :state    ,#'consult--file-state
+     :annotate (lambda (cand) nil)
      :items
      ,(lambda ()
-        (consult--buffer-query :sort 'visibility
-                               :as #'consult--buffer-pair
-                               :predicate
-                               (lambda (buf)
-                                 (and (buffer-file-name buf)
-                                      (zk-file-p
-                                       (buffer-file-name buf))))))))
-
+        (consult--buffer-query
+         :sort 'visibility
+         :as (lambda (buf)
+               (cons (zk--parse-file
+                      'title (buffer-file-name buf))
+                     (buffer-file-name buf)))
+         :predicate
+         (lambda (buf)
+           (and (buffer-file-name buf)
+                (zk-file-p
+                 (buffer-file-name buf))))))))
 
 (defun zk-consult-current-notes ()
   "Select a currently open note using `consult-buffer'.
 To use, set the variable `zk-current-notes-function' to the
 name of this function."
-  (minibuffer-with-setup-hook
-      '(lambda ()
-         (setq unread-command-events
-               (append unread-command-events (list ?z 32))))
-    (consult-buffer)))
+  (consult-buffer '(zk-consult-source)))
 
 ;;; Consult Select File with Preview
 
@@ -142,10 +142,11 @@ name of this function."
   "Wrapper around `consult--read' to select a zk-file.
 Offers candidates from `zk--directory-files', or from LIST when
 supplied.  Can take a PROMPT argument."
-  (let* ((files (if list list
-                  (zk--directory-files t)))
-         (prompt (if prompt prompt
-                   "Select File: ")))
+  (let* ((zk--no-gc t)
+         (files (or list
+                    (zk--directory-files t)))
+         (prompt (or prompt
+                     "Select File: ")))
     (consult--read
      files
      :prompt prompt
