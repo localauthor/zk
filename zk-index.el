@@ -149,6 +149,8 @@ example."
 (defvar-local zk-index-query-mode-line nil)
 (defvar zk-search-history)
 (defvar zk--no-gc)
+(defvar zk-index-querying nil)
+(defvar zk-index-sorting nil)
 
 (declare-function zk-file-p zk)
 (declare-function zk--grep-id-list zk)
@@ -269,7 +271,8 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
       (zk-index--sort files format-fn sort-fn)
       (goto-char (point-min))
       (setq truncate-lines t)
-      (unless (zk-index-narrowed-p buf-name)
+      (unless (or zk-index-querying
+                  zk-index-sorting)
         (zk-index--reset-mode-line)
         (forward-line (1- line))))))
 
@@ -394,6 +397,7 @@ items listed first.")
 
 (defun zk-index-query-files (string)
   "Return narrowed list of notes, based on focus or search query for STRING."
+  (setq zk-index-querying t)
   (let* ((zk--no-gc t)
          (command (if (eq this-command 'zk-index-focus)
                       'zk-index-focus
@@ -425,13 +429,9 @@ items listed first.")
           (zk-index files
                     zk-index-last-format-function
                     zk-index-last-sort-function
-                    index-buf)
-          (setq zk-index-query-mode-line
-                (propertize zk-mode-line
-                            'help-echo zk-mode-line))
-          (add-to-list 'mode-line-misc-info '(:eval (zk-index--query-mode-line)))
-          (force-mode-line-update t))
-      (error "No matches for \"%s\" in %s" string zk-index-buffer-name))))
+                    index-buf mode-line))
+      (error "No matches for \"%s\" in %s" string index-buf)))
+  (setq zk-index-querying nil))
 
 (defun zk-index-query-refresh ()
   "Refresh narrowed index, based on last focus or search query."
