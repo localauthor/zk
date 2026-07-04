@@ -146,7 +146,7 @@ example."
 
 (defvar zk-index-last-sort-function nil)
 (defvar zk-index-last-format-function nil)
-(defvar-local zk-index-query-mode-line nil)
+(defvar-local zk-index-mode-line nil)
 (defvar zk-search-history)
 (defvar zk--no-gc)
 (defvar zk-index-querying nil)
@@ -188,8 +188,7 @@ For details of ARG see `zk--processor'. When called on items
 selected by `embark-select', narrows index to selected
 candidates. Alternatively, `embark-export' exports candidates to
 a new index."
-  (zk-index (zk--processor arg))
-  (zk-index--reset-mode-line))
+  (zk-index (zk--processor arg)))
 
 ;;; Formatting
 
@@ -216,8 +215,8 @@ all files in `zk-directory' will be returned as formatted candidates."
 ;;; Main Stack
 
 ;;;###autoload
-(defun zk-index (&optional files format-fn sort-fn buf-name)
-  "Open ZK-Index, with optional FILES, FORMAT-FN, SORT-FN, BUF-NAME."
+(defun zk-index (&optional files format-fn sort-fn buf-name mode-line)
+  "Open ZK-Index, with optional FILES, FORMAT-FN, SORT-FN, BUF-NAME, MODE-LINE."
   (interactive)
   (setq zk-index-last-format-function format-fn)
   (when sort-fn
@@ -245,12 +244,15 @@ all files in `zk-directory' will be returned as formatted candidates."
                          '(display-buffer-at-bottom)))
       (when files
         (zk-index-refresh files format-fn sort-fn buf-name))
-      (pop-to-buffer buf-name
-                     '(display-buffer-at-bottom)))))
+      (unless (eq (buffer-name) buf-name)
+        (pop-to-buffer buf-name
+                       '(display-buffer-at-bottom))))
+    (when mode-line
+      (zk-index--set-mode-line mode-line))))
 
-(defun zk-index-refresh (&optional files format-fn sort-fn buf-name)
+(defun zk-index-refresh (&optional files format-fn sort-fn buf-name mode-line)
   "Refresh the index.
-Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
+Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME, MODE-LINE."
   (interactive)
   (let* ((zk--no-gc t)
          (inhibit-message t)
@@ -274,7 +276,12 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
       (unless (or zk-index-querying
                   zk-index-sorting)
         (zk-index--reset-mode-line)
-        (forward-line (1- line))))))
+        (setq-local zk-index-query-terms nil)
+        (when mode-line (zk-index--set-mode-line
+                         mode-line))
+        ;; TODO figure out when we would want cursor return to same line
+        ;; (forward-line (1- line))
+        ))))
 
 (defun zk-index--sort (files &optional format-fn sort-fn)
   "Sort FILES, with option FORMAT-FN and SORT-FN."
@@ -417,7 +424,7 @@ items listed first.")
                   (zk--id-list string))
                  (t
                   (zk--grep-id-list string))))
-         (zk-mode-line)
+         (mode-line)
          (ids (mapcar (lambda (x) (when (member x scope) x))
                       query))
          (files
@@ -425,13 +432,21 @@ items listed first.")
     (add-to-history 'zk-search-history string)
     (if files
         (progn
-          (setq zk-mode-line (zk-index-query-mode-line command string))
+          (setq mode-line (zk-index-query-mode-line command string))
           (zk-index files
                     zk-index-last-format-function
                     zk-index-last-sort-function
                     index-buf mode-line))
       (error "No matches for \"%s\" in %s" string index-buf)))
   (setq zk-index-querying nil))
+
+(defun zk-index--set-mode-line (string)
+  "Set ZK-Index mode-line to STRING."
+  (setq zk-index-mode-line
+        (propertize string
+                    'help-echo string))
+  (add-to-list 'mode-line-misc-info '(:eval (zk-index-mode-line)))
+  (force-mode-line-update t))
 
 (defun zk-index-query-refresh ()
   "Refresh narrowed index, based on last focus or search query."
@@ -441,7 +456,9 @@ items listed first.")
     (unless (stringp files)
       (zk-index-refresh files
                         nil
-                        zk-index-last-sort-function)
+                        zk-index-last-sort-function
+                        zk-index-buffer-name
+                        zk-index-mode-line)
       (setq mode-name mode))))
 
 (defun zk-index-query-mode-line (query-command string)
@@ -483,15 +500,14 @@ with query term STRING."
                          "\" | ")
               "\"]"))))
 
-(defun zk-index--query-mode-line ()
+(defun zk-index-mode-line ()
   "Add STRING to mode-line in `zk-index-mode'."
   (when (derived-mode-p 'zk-index-mode)
-    zk-index-query-mode-line))
+    zk-index-mode-line))
 
 (defun zk-index--reset-mode-line ()
   "Reset mode-line in `zk-index-mode'."
-  (setq-local zk-index-query-mode-line nil
-              zk-index-query-terms nil))
+  (setq-local zk-index-mode-line nil))
 
 (defun zk-index--current-id-list (buf-name)
   "Return list of IDs for index in BUF-NAME, as filepaths."
@@ -776,7 +792,8 @@ Will switch to local value of `zk-index-buffer-name’."
   (if-let ((buffer (get-buffer
                     (or index
                         zk-index-buffer-name))))
-      (pop-to-buffer buffer)
+      (unless (eq buffer (current-buffer))
+        (pop-to-buffer buffer))
     (zk-index)))
 
 (defun zk-index-rename (buf-name)
