@@ -1,11 +1,11 @@
 ;;; zk-index.el --- Index for zk   -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022-2025  Grant Rosson
+;; Copyright (C) 2022-2026  Grant Rosson
 
 ;; Author: Grant Rosson <https://github.com/localauthor>
 ;; Created: January 25, 2022
 ;; License: GPL-3.0-or-later
-;; Version: 0.11
+;; Version: 1.0
 ;; URL: https://github.com/localauthor/zk
 ;; Package-Requires: ((emacs "28.1")(zk "0.9"))
 
