@@ -368,10 +368,9 @@ an internal loop."
       (let ((zk-alist (or zk-alist (zk--alist)))
             (case-fold-search t)
             (ids))
-        (dolist (item zk-alist)
+        (dolist (item zk-alist ids)
           (when (string-match-p str (cadr item))
-            (push (car item) ids)))
-        ids)
+            (push (car item) ids))))
     (let ((zk--no-gc t))
       (ensure-list (zk--parse-file 'id (zk--directory-files t))))))
 
@@ -859,7 +858,7 @@ Optionally call a custom function by setting the variable
       (funcall zk-current-notes-function)
     (find-file
      (funcall zk-select-file-function
-              "Current Notes:"
+              "Current Notes: "
               (zk--current-notes-list)))))
 
 ;;; Follow Links
