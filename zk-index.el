@@ -344,11 +344,12 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME."
 (defun zk-index-help-echo (win _obj pos)
   "Generate help-echo for `zk-index' button in WIN at POS."
   (with-selected-window win
-    (goto-char pos)
-    (let ((beg (+ (line-beginning-position)
-                  (length zk-index-prefix)))
-          (end (line-end-position)))
-      (format "%s" (buffer-substring beg end)))))
+    (save-excursion
+      (goto-char pos)
+      (let ((beg (+ (line-beginning-position)
+                    (length zk-index-prefix)))
+            (end (line-end-position)))
+        (format "%s" (buffer-substring beg end))))))
 
 (defun zk-index-narrowed-p (buf-name)
   "Return t when index is narrowed in buffer BUF-NAME."
