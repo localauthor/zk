@@ -974,7 +974,9 @@ brackets \"[[\" initiates completion."
                 (delete-char (- -2 (length str)))
                 (insert str)
                 (when zk-enable-link-buttons
-                  (zk-make-button-before-point))))))))
+                  (zk-make-button-before-point))
+                (when (looking-at "]") ;; account for elec-pair
+                  (delete-char 1))))))))
 
 ;;; Copy Link and Title
 
