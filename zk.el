@@ -617,7 +617,7 @@ When NO-PROC is non-nil, bypass `zk--processor'."
 (defun zk--formatted-string (arg format)
   "Format a multi-line string from items in ARG, following FORMAT.
 ARG can be zk-file or zk-id as string or list, single or multiple."
-  (mapconcat #'identity (zk--formatter arg format) "\n\n"))
+  (string-join (zk--formatter arg format) "\n\n"))
 
 (defun zk-format-id-and-title (format id title)
   "Format ID and TITLE based on the `format-spec' FORMAT.
@@ -1077,10 +1077,8 @@ Select TAG, with completion, from list of all tags in zk notes."
   (interactive)
   (let* ((dead-link-ids (zk--dead-link-id-list)))
     (if dead-link-ids
-        (funcall zk-search-function (mapconcat
-                                     #'identity
-                                     dead-link-ids
-                                     "\\|"))
+        (funcall zk-search-function
+                 (string-join dead-link-ids "\\|"))
       (user-error "No dead links found"))))
 
 (defun zk--unlinked-notes-list ()
