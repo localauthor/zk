@@ -57,7 +57,7 @@
 (setq zk-enable-link-buttons nil)
 
 (defun zk-org-link--description (location desc)
-  "Insert a description for zk-org-link. Region or note title."
+  "Insert a description DESC for zk-org-link LOCATION. Region or note title."
   (if desc desc
     (string-match zk-id-regexp location)
     (zk--parse-id 'title (match-string 1 location))))
