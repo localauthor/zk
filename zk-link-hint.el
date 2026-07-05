@@ -71,14 +71,11 @@ Only search the range between just after the point and BOUND."
       (if (> (length (aw-window-list)) 1)
           (let ((switch-to-buffer-obey-display-actions nil)
                 (window (aw-select nil))
-                (buffer (current-buffer))
-                (new-buffer))
-            (zk-follow-link-at-point id)
-            (setq new-buffer
-                  (current-buffer))
-            (switch-to-buffer buffer)
+                (id (if (zk-id-p id)
+                        id
+                      (zk--id-at-point))))
             (aw-switch-to-window window)
-            (switch-to-buffer new-buffer))
+            (zk-follow-link-at-point id))
         (link-hint-open-link-at-point))))
 
   ;; add exception for zk-index buttons
@@ -106,13 +103,14 @@ Only search the range between just after the point and BOUND."
   (link-hint-define-type 'zk-link
     :preview #'link-hint-preview-zk-link)
 
-  (defun link-hint-preview-zk-link (&optional _id)
-    "Pop up a frame containing zk-file for ID at point.
+  (defun link-hint-preview-zk-link (&optional arg)
+    "Pop up a frame containing zk-file for ARG.
 Set pop-up frame parameters in `link-hint-preview-frame-parameters'."
-    (interactive)
+    (interactive (list (zk--select-file)))
     (let* ((id (or (zk--id-at-point)
                    (zk-index--button-at-point-p)))
-           (file (zk--parse-id 'file-path id))
+           (file (or (car (zk--processor arg))
+                     (zk--parse-id 'file-path id)))
            (buffer (get-file-buffer file))
            (frame (selected-frame)))
       (if (get-file-buffer file)
