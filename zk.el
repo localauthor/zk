@@ -492,7 +492,9 @@ supplied. Can take a PROMPT argument."
   (if transform
       (progn
         (string-match (zk-file-name-regexp) file)
-        (match-string 2 file))
+        (if (string-empty-p (match-string 2 file))
+            (file-name-nondirectory file) ;; if no title, use file-name
+          (match-string 2 file)))
     "zk"))
 
 (defun zk--id-at-point ()

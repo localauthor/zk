@@ -203,13 +203,17 @@ all files in `zk-directory' will be returned as formatted candidates."
          output)
     (dolist (file list output)
       (when (string-match (zk-file-name-regexp) file)
-        (let ((id (if zk-index-invisible-ids
-                      (propertize (match-string 1 file) 'invisible t)
-                    (match-string 1 file)))
-              (title (replace-regexp-in-string
-                      zk-file-name-separator
-                      " "
-                      (match-string 2 file))))
+        (let* ((id (if zk-index-invisible-ids
+                       (propertize (match-string 1 file) 'invisible t)
+                     (match-string 1 file)))
+               (title1 (match-string 2 file))
+               (title (if (and zk-index-invisible-ids
+                               (string-empty-p title1))
+                          (file-name-base file)
+                        (replace-regexp-in-string
+                         zk-file-name-separator
+                         " "
+                         title1))))
           (push (zk--format format id title) output))))))
 
 ;;; Main Stack
@@ -223,7 +227,7 @@ all files in `zk-directory' will be returned as formatted candidates."
     (unless (eq zk-index-last-sort-function 'reverse)
       (setq zk-index-last-sort-function sort-fn)))
   (let* ((zk--no-gc t)
-         (inhibit-message nil)
+         (inhibit-message t)
          (inhibit-read-only t)
          (buf-name (or buf-name
                        zk-index-buffer-name))
@@ -368,7 +372,7 @@ Optionally refresh with FILES, using FORMAT-FN, SORT-FN, BUF-NAME, MODE-LINE."
   "Return t when index is narrowed in buffer BUF-NAME."
   (when (get-buffer buf-name)
     (with-current-buffer buf-name
-      (if (< (count-lines (point-min) (point-max))
+      (if (< (line-number-at-pos (point-max))
              (length (zk--directory-files)))
           t nil))))
 
@@ -521,7 +525,8 @@ with query term STRING."
         (goto-char (point-min))
         (save-match-data
           (while (re-search-forward zk-id-regexp nil t)
-            (push (match-string-no-properties 1) ids)))
+            (when (get-text-property 0 'invisible (match-string 1))
+              (push (match-string-no-properties 1) ids))))
         ids))))
 
 ;;; Index Sort Functions
